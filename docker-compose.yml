@@ -1,0 +1,142 @@
+# docker-compose.yml
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: solidus_postgres
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - solidus_network
+
+  redis:
+    image: redis:7-alpine
+    container_name: solidus_redis
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - solidus_network
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        UID: ${UID:-1000}
+        GID: ${GID:-1000}
+    container_name: solidus_web
+    command: >
+      sh -c "
+        python manage.py migrate &&
+        python manage.py collectstatic --noinput &&
+        daphne -b 0.0.0.0 -p 8000 solidus.asgi:application
+      "
+    volumes:
+      - .:/app
+      - media_data:/app/media
+      - static_data:/app/staticfiles
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - solidus_network
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: solidus_worker
+    command: >
+      sh -c "
+        while true; do
+          python manage.py process_assets --batch-size 5;
+          python manage.py generate_feeds;
+          sleep 60;
+        done
+      "
+    volumes:
+      - .:/app
+      - media_data:/app/media
+    env_file:
+      - .env
+    depends_on:
+      - postgres
+      - redis
+      - web
+    networks:
+      - solidus_network
+
+  nginx:
+    image: nginx:alpine
+    container_name: solidus_nginx
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - static_data:/app/static:ro
+      - media_data:/app/media:ro
+    ports:
+      - "80:80"
+    depends_on:
+      - web
+    networks:
+      - solidus_network
+
+  mailhog:
+    image: mailhog/mailhog
+    container_name: solidus_mailhog
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+    networks:
+      - solidus_network
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: solidus_pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@solidus.local
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+    networks:
+      - solidus_network
+    profiles:
+      - tools
+
+volumes:
+  postgres_data:
+  redis_data:
+  media_data:
+  static_data:
+
+networks:
+  solidus_network:
+    driver: bridge

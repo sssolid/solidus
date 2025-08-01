@@ -1,0 +1,238 @@
+[
+  {
+    "model": "products.brand",
+    "pk": 1,
+    "fields": {
+      "name": "Acme Auto Parts",
+      "code": "ACME",
+      "website": "https://acme-auto.example.com",
+      "is_active": true,
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "products.brand",
+    "pk": 2,
+    "fields": {
+      "name": "TurboTech Performance",
+      "code": "TURBO",
+      "website": "https://turbotech.example.com",
+      "is_active": true,
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "products.category",
+    "pk": 1,
+    "fields": {
+      "name": "Brakes",
+      "slug": "brakes",
+      "parent": null,
+      "description": "Brake components and systems",
+      "sort_order": 1,
+      "is_active": true,
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "products.category",
+    "pk": 2,
+    "fields": {
+      "name": "Brake Pads",
+      "slug": "brake-pads",
+      "parent": 1,
+      "description": "Disc brake pads",
+      "sort_order": 1,
+      "is_active": true,
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "products.category",
+    "pk": 3,
+    "fields": {
+      "name": "Engine",
+      "slug": "engine",
+      "parent": null,
+      "description": "Engine components",
+      "sort_order": 2,
+      "is_active": true,
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "products.vehiclemake",
+    "pk": 1,
+    "fields": {
+      "name": "Toyota",
+      "code": "TOY",
+      "country": "Japan",
+      "is_active": true
+    }
+  },
+  {
+    "model": "products.vehiclemake",
+    "pk": 2,
+    "fields": {
+      "name": "Honda",
+      "code": "HON",
+      "country": "Japan",
+      "is_active": true
+    }
+  },
+  {
+    "model": "products.vehiclemake",
+    "pk": 3,
+    "fields": {
+      "name": "Ford",
+      "code": "FOR",
+      "country": "USA",
+      "is_active": true
+    }
+  },
+  {
+    "model": "products.vehiclemodel",
+    "pk": 1,
+    "fields": {
+      "make": 1,
+      "name": "Camry",
+      "code": "CAM",
+      "is_active": true
+    }
+  },
+  {
+    "model": "products.vehiclemodel",
+    "pk": 2,
+    "fields": {
+      "make": 1,
+      "name": "Corolla",
+      "code": "COR",
+      "is_active": true
+    }
+  },
+  {
+    "model": "products.vehiclemodel",
+    "pk": 3,
+    "fields": {
+      "make": 2,
+      "name": "Civic",
+      "code": "CIV",
+      "is_active": true
+    }
+  },
+  {
+    "model": "products.vehiclemodel",
+    "pk": 4,
+    "fields": {
+      "make": 2,
+      "name": "Accord",
+      "code": "ACC",
+      "is_active": true
+    }
+  },
+  {
+    "model": "products.vehiclemodel",
+    "pk": 5,
+    "fields": {
+      "make": 3,
+      "name": "F-150",
+      "code": "F15",
+      "is_active": true
+    }
+  },
+  {
+    "model": "assets.assetcategory",
+    "pk": 1,
+    "fields": {
+      "name": "Product Images",
+      "slug": "product-images",
+      "parent": null,
+      "description": "Product photography and images",
+      "icon": "fa-image",
+      "is_active": true,
+      "sort_order": 1,
+      "requires_permission": false,
+      "allowed_roles": [],
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "assets.assetcategory",
+    "pk": 2,
+    "fields": {
+      "name": "Installation Guides",
+      "slug": "installation-guides",
+      "parent": null,
+      "description": "Installation instructions and guides",
+      "icon": "fa-file-pdf",
+      "is_active": true,
+      "sort_order": 2,
+      "requires_permission": false,
+      "allowed_roles": [],
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "assets.assetcategory",
+    "pk": 3,
+    "fields": {
+      "name": "Marketing Materials",
+      "slug": "marketing-materials",
+      "parent": null,
+      "description": "Marketing and promotional materials",
+      "icon": "fa-bullhorn",
+      "is_active": true,
+      "sort_order": 3,
+      "requires_permission": true,
+      "allowed_roles": ["admin", "employee"],
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "core.systemsetting",
+    "pk": 1,
+    "fields": {
+      "key": "company_name",
+      "value": "Solidus Auto Parts",
+      "setting_type": "string",
+      "description": "Company name displayed throughout the system",
+      "is_public": true,
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "core.systemsetting",
+    "pk": 2,
+    "fields": {
+      "key": "support_email",
+      "value": "support@solidus.example.com",
+      "setting_type": "string",
+      "description": "Support email address",
+      "is_public": true,
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "core.systemsetting",
+    "pk": 3,
+    "fields": {
+      "key": "max_upload_size_mb",
+      "value": "100",
+      "setting_type": "integer",
+      "description": "Maximum file upload size in megabytes",
+      "is_public": false,
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    }
+  }
+]

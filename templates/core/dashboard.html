@@ -1,0 +1,437 @@
+<!-- templates/core/dashboard.html -->
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - Solidus{% endblock %}
+
+{% block content %}
+<div class="px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Welcome Header -->
+    <div class="mb-8">
+        <h1 class="text-2xl font-bold text-gray-900">
+            Welcome back, {{ user.get_full_name|default:user.username }}!
+        </h1>
+        <p class="mt-1 text-sm text-gray-600">
+            Here's what's happening with your {{ user.get_role_display|lower }} account.
+        </p>
+    </div>
+
+    {% if user.is_employee %}
+    <!-- Employee Dashboard -->
+    <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <!-- Stats Cards -->
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-box text-3xl text-blue-600"></i>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">
+                                Active Products
+                            </dt>
+                            <dd class="text-lg font-semibold text-gray-900">
+                                {{ total_products|floatformat:0 }}
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-gray-50 px-5 py-3">
+                <div class="text-sm">
+                    <a href="{% url 'products:list' %}" class="font-medium text-blue-600 hover:text-blue-900">
+                        View all <i class="fas fa-arrow-right ml-1"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-images text-3xl text-green-600"></i>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">
+                                Digital Assets
+                            </dt>
+                            <dd class="text-lg font-semibold text-gray-900">
+                                {{ total_assets|floatformat:0 }}
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-gray-50 px-5 py-3">
+                <div class="text-sm">
+                    <a href="{% url 'assets:list' %}" class="font-medium text-green-600 hover:text-green-900">
+                        View all <i class="fas fa-arrow-right ml-1"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-tasks text-3xl text-purple-600"></i>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">
+                                Pending Tasks
+                            </dt>
+                            <dd class="text-lg font-semibold text-gray-900">
+                                {{ pending_tasks|floatformat:0 }}
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-gray-50 px-5 py-3">
+                <div class="text-sm">
+                    <a href="{% url 'core:task_list' %}" class="font-medium text-purple-600 hover:text-purple-900">
+                        View all <i class="fas fa-arrow-right ml-1"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-users text-3xl text-indigo-600"></i>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">
+                                Total Customers
+                            </dt>
+                            <dd class="text-lg font-semibold text-gray-900">
+                                {{ User.objects.filter(role='customer').count|floatformat:0 }}
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-gray-50 px-5 py-3">
+                <div class="text-sm">
+                    <a href="{% url 'accounts:customer_list' %}" class="font-medium text-indigo-600 hover:text-indigo-900">
+                        View all <i class="fas fa-arrow-right ml-1"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <!-- Recent Products -->
+        <div class="bg-white shadow rounded-lg">
+            <div class="px-4 py-5 sm:px-6 border-b border-gray-200">
+                <h3 class="text-lg leading-6 font-medium text-gray-900">
+                    Recent Products
+                </h3>
+            </div>
+            <div class="px-4 py-5 sm:p-6">
+                {% if recent_products %}
+                <ul class="divide-y divide-gray-200">
+                    {% for product in recent_products %}
+                    <li class="py-3">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-gray-900">
+                                    {{ product.name }}
+                                </p>
+                                <p class="text-sm text-gray-500">
+                                    {{ product.sku }} • {{ product.brand.name }}
+                                </p>
+                            </div>
+                            <a href="{% url 'products:detail' product.id %}" class="text-blue-600 hover:text-blue-900">
+                                <i class="fas fa-arrow-right"></i>
+                            </a>
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p class="text-gray-500 text-sm">No recent products</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Recent Assets -->
+        <div class="bg-white shadow rounded-lg">
+            <div class="px-4 py-5 sm:px-6 border-b border-gray-200">
+                <h3 class="text-lg leading-6 font-medium text-gray-900">
+                    Recent Assets
+                </h3>
+            </div>
+            <div class="px-4 py-5 sm:p-6">
+                {% if recent_assets %}
+                <ul class="divide-y divide-gray-200">
+                    {% for asset in recent_assets %}
+                    <li class="py-3">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0">
+                                    {% if asset.asset_type == 'image' %}
+                                        <i class="fas fa-image text-green-500"></i>
+                                    {% elif asset.asset_type == 'document' %}
+                                        <i class="fas fa-file-pdf text-red-500"></i>
+                                    {% elif asset.asset_type == 'video' %}
+                                        <i class="fas fa-video text-purple-500"></i>
+                                    {% else %}
+                                        <i class="fas fa-file text-gray-500"></i>
+                                    {% endif %}
+                                </div>
+                                <div class="ml-3">
+                                    <p class="text-sm font-medium text-gray-900">
+                                        {{ asset.title }}
+                                    </p>
+                                    <p class="text-sm text-gray-500">
+                                        {{ asset.file_size|filesizeformat }}
+                                    </p>
+                                </div>
+                            </div>
+                            <a href="{% url 'assets:detail' asset.id %}" class="text-blue-600 hover:text-blue-900">
+                                <i class="fas fa-arrow-right"></i>
+                            </a>
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p class="text-gray-500 text-sm">No recent assets</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    {% else %}
+    <!-- Customer Dashboard -->
+    <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <!-- Stats Cards -->
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-rss text-3xl text-blue-600"></i>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">
+                                Active Feeds
+                            </dt>
+                            <dd class="text-lg font-semibold text-gray-900">
+                                {{ active_feeds|floatformat:0 }}
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-gray-50 px-5 py-3">
+                <div class="text-sm">
+                    <a href="{% url 'feeds:my_feeds' %}" class="font-medium text-blue-600 hover:text-blue-900">
+                        Manage feeds <i class="fas fa-arrow-right ml-1"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-shopping-cart text-3xl text-green-600"></i>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">
+                                Available Products
+                            </dt>
+                            <dd class="text-lg font-semibold text-gray-900">
+                                {{ available_products|floatformat:0 }}
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-gray-50 px-5 py-3">
+                <div class="text-sm">
+                    <a href="{% url 'products:catalog' %}" class="font-medium text-green-600 hover:text-green-900">
+                        Browse catalog <i class="fas fa-arrow-right ml-1"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-download text-3xl text-purple-600"></i>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">
+                                Recent Downloads
+                            </dt>
+                            <dd class="text-lg font-semibold text-gray-900">
+                                {{ recent_generations|length }}
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-gray-50 px-5 py-3">
+                <div class="text-sm">
+                    <a href="{% url 'assets:browse' %}" class="font-medium text-purple-600 hover:text-purple-900">
+                        Download center <i class="fas fa-arrow-right ml-1"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Feed Generations -->
+    <div class="mt-8">
+        <div class="bg-white shadow rounded-lg">
+            <div class="px-4 py-5 sm:px-6 border-b border-gray-200">
+                <h3 class="text-lg leading-6 font-medium text-gray-900">
+                    Recent Feed Generations
+                </h3>
+            </div>
+            <div class="px-4 py-5 sm:p-6">
+                {% if recent_generations %}
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead>
+                            <tr>
+                                <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Feed Name
+                                </th>
+                                <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Generated
+                                </th>
+                                <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Status
+                                </th>
+                                <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Action
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            {% for generation in recent_generations %}
+                            <tr>
+                                <td class="px-3 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                    {{ generation.feed.name }}
+                                </td>
+                                <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {{ generation.started_at|date:"M d, Y g:i A" }}
+                                </td>
+                                <td class="px-3 py-4 whitespace-nowrap">
+                                    {% if generation.status == 'completed' %}
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                        Completed
+                                    </span>
+                                    {% elif generation.status == 'failed' %}
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                                        Failed
+                                    </span>
+                                    {% else %}
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                        {{ generation.status|title }}
+                                    </span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-3 py-4 whitespace-nowrap text-sm font-medium">
+                                    {% if generation.status == 'completed' %}
+                                    <a href="{% url 'feeds:download' generation.generation_id %}" class="text-blue-600 hover:text-blue-900">
+                                        Download
+                                    </a>
+                                    {% else %}
+                                    <span class="text-gray-400">-</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-gray-500 text-sm">No recent feed generations</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Notifications -->
+    <div class="mt-8">
+        <div class="bg-white shadow rounded-lg">
+            <div class="px-4 py-5 sm:px-6 border-b border-gray-200 flex justify-between items-center">
+                <h3 class="text-lg leading-6 font-medium text-gray-900">
+                    Recent Notifications
+                </h3>
+                {% if notification_count > 0 %}
+                <span class="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                    {{ notification_count }} unread
+                </span>
+                {% endif %}
+            </div>
+            <div class="px-4 py-5 sm:p-6">
+                {% if notifications %}
+                <ul class="divide-y divide-gray-200">
+                    {% for notification in notifications %}
+                    <li class="py-3">
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0">
+                                {% if notification.notification_type == 'success' %}
+                                    <i class="fas fa-check-circle text-green-500"></i>
+                                {% elif notification.notification_type == 'warning' %}
+                                    <i class="fas fa-exclamation-triangle text-yellow-500"></i>
+                                {% elif notification.notification_type == 'error' %}
+                                    <i class="fas fa-exclamation-circle text-red-500"></i>
+                                {% else %}
+                                    <i class="fas fa-info-circle text-blue-500"></i>
+                                {% endif %}
+                            </div>
+                            <div class="ml-3 flex-1">
+                                <p class="text-sm font-medium text-gray-900">
+                                    {{ notification.title }}
+                                </p>
+                                <p class="text-sm text-gray-500">
+                                    {{ notification.message }}
+                                </p>
+                                <p class="text-xs text-gray-400 mt-1">
+                                    {{ notification.created_at|timesince }} ago
+                                </p>
+                            </div>
+                            {% if notification.action_url %}
+                            <a href="{{ notification.action_url }}" class="ml-3 text-blue-600 hover:text-blue-900 text-sm">
+                                {{ notification.action_label|default:"View" }}
+                            </a>
+                            {% endif %}
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+                <div class="mt-4">
+                    <a href="{% url 'core:notification_list' %}" class="text-sm font-medium text-blue-600 hover:text-blue-900">
+                        View all notifications <i class="fas fa-arrow-right ml-1"></i>
+                    </a>
+                </div>
+                {% else %}
+                <p class="text-gray-500 text-sm">No new notifications</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,23 @@
+# templates/feeds/email/feed_ready.txt
+Solidus - Your Data Feed is Ready
+
+Hello {{ customer.get_full_name|default:customer.username }},
+
+Your {{ feed.name }} data feed has been successfully generated and is ready for download.
+
+Feed Details:
+-------------
+Feed Type: {{ feed.get_feed_type_display }}
+Format: {{ feed.get_format_display|upper }}
+Generated: {{ generation.completed_at|date:"F j, Y g:i A" }}
+{% if generation.row_count %}Records: {{ generation.row_count|floatformat:0 }}{% endif %}
+{% if generation.file_size %}File Size: {{ generation.file_size|filesizeformat }}{% endif %}
+
+Download Your Feed:
+{{ download_url }}
+
+This download link will be available for 7 days. If you need to regenerate this feed after that time, please log into your account or contact support.
+
+---
+This is an automated message from Solidus. Please do not reply to this email.
+If you have questions, please contact our support team.
