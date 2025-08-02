@@ -1,248 +1,283 @@
-# Makefile for Solidus Project
-.PHONY: help install setup migrate test lint format clean build up down logs shell superuser fixtures backup restore
+# Makefile.prod
+# Production Makefile for Solidus Project
 
-# Default target
+# Variables
+DOCKER_COMPOSE_PROD = docker-compose -f docker-compose.prod.yml
+PROJECT_NAME = solidus
+VERSION ?= latest
+REGISTRY ?= your-registry.com
+
+# Help command
+.PHONY: help
 help:
-	@echo "Available commands:"
-	@echo "  install     - Install Python dependencies"
-	@echo "  setup       - Initial project setup"
-	@echo "  migrate     - Run database migrations"
-	@echo "  test        - Run tests"
-	@echo "  lint        - Run code linting"
-	@echo "  format      - Format code with black"
-	@echo "  clean       - Clean up generated files"
-	@echo "  build       - Build Docker image"
-	@echo "  up          - Start Docker containers"
-	@echo "  down        - Stop Docker containers"
-	@echo "  logs        - View Docker logs"
-	@echo "  shell       - Open Django shell"
-	@echo "  superuser   - Create superuser"
-	@echo "  fixtures    - Load initial data fixtures"
-	@echo "  backup      - Backup database"
-	@echo "  restore     - Restore database from backup"
+	@echo "🚀 Solidus Production Commands"
+	@echo ""
+	@echo "🏗️  Build & Deploy:"
+	@echo "  make build            - Build production images"
+	@echo "  make deploy           - Deploy to production"
+	@echo "  make rollback         - Rollback to previous version"
+	@echo "  make update           - Update running services"
+	@echo ""
+	@echo "🐳 Container Management:"
+	@echo "  make up               - Start production services"
+	@echo "  make down             - Stop production services"
+	@echo "  make restart          - Restart all services"
+	@echo "  make scale            - Scale services"
+	@echo ""
+	@echo "🗄️  Database Operations:"
+	@echo "  make migrate          - Run database migrations"
+	@echo "  make backup           - Create database backup"
+	@echo "  make restore          - Restore from backup"
+	@echo "  make db-migrate-check - Check pending migrations"
+	@echo ""
+	@echo "📊 Monitoring & Maintenance:"
+	@echo "  make logs             - View service logs"
+	@echo "  make status           - Check service status"
+	@echo "  make health           - Health check all services"
+	@echo "  make stats            - Resource usage statistics"
+	@echo ""
+	@echo "🔧 Maintenance:"
+	@echo "  make collectstatic    - Collect static files"
+	@echo "  make clean            - Clean unused resources"
+	@echo "  make ssl-renew        - Renew SSL certificates"
+	@echo ""
+	@echo "🔒 Security:"
+	@echo "  make security-check   - Run security scans"
+	@echo "  make update-secrets   - Update production secrets"
 
-# Development setup
-install:
-	pip install -r requirements.txt
-
-setup: install
-	@echo "Setting up Solidus project..."
-	python manage.py migrate
-	python manage.py collectstatic --noinput
-	@echo "Setup complete!"
-
-migrate:
-	python manage.py makemigrations
-	python manage.py migrate
-
-# Testing and quality
-test:
-	python manage.py test --verbosity=2
-
-lint:
-	flake8 src/
-	pylint src/ --load-plugins=pylint_django --django-settings-module=solidus.settings
-
-format:
-	black src/
-	isort src/
-
-# Cleanup
-clean:
-	find . -type f -name "*.pyc" -delete
-	find . -type d -name "__pycache__" -delete
-	find . -type d -name "*.egg-info" -exec rm -rf {} +
-	rm -rf build/
-	rm -rf dist/
-
-# Docker commands
+# Build and deployment
+.PHONY: build
 build:
-	docker-compose build
+	@echo "🏗️  Building production images..."
+	$(DOCKER_COMPOSE_PROD) build --no-cache
+	@echo "✅ Build complete!"
 
+.PHONY: build-push
+build-push: build
+	@echo "📤 Pushing images to registry..."
+	docker tag $(PROJECT_NAME)_web:latest $(REGISTRY)/$(PROJECT_NAME):$(VERSION)
+	docker tag $(PROJECT_NAME)_nginx:latest $(REGISTRY)/$(PROJECT_NAME)-nginx:$(VERSION)
+	docker push $(REGISTRY)/$(PROJECT_NAME):$(VERSION)
+	docker push $(REGISTRY)/$(PROJECT_NAME)-nginx:$(VERSION)
+	@echo "✅ Images pushed!"
+
+.PHONY: deploy
+deploy:
+	@echo "🚀 Deploying to production..."
+	@echo "⚠️  This will update the production environment!"
+	@read -p "Continue? [y/N] " -n 1 -r; \
+	echo; \
+	if [[ $$REPLY =~ ^[Yy]$$ ]]; then \
+		$(DOCKER_COMPOSE_PROD) pull; \
+		$(DOCKER_COMPOSE_PROD) up -d --remove-orphans; \
+		$(MAKE) migrate; \
+		$(MAKE) collectstatic; \
+		$(MAKE) health; \
+		echo "✅ Deployment complete!"; \
+	else \
+		echo "❌ Deployment cancelled"; \
+	fi
+
+.PHONY: rollback
+rollback:
+	@echo "⏪ Rolling back to previous version..."
+	@read -p "Enter version to rollback to: " version; \
+	if [ -n "$$version" ]; then \
+		docker pull $(REGISTRY)/$(PROJECT_NAME):$$version; \
+		docker pull $(REGISTRY)/$(PROJECT_NAME)-nginx:$$version; \
+		docker tag $(REGISTRY)/$(PROJECT_NAME):$$version $(PROJECT_NAME)_web:latest; \
+		docker tag $(REGISTRY)/$(PROJECT_NAME)-nginx:$$version $(PROJECT_NAME)_nginx:latest; \
+		$(DOCKER_COMPOSE_PROD) up -d; \
+		echo "✅ Rollback complete!"; \
+	fi
+
+# Container management
+.PHONY: up
 up:
-	docker-compose up -d
+	@echo "🚀 Starting production services..."
+	$(DOCKER_COMPOSE_PROD) up -d
+	@echo "✅ Services started!"
 
+.PHONY: down
 down:
-	docker-compose down
+	@echo "🛑 Stopping production services..."
+	$(DOCKER_COMPOSE_PROD) down
+	@echo "✅ Services stopped!"
 
-logs:
-	docker-compose logs -f
+.PHONY: restart
+restart:
+	@echo "🔄 Restarting services..."
+	$(DOCKER_COMPOSE_PROD) restart
+	@echo "✅ Services restarted!"
 
-restart: down up
+.PHONY: scale
+scale:
+	@echo "📈 Scaling services..."
+	@read -p "Web replicas: " web_replicas; \
+	$(DOCKER_COMPOSE_PROD) up -d --scale web=$$web_replicas
 
 # Database operations
-shell:
-	python manage.py shell
+.PHONY: migrate
+migrate:
+	@echo "🔄 Running migrations..."
+	$(DOCKER_COMPOSE_PROD) exec web python manage.py migrate
+	@echo "✅ Migrations complete!"
 
-dbshell:
-	python manage.py dbshell
+.PHONY: db-migrate-check
+db-migrate-check:
+	@echo "🔍 Checking for pending migrations..."
+	$(DOCKER_COMPOSE_PROD) exec web python manage.py showmigrations --plan
 
-superuser:
-	python manage.py createsuperuser
-
-fixtures:
-	python manage.py loaddata fixtures/initial_data.json
-
-# Backup and restore
+.PHONY: backup
 backup:
-	@echo "Creating database backup..."
-	docker-compose exec db pg_dump -U solidus solidus > backups/solidus_$(shell date +%Y%m%d_%H%M%S).sql
-	@echo "Backup created in backups/ directory"
+	@echo "💾 Creating database backup..."
+	@mkdir -p backups/production
+	$(DOCKER_COMPOSE_PROD) exec postgres pg_dump -U solidus solidus | gzip > backups/production/solidus_$(shell date +%Y%m%d_%H%M%S).sql.gz
+	@echo "✅ Backup created!"
 
+.PHONY: restore
 restore:
-	@read -p "Enter backup file name: " backup_file; \
-	docker-compose exec -T db psql -U solidus -d solidus < backups/$$backup_file
+	@echo "📥 Database restore..."
+	@echo "⚠️  This will overwrite the production database!"
+	@read -p "Backup file name: " backup_file; \
+	if [ -f "backups/production/$$backup_file" ]; then \
+		read -p "Are you sure? [y/N] " -n 1 -r; \
+		echo; \
+		if [[ $$REPLY =~ ^[Yy]$$ ]]; then \
+			gunzip -c backups/production/$$backup_file | $(DOCKER_COMPOSE_PROD) exec -T postgres psql -U solidus -d solidus; \
+			echo "✅ Restore complete!"; \
+		fi; \
+	else \
+		echo "❌ Backup file not found!"; \
+	fi
 
-# Asset processing
-process-assets:
-	python manage.py process_assets
+# Monitoring and logs
+.PHONY: logs
+logs:
+	$(DOCKER_COMPOSE_PROD) logs -f
 
-generate-thumbnails:
-	python manage.py generate_thumbnails
+.PHONY: logs-web
+logs-web:
+	$(DOCKER_COMPOSE_PROD) logs -f web
 
-# Feed operations
-generate-feeds:
-	python manage.py generate_scheduled_feeds
+.PHONY: logs-nginx
+logs-nginx:
+	$(DOCKER_COMPOSE_PROD) logs -f nginx
 
-# Monitoring and maintenance
-health-check:
-	curl -f http://localhost:8000/health/ || echo "Service not healthy"
+.PHONY: logs-postgres
+logs-postgres:
+	$(DOCKER_COMPOSE_PROD) logs -f postgres
 
-check-services:
-	docker-compose ps
+.PHONY: status
+status:
+	@echo "📊 Service Status:"
+	$(DOCKER_COMPOSE_PROD) ps
 
-# Production commands
-deploy:
-	@echo "Deploying to production..."
-	docker-compose -f docker-compose.prod.yml up -d --build
-	docker-compose -f docker-compose.prod.yml exec web python manage.py migrate
-	docker-compose -f docker-compose.prod.yml exec web python manage.py collectstatic --noinput
-	@echo "Deployment complete!"
+.PHONY: health
+health:
+	@echo "🏥 Health check..."
+	@for service in web nginx postgres redis; do \
+		echo -n "$$service: "; \
+		if $(DOCKER_COMPOSE_PROD) exec $$service sh -c 'exit 0' 2>/dev/null; then \
+			echo "✅ Healthy"; \
+		else \
+			echo "❌ Unhealthy"; \
+		fi; \
+	done
+	@echo ""
+	@echo "🌐 HTTP Health Check:"
+	@curl -f -s -o /dev/null https://$(DOMAIN)/health/ && echo "✅ Web service healthy" || echo "❌ Web service unhealthy"
 
-prod-logs:
-	docker-compose -f docker-compose.prod.yml logs -f
+.PHONY: stats
+stats:
+	@echo "📊 Resource Usage:"
+	docker stats --no-stream --format "table {{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}\t{{.NetIO}}\t{{.BlockIO}}"
 
-prod-down:
-	docker-compose -f docker-compose.prod.yml down
+# Maintenance
+.PHONY: collectstatic
+collectstatic:
+	@echo "📁 Collecting static files..."
+	$(DOCKER_COMPOSE_PROD) exec web python manage.py collectstatic --noinput
+	@echo "✅ Static files collected!"
 
-# SSL certificate management (for production)
-ssl-cert:
-	certbot --nginx -d your-domain.com
+.PHONY: clean
+clean:
+	@echo "🧹 Cleaning unused resources..."
+	docker system prune -f
+	docker volume prune -f
+	docker image prune -f
+	@echo "✅ Cleanup complete!"
 
+.PHONY: ssl-renew
 ssl-renew:
-	certbot renew --quiet
+	@echo "🔒 Renewing SSL certificates..."
+	$(DOCKER_COMPOSE_PROD) exec nginx certbot renew --nginx
+	$(DOCKER_COMPOSE_PROD) exec nginx nginx -s reload
+	@echo "✅ SSL certificates renewed!"
 
-# Development utilities
-dev-data:
-	python manage.py create_dev_data
-
-reset-db:
-	@echo "WARNING: This will delete all data!"
-	@read -p "Are you sure? (y/N): " confirm && [ "$$confirm" = "y" ]
-	docker-compose down
-	docker volume rm solidus_postgres_data
-	docker-compose up -d db
-	sleep 10
-	make migrate
-	make fixtures
-
-# Code analysis
-coverage:
-	coverage run --source='.' manage.py test
-	coverage report
-	coverage html
-
+# Security
+.PHONY: security-check
 security-check:
-	bandit -r src/
-	safety check
+	@echo "🔍 Running security checks..."
+	$(DOCKER_COMPOSE_PROD) exec web python manage.py check --deploy
+	@echo "🔍 Checking for security updates..."
+	$(DOCKER_COMPOSE_PROD) exec web python -m pip list --outdated
 
-# Documentation
-docs:
-	cd docs && make html
+.PHONY: update-secrets
+update-secrets:
+	@echo "🔒 Updating production secrets..."
+	@echo "⚠️  This will restart services with new secrets!"
+	@read -p "Continue? [y/N] " -n 1 -r; \
+	echo; \
+	if [[ $$REPLY =~ ^[Yy]$$ ]]; then \
+		$(MAKE) down; \
+		echo "📝 Update your .env.prod file with new secrets"; \
+		read -p "Press enter when ready..."; \
+		$(MAKE) up; \
+	fi
 
-docs-serve:
-	cd docs/_build/html && python -m http.server 8080
+# Backup scheduling
+.PHONY: setup-backup-cron
+setup-backup-cron:
+	@echo "⏰ Setting up automated backups..."
+	@echo "0 2 * * * cd $(PWD) && make backup" | crontab -
+	@echo "✅ Daily backup scheduled for 2 AM!"
 
-# Environment management
-env-example:
-	cp .env.example .env
-	@echo "Created .env file from example. Please update with your settings."
+# Performance monitoring
+.PHONY: performance-check
+performance-check:
+	@echo "⚡ Performance check..."
+	@echo "🔍 Database connections:"
+	$(DOCKER_COMPOSE_PROD) exec postgres psql -U solidus -d solidus -c "SELECT count(*) as active_connections FROM pg_stat_activity WHERE state = 'active';"
+	@echo "🔍 Cache status:"
+	$(DOCKER_COMPOSE_PROD) exec redis redis-cli info memory | grep used_memory_human
+	@echo "🔍 Disk usage:"
+	df -h
 
-# Performance testing
-load-test:
-	locust -f tests/load_test.py --host=http://localhost:8000
+# Log rotation
+.PHONY: rotate-logs
+rotate-logs:
+	@echo "🔄 Rotating logs..."
+	docker logs $(PROJECT_NAME)_web_1 > logs/web_$(shell date +%Y%m%d_%H%M%S).log 2>&1
+	docker logs $(PROJECT_NAME)_nginx_1 > logs/nginx_$(shell date +%Y%m%d_%H%M%S).log 2>&1
+	$(DOCKER_COMPOSE_PROD) restart
+	@echo "✅ Logs rotated!"
 
-# Data management
-export-data:
-	python manage.py dumpdata --natural-foreign --natural-primary > data/solidus_data.json
+# Environment validation
+.PHONY: validate-env
+validate-env:
+	@echo "✅ Validating production environment..."
+	@test -f .env.prod || (echo "❌ .env.prod file missing!" && exit 1)
+	@test -n "$(DOMAIN)" || (echo "❌ DOMAIN not set!" && exit 1)
+	@test -n "$(SECRET_KEY)" || (echo "❌ SECRET_KEY not set!" && exit 1)
+	@echo "✅ Environment validation passed!"
 
-import-data:
-	python manage.py loaddata data/solidus_data.json
-
-# Monitoring
-monitor:
-	docker-compose exec web python manage.py monitor_system
-
-# Cache management
-clear-cache:
-	python manage.py clear_cache
-
-warm-cache:
-	python manage.py warm_cache
-
-# Search index management
-rebuild-index:
-	python manage.py rebuild_search_index
-
-# Task queue management
-worker:
-	python manage.py runworker
-
-scheduler:
-	python manage.py runscheduler
-
-# Asset optimization
-optimize-images:
-	python manage.py optimize_images
-
-# Audit commands
-audit-log:
-	python manage.py export_audit_log
-
-audit-cleanup:
-	python manage.py cleanup_old_audit_logs
-
-# System checks
-check:
-	python manage.py check
-
-check-deploy:
-	python manage.py check --deploy
-
-# Translation management (if needed)
-makemessages:
-	python manage.py makemessages -l en
-
-compilemessages:
-	python manage.py compilemessages
-
-# Version management
-version:
-	@echo "Solidus Version: $(shell python -c 'import src; print(src.__version__)')"
-
-# Quick development reset
-dev-reset: clean reset-db dev-data
-	@echo "Development environment reset complete!"
-
-# All-in-one development start
-dev: up
-	@echo "Waiting for services to start..."
-	sleep 10
-	make migrate
-	@echo "Development environment ready at http://localhost:8000"
-
-# Production health check
-prod-health:
-	@echo "Checking production services..."
-	curl -f https://your-domain.com/health/ || echo "Production service not healthy"
-	docker-compose -f docker-compose.prod.yml ps
+# Quick deployment (for CI/CD)
+.PHONY: ci-deploy
+ci-deploy: validate-env build
+	@echo "🤖 CI/CD Deployment..."
+	$(DOCKER_COMPOSE_PROD) up -d --remove-orphans
+	$(MAKE) migrate
+	$(MAKE) collectstatic
+	$(MAKE) health
+	@echo "✅ CI/CD Deployment complete!"

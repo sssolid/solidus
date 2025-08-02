@@ -1,21 +1,16 @@
 # src/feeds/delivery.py
-import os
-import smtplib
 import ftplib
+import logging
+import os
+
 import paramiko
 import requests
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
-from email.mime.base import MIMEBase
-from email import encoders
-from pathlib import Path
 from django.conf import settings
 from django.core.files.storage import default_storage
 from django.core.mail import EmailMessage
 from django.template.loader import render_to_string
-import logging
 
-logger = logging.getLogger('solidus.feeds')
+logger = logging.getLogger("solidus.feeds")
 
 
 class BaseDeliveryHandler:
@@ -32,7 +27,7 @@ class BaseDeliveryHandler:
     def get_file_content(self, file_path):
         """Get file content from storage"""
         try:
-            with default_storage.open(file_path, 'rb') as f:
+            with default_storage.open(file_path, "rb") as f:
                 return f.read()
         except Exception as e:
             logger.error(f"Error reading file {file_path}: {str(e)}")
@@ -45,27 +40,29 @@ class EmailDeliveryHandler(BaseDeliveryHandler):
     def deliver(self, generation):
         try:
             # Get email configuration
-            recipient_email = self.config.get('email', self.feed.customer.email)
-            cc_emails = self.config.get('cc_emails', [])
-            subject_template = self.config.get('subject_template', 'Your {feed_name} is ready')
+            recipient_email = self.config.get("email", self.feed.customer.email)
+            cc_emails = self.config.get("cc_emails", [])
+            subject_template = self.config.get(
+                "subject_template", "Your {feed_name} is ready"
+            )
 
             # Build email
             subject = subject_template.format(
                 feed_name=self.feed.name,
                 feed_type=self.feed.get_feed_type_display(),
-                date=generation.started_at.strftime('%Y-%m-%d')
+                date=generation.started_at.strftime("%Y-%m-%d"),
             )
 
             # Render email body
             context = {
-                'feed': self.feed,
-                'generation': generation,
-                'customer': self.feed.customer,
-                'download_url': f"{settings.BASE_URL}/feeds/download/{generation.generation_id}/",
+                "feed": self.feed,
+                "generation": generation,
+                "customer": self.feed.customer,
+                "download_url": f"{settings.BASE_URL}/feeds/download/{generation.generation_id}/",
             }
 
-            html_content = render_to_string('feeds/email/feed_ready.html', context)
-            text_content = render_to_string('feeds/email/feed_ready.txt', context)
+            html_content = render_to_string("feeds/email/feed_ready.html", context)
+            text_content = render_to_string("feeds/email/feed_ready.txt", context)
 
             # Create email
             email = EmailMessage(
@@ -78,7 +75,9 @@ class EmailDeliveryHandler(BaseDeliveryHandler):
             email.attach_alternative(html_content, "text/html")
 
             # Attach file if it's small enough
-            if generation.file_size and generation.file_size < 10 * 1024 * 1024:  # 10MB limit
+            if (
+                generation.file_size and generation.file_size < 10 * 1024 * 1024
+            ):  # 10MB limit
                 file_content = self.get_file_content(generation.file_path)
                 filename = os.path.basename(generation.file_path)
                 email.attach(filename, file_content)
@@ -87,20 +86,19 @@ class EmailDeliveryHandler(BaseDeliveryHandler):
             email.send()
 
             return {
-                'success': True,
-                'details': {
-                    'recipient': recipient_email,
-                    'cc': cc_emails,
-                    'attached': generation.file_size < 10 * 1024 * 1024 if generation.file_size else False
-                }
+                "success": True,
+                "details": {
+                    "recipient": recipient_email,
+                    "cc": cc_emails,
+                    "attached": generation.file_size < 10 * 1024 * 1024
+                    if generation.file_size
+                    else False,
+                },
             }
 
         except Exception as e:
             logger.error(f"Email delivery error: {str(e)}")
-            return {
-                'success': False,
-                'error': str(e)
-            }
+            return {"success": False, "error": str(e)}
 
 
 class FTPDeliveryHandler(BaseDeliveryHandler):
@@ -110,11 +108,11 @@ class FTPDeliveryHandler(BaseDeliveryHandler):
         ftp = None
         try:
             # Get FTP configuration
-            host = self.config.get('host')
-            port = self.config.get('port', 21)
-            username = self.config.get('username')
-            password = self.config.get('password')
-            remote_path = self.config.get('remote_path', '/')
+            host = self.config.get("host")
+            port = self.config.get("port", 21)
+            username = self.config.get("username")
+            password = self.config.get("password")
+            remote_path = self.config.get("remote_path", "/")
 
             if not all([host, username, password]):
                 raise ValueError("Missing FTP configuration")
@@ -125,7 +123,7 @@ class FTPDeliveryHandler(BaseDeliveryHandler):
             ftp.login(username, password)
 
             # Change to remote directory
-            if remote_path and remote_path != '/':
+            if remote_path and remote_path != "/":
                 try:
                     ftp.cwd(remote_path)
                 except ftplib.error_perm:
@@ -138,18 +136,18 @@ class FTPDeliveryHandler(BaseDeliveryHandler):
             filename = os.path.basename(generation.file_path)
 
             # Use binary mode for all file types
-            ftp.storbinary(f'STOR {filename}', file_content)
+            ftp.storbinary(f"STOR {filename}", file_content)
 
             # Close connection
             ftp.quit()
 
             return {
-                'success': True,
-                'details': {
-                    'host': host,
-                    'remote_path': os.path.join(remote_path, filename),
-                    'size': len(file_content)
-                }
+                "success": True,
+                "details": {
+                    "host": host,
+                    "remote_path": os.path.join(remote_path, filename),
+                    "size": len(file_content),
+                },
             }
 
         except Exception as e:
@@ -157,18 +155,16 @@ class FTPDeliveryHandler(BaseDeliveryHandler):
             if ftp:
                 try:
                     ftp.quit()
-                except:
+                except Exception as e:
+                    logger.error(f"FTP delivery error: {str(e)}")
                     pass
-            return {
-                'success': False,
-                'error': str(e)
-            }
+            return {"success": False, "error": str(e)}
 
     def _create_ftp_path(self, ftp, path):
         """Create FTP directory path recursively"""
-        dirs = path.strip('/').split('/')
+        dirs = path.strip("/").split("/")
         for i in range(len(dirs)):
-            dir_path = '/'.join(dirs[:i + 1])
+            dir_path = "/".join(dirs[: i + 1])
             try:
                 ftp.mkd(dir_path)
             except ftplib.error_perm:
@@ -185,12 +181,12 @@ class SFTPDeliveryHandler(BaseDeliveryHandler):
 
         try:
             # Get SFTP configuration
-            host = self.config.get('host')
-            port = self.config.get('port', 22)
-            username = self.config.get('username')
-            password = self.config.get('password')
-            private_key_path = self.config.get('private_key_path')
-            remote_path = self.config.get('remote_path', '/')
+            host = self.config.get("host")
+            port = self.config.get("port", 22)
+            username = self.config.get("username")
+            password = self.config.get("password")
+            private_key_path = self.config.get("private_key_path")
+            remote_path = self.config.get("remote_path", "/")
 
             if not host or not username:
                 raise ValueError("Missing SFTP configuration")
@@ -213,7 +209,7 @@ class SFTPDeliveryHandler(BaseDeliveryHandler):
             sftp = paramiko.SFTPClient.from_transport(transport)
 
             # Create remote directory if needed
-            if remote_path and remote_path != '/':
+            if remote_path and remote_path != "/":
                 self._create_sftp_path(sftp, remote_path)
 
             # Upload file
@@ -222,7 +218,7 @@ class SFTPDeliveryHandler(BaseDeliveryHandler):
             remote_file_path = os.path.join(remote_path, filename)
 
             # Write file
-            with sftp.open(remote_file_path, 'wb') as remote_file:
+            with sftp.open(remote_file_path, "wb") as remote_file:
                 remote_file.write(file_content)
 
             # Close connections
@@ -230,12 +226,12 @@ class SFTPDeliveryHandler(BaseDeliveryHandler):
             transport.close()
 
             return {
-                'success': True,
-                'details': {
-                    'host': host,
-                    'remote_path': remote_file_path,
-                    'size': len(file_content)
-                }
+                "success": True,
+                "details": {
+                    "host": host,
+                    "remote_path": remote_file_path,
+                    "size": len(file_content),
+                },
             }
 
         except Exception as e:
@@ -244,15 +240,12 @@ class SFTPDeliveryHandler(BaseDeliveryHandler):
                 sftp.close()
             if transport:
                 transport.close()
-            return {
-                'success': False,
-                'error': str(e)
-            }
+            return {"success": False, "error": str(e)}
 
     def _create_sftp_path(self, sftp, path):
         """Create SFTP directory path recursively"""
-        dirs = path.strip('/').split('/')
-        current_path = ''
+        dirs = path.strip("/").split("/")
+        current_path = ""
 
         for dir_name in dirs:
             current_path = os.path.join(current_path, dir_name)
@@ -261,7 +254,8 @@ class SFTPDeliveryHandler(BaseDeliveryHandler):
             except FileNotFoundError:
                 try:
                     sftp.mkdir(current_path)
-                except:
+                except Exception as e:
+                    logger.error(f"SFTP delivery error: {str(e)}")
                     pass
 
 
@@ -271,87 +265,79 @@ class WebhookDeliveryHandler(BaseDeliveryHandler):
     def deliver(self, generation):
         try:
             # Get webhook configuration
-            webhook_url = self.config.get('webhook_url')
-            auth_token = self.config.get('auth_token')
-            include_file_url = self.config.get('include_file_url', True)
-            method = self.config.get('method', 'POST').upper()
+            webhook_url = self.config.get("webhook_url")
+            auth_token = self.config.get("auth_token")
+            include_file_url = self.config.get("include_file_url", True)
+            method = self.config.get("method", "POST").upper()
 
             if not webhook_url:
                 raise ValueError("Missing webhook URL")
 
             # Build payload
             payload = {
-                'feed_id': str(self.feed.id),
-                'feed_name': self.feed.name,
-                'feed_type': self.feed.feed_type,
-                'generation_id': str(generation.generation_id),
-                'status': 'completed',
-                'row_count': generation.row_count,
-                'file_size': generation.file_size,
-                'generated_at': generation.completed_at.isoformat() if generation.completed_at else None,
-                'customer': {
-                    'id': self.feed.customer.id,
-                    'username': self.feed.customer.username,
-                    'company': self.feed.customer.company_name,
-                }
+                "feed_id": str(self.feed.id),
+                "feed_name": self.feed.name,
+                "feed_type": self.feed.feed_type,
+                "generation_id": str(generation.generation_id),
+                "status": "completed",
+                "row_count": generation.row_count,
+                "file_size": generation.file_size,
+                "generated_at": generation.completed_at.isoformat()
+                if generation.completed_at
+                else None,
+                "customer": {
+                    "id": self.feed.customer.id,
+                    "username": self.feed.customer.username,
+                    "company": self.feed.customer.company_name,
+                },
             }
 
             if include_file_url:
-                payload['download_url'] = f"{settings.BASE_URL}/feeds/download/{generation.generation_id}/"
+                payload[
+                    "download_url"
+                ] = f"{settings.BASE_URL}/feeds/download/{generation.generation_id}/"
 
             # Build headers
             headers = {
-                'Content-Type': 'application/json',
-                'User-Agent': 'Solidus/1.0',
+                "Content-Type": "application/json",
+                "User-Agent": "Solidus/1.0",
             }
 
             if auth_token:
-                headers['Authorization'] = f'Bearer {auth_token}'
+                headers["Authorization"] = f"Bearer {auth_token}"
 
             # Add custom headers if configured
-            custom_headers = self.config.get('custom_headers', {})
+            custom_headers = self.config.get("custom_headers", {})
             headers.update(custom_headers)
 
             # Send webhook
-            if method == 'POST':
+            if method == "POST":
                 response = requests.post(
-                    webhook_url,
-                    json=payload,
-                    headers=headers,
-                    timeout=30
+                    webhook_url, json=payload, headers=headers, timeout=30
                 )
             else:
                 response = requests.get(
-                    webhook_url,
-                    params=payload,
-                    headers=headers,
-                    timeout=30
+                    webhook_url, params=payload, headers=headers, timeout=30
                 )
 
             # Check response
             response.raise_for_status()
 
             return {
-                'success': True,
-                'details': {
-                    'webhook_url': webhook_url,
-                    'status_code': response.status_code,
-                    'response': response.text[:500] if response.text else None
-                }
+                "success": True,
+                "details": {
+                    "webhook_url": webhook_url,
+                    "status_code": response.status_code,
+                    "response": response.text[:500] if response.text else None,
+                },
             }
 
         except requests.exceptions.RequestException as e:
             logger.error(f"Webhook delivery error: {str(e)}")
-            return {
-                'success': False,
-                'error': str(e)
-            }
+            return {"success": False, "error": str(e)}
         except Exception as e:
             logger.error(f"Webhook configuration error: {str(e)}")
-            return {
-                'success': False,
-                'error': str(e)
-            }
+            return {"success": False, "error": str(e)}
 
 
 class DownloadDeliveryHandler(BaseDeliveryHandler):
@@ -361,12 +347,12 @@ class DownloadDeliveryHandler(BaseDeliveryHandler):
         # For download delivery, we just need to mark it as ready
         # The file is already generated and stored
         return {
-            'success': True,
-            'details': {
-                'method': 'download',
-                'file_path': generation.file_path,
-                'ready_for_download': True
-            }
+            "success": True,
+            "details": {
+                "method": "download",
+                "file_path": generation.file_path,
+                "ready_for_download": True,
+            },
         }
 
 
@@ -374,11 +360,11 @@ class DeliveryHandlerFactory:
     """Factory to get appropriate delivery handler"""
 
     handlers = {
-        'download': DownloadDeliveryHandler,
-        'email': EmailDeliveryHandler,
-        'ftp': FTPDeliveryHandler,
-        'sftp': SFTPDeliveryHandler,
-        'api': WebhookDeliveryHandler,
+        "download": DownloadDeliveryHandler,
+        "email": EmailDeliveryHandler,
+        "ftp": FTPDeliveryHandler,
+        "sftp": SFTPDeliveryHandler,
+        "api": WebhookDeliveryHandler,
     }
 
     @classmethod

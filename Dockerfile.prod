@@ -1,67 +1,106 @@
-# Dockerfile
-FROM python:3.11-slim
+# Dockerfile.prod
+FROM python:3.12-slim as builder
 
-# Set environment variables
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1
-ENV DEBIAN_FRONTEND=noninteractive
+# Build arguments for user/group IDs
+ARG UID=1000
+ARG GID=1000
 
-# Set work directory
-WORKDIR /app
+# Set environment variables for build
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    UV_SYSTEM_PYTHON=1 \
+    UV_COMPILE_BYTECODE=1 \
+    UV_LINK_MODE=copy
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
     build-essential \
-    postgresql-client \
-    libpq-dev \
-    imagemagick \
-    libmagick++-dev \
-    exiftool \
-    nginx \
-    supervisor \
     curl \
-    wget \
     git \
+    libpq-dev \
+    libmagic1 \
+    imagemagick \
+    exiftool \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Python dependencies
-COPY requirements.txt /app/
-RUN pip install --no-cache-dir -r requirements.txt
+# Install UV
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
 
-# Copy project
-COPY . /app/
+# Create solidus user with specified UID/GID
+RUN groupadd -g ${GID} solidus && \
+    useradd -u ${UID} -g ${GID} -m -s /bin/bash solidus
 
-# Create directories
-RUN mkdir -p /app/media/uploads \
-    /app/media/thumbnails \
-    /app/media/feeds \
-    /app/staticfiles \
-    /var/log/solidus
+# Set work directory
+WORKDIR /app
 
-# Set permissions
-RUN chmod +x /app/scripts/entrypoint.sh \
-    && chmod +x /app/scripts/start.sh \
-    && chmod 755 /app/media \
-    && chmod 755 /app/staticfiles
+# Copy UV configuration files
+COPY pyproject.toml uv.lock ./
 
-# Copy configuration files
-COPY config/nginx.conf /etc/nginx/sites-available/solidus
-COPY config/supervisor.conf /etc/supervisor/conf.d/solidus.conf
+# Install dependencies
+RUN uv sync --frozen --no-dev
 
-# Enable nginx site
-RUN ln -sf /etc/nginx/sites-available/solidus /etc/nginx/sites-enabled/ \
-    && rm -f /etc/nginx/sites-enabled/default
+# Production image
+FROM python:3.12-slim as production
 
-# Collect static files
-RUN python manage.py collectstatic --noinput
+# Build arguments for user/group IDs
+ARG UID=1000
+ARG GID=1000
+
+# Set production environment variables
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    DJANGO_SETTINGS_MODULE=solidus.settings \
+    UV_SYSTEM_PYTHON=1
+
+# Install runtime dependencies only
+RUN apt-get update && apt-get install -y \
+    libpq5 \
+    libmagic1 \
+    imagemagick \
+    exiftool \
+    curl \
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
+
+# Create solidus user with specified UID/GID
+RUN groupadd -g ${GID} solidus && \
+    useradd -u ${UID} -g ${GID} -m -s /bin/bash solidus
+
+# Set work directory
+WORKDIR /app
+
+# Copy UV from builder
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
+
+# Copy virtual environment from builder
+COPY --from=builder /app/.venv /app/.venv
+
+# Copy pyproject.toml and uv.lock for reference
+COPY pyproject.toml uv.lock ./
+
+# Copy application code
+COPY . .
+
+# Set up directories and permissions
+RUN mkdir -p /app/media /app/staticfiles /app/logs && \
+    chown -R solidus:solidus /app && \
+    chmod -R 755 /app
+
+# Configure ImageMagick security policy
+RUN sed -i 's/rights="none" pattern="PDF"/rights="read|write" pattern="PDF"/' /etc/ImageMagick-6/policy.xml
+
+# Switch to solidus user
+USER solidus
+
+# Add virtual environment to PATH
+ENV PATH="/app/.venv/bin:$PATH"
 
 # Expose port
-EXPOSE 80
+EXPOSE 8000
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost/health/ || exit 1
+    CMD curl -f http://localhost:8000/health/ || exit 1
 
-# Run entrypoint script
-ENTRYPOINT ["/app/scripts/entrypoint.sh"]
-CMD ["/app/scripts/start.sh"]
+# Default command (can be overridden in docker-compose)
+CMD ["gunicorn", "solidus.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "4", "--worker-class", "gthread", "--threads", "2"]

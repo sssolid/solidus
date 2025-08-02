@@ -1,4 +1,5 @@
 # Makefile
+# Development Makefile for Solidus Project with UV
 
 # Variables
 DOCKER_COMPOSE = docker-compose
@@ -8,35 +9,104 @@ DJANGO_SHELL = $(DOCKER_COMPOSE) exec web python manage.py shell_plus
 # Help command
 .PHONY: help
 help:
-	@echo "Available commands:"
-	@echo "  make build          - Build Docker images"
-	@echo "  make up             - Start all services"
-	@echo "  make down           - Stop all services"
-	@echo "  make restart        - Restart all services"
-	@echo "  make logs           - View logs"
-	@echo "  make shell          - Django shell"
-	@echo "  make bash           - Bash shell in web container"
-	@echo "  make migrate        - Run migrations"
-	@echo "  make makemigrations - Create migrations"
-	@echo "  make superuser      - Create superuser"
-	@echo "  make test           - Run tests"
-	@echo "  make lint           - Run linters"
-	@echo "  make clean          - Clean up containers and volumes"
+	@echo "🚀 Solidus Development Commands"
+	@echo ""
+	@echo "📦 Setup & Dependencies:"
+	@echo "  make install          - Install dependencies with UV"
+	@echo "  make install-dev      - Install dev dependencies"
+	@echo "  make sync             - Sync dependencies with uv.lock"
+	@echo "  make update           - Update dependencies"
+	@echo ""
+	@echo "🐳 Docker Commands:"
+	@echo "  make build            - Build Docker images"
+	@echo "  make up               - Start all services"
+	@echo "  make down             - Stop all services"
+	@echo "  make restart          - Restart all services"
+	@echo "  make logs             - View logs"
+	@echo "  make logs-web         - View web container logs"
+	@echo "  make logs-worker      - View worker container logs"
+	@echo ""
+	@echo "🗄️  Database Commands:"
+	@echo "  make migrate          - Run migrations"
+	@echo "  make makemigrations   - Create migrations"
+	@echo "  make dbshell          - Database shell"
+	@echo "  make dbreset          - Reset database (⚠️  DESTRUCTIVE)"
+	@echo "  make fixtures         - Load initial data"
+	@echo ""
+	@echo "👤 User Management:"
+	@echo "  make superuser        - Create superuser"
+	@echo "  make dev-data         - Create development data"
+	@echo ""
+	@echo "🧪 Testing & Quality:"
+	@echo "  make test             - Run tests"
+	@echo "  make test-coverage    - Run tests with coverage"
+	@echo "  make lint             - Run linters"
+	@echo "  make format           - Format code"
+	@echo "  make type-check       - Run type checking"
+	@echo ""
+	@echo "🛠️  Development Tools:"
+	@echo "  make shell            - Django shell"
+	@echo "  make bash             - Bash shell in web container"
+	@echo "  make collectstatic    - Collect static files"
+	@echo "  make clean            - Clean up containers and volumes"
+	@echo ""
+	@echo "📊 Monitoring:"
+	@echo "  make status           - Show service status"
+	@echo "  make health           - Health check"
+	@echo "  make pgadmin          - Start pgAdmin"
+
+# UV-based dependency management
+.PHONY: install
+install:
+	@echo "📦 Installing dependencies with UV..."
+	uv sync
+
+.PHONY: install-dev
+install-dev:
+	@echo "📦 Installing dev dependencies..."
+	uv sync --group dev
+
+.PHONY: sync
+sync:
+	@echo "🔄 Syncing dependencies..."
+	uv sync
+
+.PHONY: update
+update:
+	@echo "⬆️  Updating dependencies..."
+	uv lock --upgrade
+
+.PHONY: add
+add:
+	@echo "➕ Adding dependency..."
+	@read -p "Package name: " pkg; \
+	uv add $$pkg
+
+.PHONY: add-dev
+add-dev:
+	@echo "➕ Adding dev dependency..."
+	@read -p "Package name: " pkg; \
+	uv add --group dev $$pkg
 
 # Docker commands
 .PHONY: build
 build:
+	@echo "🏗️  Building Docker images..."
 	$(DOCKER_COMPOSE) build
 
 .PHONY: up
 up:
+	@echo "🚀 Starting Solidus services..."
 	$(DOCKER_COMPOSE) up -d
-	@echo "Solidus is running at http://localhost"
-	@echo "Mailhog is running at http://localhost:8025"
-	@echo "pgAdmin is available with: make pgadmin"
+	@echo ""
+	@echo "✅ Solidus is running!"
+	@echo "🌐 Main app: http://localhost:8000"
+	@echo "📧 Mailhog: http://localhost:8025"
+	@echo "🗄️  pgAdmin: make pgadmin"
 
 .PHONY: down
 down:
+	@echo "🛑 Stopping services..."
 	$(DOCKER_COMPOSE) down
 
 .PHONY: restart
@@ -57,107 +127,175 @@ logs-worker:
 # Django commands
 .PHONY: shell
 shell:
+	@echo "🐍 Starting Django shell..."
 	$(DJANGO_SHELL)
 
 .PHONY: bash
 bash:
+	@echo "💻 Starting bash shell..."
 	$(DOCKER_COMPOSE) exec web bash
 
 .PHONY: migrate
 migrate:
+	@echo "🔄 Running migrations..."
 	$(DJANGO_MANAGE) migrate
 
 .PHONY: makemigrations
 makemigrations:
+	@echo "📝 Creating migrations..."
 	$(DJANGO_MANAGE) makemigrations
-
-.PHONY: superuser
-superuser:
-	$(DJANGO_MANAGE) createsuperuser
 
 .PHONY: collectstatic
 collectstatic:
+	@echo "📁 Collecting static files..."
 	$(DJANGO_MANAGE) collectstatic --noinput
 
 # Database commands
 .PHONY: dbshell
 dbshell:
+	@echo "🗄️  Starting database shell..."
 	$(DOCKER_COMPOSE) exec postgres psql -U solidus solidus
 
 .PHONY: dbreset
 dbreset:
-	@echo "WARNING: This will delete all data!"
+	@echo "⚠️  WARNING: This will delete all data!"
 	@read -p "Are you sure? [y/N] " -n 1 -r; \
 	echo; \
 	if [[ $$REPLY =~ ^[Yy]$$ ]]; then \
+		echo "🗑️  Resetting database..."; \
 		$(DOCKER_COMPOSE) down -v; \
-		$(DOCKER_COMPOSE) up -d postgres; \
+		$(DOCKER_COMPOSE) up -d postgres redis; \
 		sleep 5; \
 		$(DOCKER_COMPOSE) up -d; \
 		sleep 5; \
 		$(DJANGO_MANAGE) migrate; \
-		$(DJANGO_MANAGE) loaddata initial_data; \
+		$(DJANGO_MANAGE) loaddata fixtures/initial_data.json; \
+		echo "✅ Database reset complete!"; \
 	fi
+
+.PHONY: pgadmin
+pgadmin:
+	@echo "🚀 Starting pgAdmin..."
+	$(DOCKER_COMPOSE) --profile tools up -d pgadmin
+	@echo "✅ pgAdmin is running at http://localhost:5050"
+	@echo "📧 Email: admin@solidus.local"
+	@echo "🔑 Password: admin"
 
 # Development commands
 .PHONY: fixtures
 fixtures:
-	$(DJANGO_MANAGE) loaddata initial_data
+	@echo "📊 Loading initial data..."
+	$(DJANGO_MANAGE) loaddata fixtures/initial_data.json
 
+.PHONY: dev-data
+dev-data:
+	@echo "🎯 Creating development data..."
+	$(DJANGO_MANAGE) create_dev_data --reset
+
+.PHONY: superuser
+superuser:
+	@echo "👤 Creating superuser..."
+	$(DJANGO_MANAGE) createsuperuser
+
+# Testing and quality
 .PHONY: test
 test:
+	@echo "🧪 Running tests..."
 	$(DOCKER_COMPOSE) exec web pytest
 
 .PHONY: test-coverage
 test-coverage:
+	@echo "📊 Running tests with coverage..."
 	$(DOCKER_COMPOSE) exec web pytest --cov=. --cov-report=html
+	@echo "📝 Coverage report: htmlcov/index.html"
 
 .PHONY: lint
 lint:
+	@echo "🔍 Running linters..."
 	$(DOCKER_COMPOSE) exec web black . --check
 	$(DOCKER_COMPOSE) exec web isort . --check-only
 	$(DOCKER_COMPOSE) exec web flake8
 
 .PHONY: format
 format:
+	@echo "✨ Formatting code..."
 	$(DOCKER_COMPOSE) exec web black .
 	$(DOCKER_COMPOSE) exec web isort .
+
+.PHONY: type-check
+type-check:
+	@echo "🔍 Running type checks..."
+	$(DOCKER_COMPOSE) exec web mypy src/
 
 # Asset processing
 .PHONY: process-assets
 process-assets:
+	@echo "🖼️  Processing assets..."
 	$(DJANGO_MANAGE) process_assets
 
+.PHONY: generate-thumbnails
+generate-thumbnails:
+	@echo "🖼️  Generating thumbnails..."
+	$(DJANGO_MANAGE) generate_thumbnails
+
+# Feed operations
 .PHONY: generate-feeds
 generate-feeds:
-	$(DJANGO_MANAGE) generate_feeds
+	@echo "📊 Generating feeds..."
+	$(DJANGO_MANAGE) generate_scheduled_feeds
 
-# Optional services
-.PHONY: pgadmin
-pgadmin:
-	$(DOCKER_COMPOSE) --profile tools up -d pgadmin
-	@echo "pgAdmin is running at http://localhost:5050"
-	@echo "Login: admin@solidus.local / admin"
+# Monitoring and maintenance
+.PHONY: status
+status:
+	@echo "📊 Service Status:"
+	$(DOCKER_COMPOSE) ps
+
+.PHONY: health
+health:
+	@echo "🏥 Health check..."
+	@curl -f http://localhost:8000/health/ 2>/dev/null && echo "✅ Service healthy" || echo "❌ Service not healthy"
+
+.PHONY: backup
+backup:
+	@echo "💾 Creating database backup..."
+	@mkdir -p backups
+	$(DOCKER_COMPOSE) exec postgres pg_dump -U solidus solidus > backups/solidus_$(shell date +%Y%m%d_%H%M%S).sql
+	@echo "✅ Backup created in backups/ directory"
+
+.PHONY: restore
+restore:
+	@echo "📥 Database restore..."
+	@read -p "Enter backup file name: " backup_file; \
+	$(DOCKER_COMPOSE) exec -T postgres psql -U solidus -d solidus < backups/$$backup_file
 
 # Cleanup
 .PHONY: clean
 clean:
-	$(DOCKER_COMPOSE) down -v --remove-orphans
+	@echo "🧹 Cleaning up..."
+	$(DOCKER_COMPOSE) down -v
 	docker system prune -f
+	@echo "✅ Cleanup complete!"
 
-.PHONY: clean-all
-clean-all: clean
-	docker system prune -a -f --volumes
+.PHONY: clean-data
+clean-data:
+	@echo "⚠️  WARNING: This will delete all data volumes!"
+	@read -p "Are you sure? [y/N] " -n 1 -r; \
+	echo; \
+	if [[ $$REPLY =~ ^[Yy]$$ ]]; then \
+		$(DOCKER_COMPOSE) down -v; \
+		echo "✅ Data volumes deleted!"; \
+	fi
 
-# Production-like commands
+# Production deployment helpers
 .PHONY: prod-build
 prod-build:
-	docker build -f Dockerfile.prod -t solidus:latest .
+	@echo "🏗️  Building for production..."
+	docker-compose -f docker-compose.prod.yml build
 
-.PHONY: prod-run
-prod-run:
-	docker run -d \
-		--name solidus_prod \
-		-p 8000:8000 \
-		--env-file .env.prod \
-		solidus:latest
+.PHONY: prod-deploy
+prod-deploy:
+	@echo "🚀 Deploying to production..."
+	docker-compose -f docker-compose.prod.yml up -d --build
+	docker-compose -f docker-compose.prod.yml exec web python manage.py migrate
+	docker-compose -f docker-compose.prod.yml exec web python manage.py collectstatic --noinput
+	@echo "✅ Production deployment complete!"

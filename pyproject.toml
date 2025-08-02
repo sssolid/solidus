@@ -7,15 +7,11 @@ name = "solidus"
 version = "0.1.0"
 description = "Solidus Platform for CMS/Data Management"
 requires-python = ">=3.12"
-
 dependencies = [
-  # Core Framework
   "django==5.0.1",
-  "channels==4.0.0",
+  "channels==4.1.0",
   "channels-redis==4.1.0",
   "daphne==4.0.0",
-
-  # Django Enhancements
   "django-extensions==3.2.3",
   "django-widget-tweaks==1.5.0",
   "django-cleanup==8.0.0",
@@ -27,8 +23,6 @@ dependencies = [
   "djangorestframework==3.14.0",
   "django-filter==23.5",
   "django-celery-beat>=2.5.0",
-
-  # Core Libraries
   "psycopg[binary]==3.1.16",
   "pillow==10.2.0",
   "paramiko==3.4.0",
@@ -39,31 +33,84 @@ dependencies = [
   "python-decouple==3.8",
   "whitenoise==6.6.0",
   "gunicorn==21.2.0",
-  "sentry-sdk==1.39.1"
+  "sentry-sdk==1.39.1",
+  "psutil>=7.0.0"
 ]
 
 [project.optional-dependencies]
-dev = [
-  "ipython==8.19.0",
-  "django-debug-toolbar==4.2.0",
-  "black==23.12.1",
-  "flake8==7.0.0",
-  "isort==5.13.2",
-  "mypy==1.8.0",
-  "django-stubs==4.2.7"
-]
-
-test = [
-  "pytest==7.4.4",
-  "pytest-django==4.7.0",
-  "pytest-cov==4.1.0",
-  "factory-boy==3.3.0"
-]
-
-docs = [
-  "mkdocs==1.5.3",
-  "mkdocs-material==9.5.3"
-]
+docs = ["mkdocs>=1.5.3", "mkdocs-material>=9.5.0"]
+test = ["pytest>=7.4.4", "pytest-django>=4.7.0", "pytest-cov>=4.1.0"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[dependency-groups]
+lint = [
+  "isort>=5.13.2",
+  "black>=23.12.1",
+  "ruff>=0.12.7"
+]
+test = [
+  "pytest>=7.4.4",
+  "pytest-django>=4.7.0",
+  "pytest-cov>=4.1.0"
+]
+dev = [
+  {include-group = "lint"},
+  {include-group = "test"}
+]
+
+[tool.black]
+line-length = 88
+target-version = ["py312"]
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+line_length = 88
+known_django = "django"
+known_first_party = "src"
+sections = ["FUTURE", "STDLIB", "THIRDPARTY", "DJANGO", "FIRSTPARTY", "LOCALFOLDER"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py312"
+# No "formatter" field here—tools parse only supported keys.
+
+[tool.ruff.lint]
+# E = pycodestyle, F = PyFlakes, I = isort, UP = pyupgrade
+select = ["E", "F", "I", "UP"]
+# Automatically apply safe fixes
+fixable = ["ALL"]
+# Ignore line length
+ignore = ["E501"]
+
+[tool.ruff.format]
+# Use double-quotes and consistent docstring formatting
+quote-style = "double"
+docstring-code-format = true
+
+[tool.mypy]
+python_version = "3.12"
+check_untyped_defs = true
+ignore_missing_imports = true
+warn_unused_ignores = true
+warn_redundant_casts = true
+plugins = ["mypy_django_plugin.main"]
+
+[tool.django-stubs]
+django_settings_module = "solidus.settings"
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "solidus.settings"
+python_files = ["tests.py", "test_*.py", "*_tests.py"]
+addopts = "--tb=short --strict-markers"
+
+[tool.coverage.run]
+source = ["src"]
+omit = ["*/migrations/*", "*/tests/*", "*/venv/*", "manage.py"]
+
+[tool.coverage.report]
+precision = 2
+show_missing = true
+skip_covered = false

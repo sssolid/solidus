@@ -1,0 +1,157 @@
+<!-- templates/errors/404.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Page Not Found - Solidus</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .error-animation {
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+
+        .search-suggestions {
+            opacity: 0;
+            animation: fadeInUp 0.8s ease forwards;
+            animation-delay: 0.5s;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen flex items-center justify-center">
+    <div class="max-w-4xl mx-auto px-4 text-center">
+        <!-- Error Illustration -->
+        <div class="error-animation mb-8">
+            <div class="text-blue-600 mb-6">
+                <i class="fas fa-search text-8xl opacity-20"></i>
+            </div>
+            <h1 class="text-9xl font-bold text-gray-300 mb-4">404</h1>
+        </div>
+
+        <!-- Error Message -->
+        <h2 class="text-3xl font-bold text-gray-900 mb-4">Oops! Page Not Found</h2>
+        <p class="text-lg text-gray-600 mb-8 max-w-md mx-auto">
+            The page you're looking for doesn't exist. It might have been moved, deleted, or you entered the wrong URL.
+        </p>
+
+        <!-- Search Box -->
+        <div class="mb-8">
+            <div class="max-w-md mx-auto">
+                <form action="{% url 'core:search' %}" method="get" class="relative">
+                    <input type="text"
+                           name="q"
+                           placeholder="Search for products, pages, or help..."
+                           class="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <button type="submit"
+                            class="absolute right-3 top-3 text-gray-400 hover:text-blue-600 transition">
+                        <i class="fas fa-search text-lg"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex flex-wrap justify-center gap-4 mb-12">
+            <a href="{% url 'core:dashboard' %}"
+               class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition flex items-center">
+                <i class="fas fa-home mr-2"></i>Go to Dashboard
+            </a>
+
+            <a href="{% url 'products:catalog' %}"
+               class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition flex items-center">
+                <i class="fas fa-shopping-bag mr-2"></i>Browse Products
+            </a>
+
+            <button onclick="history.back()"
+                    class="bg-gray-600 text-white px-6 py-3 rounded-lg hover:bg-gray-700 transition flex items-center">
+                <i class="fas fa-arrow-left mr-2"></i>Go Back
+            </button>
+        </div>
+
+        <!-- Popular Links -->
+        <div class="search-suggestions bg-white rounded-lg shadow-lg p-6 max-w-2xl mx-auto">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Popular Pages</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="space-y-2">
+                    <h4 class="font-medium text-gray-700">Products</h4>
+                    <div class="space-y-1">
+                        <a href="{% url 'products:catalog' %}"
+                           class="block text-blue-600 hover:text-blue-700 text-sm">Product Catalog</a>
+                        <a href="{% url 'products:brands' %}"
+                           class="block text-blue-600 hover:text-blue-700 text-sm">Browse by Brand</a>
+                        <a href="{% url 'products:categories' %}"
+                           class="block text-blue-600 hover:text-blue-700 text-sm">Product Categories</a>
+                    </div>
+                </div>
+
+                <div class="space-y-2">
+                    <h4 class="font-medium text-gray-700">Account</h4>
+                    <div class="space-y-1">
+                        {% if user.is_authenticated %}
+                            <a href="{% url 'accounts:profile' %}"
+                               class="block text-blue-600 hover:text-blue-700 text-sm">My Profile</a>
+                            {% if user.is_customer %}
+                                <a href="{% url 'feeds:my_feeds' %}"
+                                   class="block text-blue-600 hover:text-blue-700 text-sm">My Feeds</a>
+                            {% endif %}
+                            {% if user.is_employee %}
+                                <a href="{% url 'assets:list' %}"
+                                   class="block text-blue-600 hover:text-blue-700 text-sm">Asset Library</a>
+                            {% endif %}
+                        {% else %}
+                            <a href="{% url 'accounts:login' %}"
+                               class="block text-blue-600 hover:text-blue-700 text-sm">Login</a>
+                            <a href="{% url 'accounts:register' %}"
+                               class="block text-blue-600 hover:text-blue-700 text-sm">Register</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Help Section -->
+        <div class="mt-8 text-sm text-gray-500">
+            <p>Still need help?
+                <a href="mailto:support@solidus.example.com"
+                   class="text-blue-600 hover:text-blue-700">Contact Support</a>
+            </p>
+            <p class="mt-2">Error ID: {{ request.path }} - {{ request.META.HTTP_USER_AGENT|truncatechars:50 }}</p>
+        </div>
+    </div>
+
+    <script>
+        // Auto-focus search box
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchInput = document.querySelector('input[name="q"]');
+            if (searchInput) {
+                setTimeout(() => searchInput.focus(), 500);
+            }
+        });
+
+        // Track 404 errors for analytics
+        if (typeof gtag !== 'undefined') {
+            gtag('event', 'exception', {
+                'description': '404 - Page Not Found',
+                'fatal': false
+            });
+        }
+    </script>
+</body>
+</html>

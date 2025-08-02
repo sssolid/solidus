@@ -1,0 +1,559 @@
+<!-- templates/feeds/create.html -->
+{% extends 'base.html' %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block title %}Create Feed{% endblock %}
+
+{% block extra_css %}
+<style>
+    .step-indicator {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 2rem;
+    }
+
+    .step {
+        display: flex;
+        align-items: center;
+        margin: 0 1rem;
+    }
+
+    .step-number {
+        width: 2rem;
+        height: 2rem;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        margin-right: 0.5rem;
+    }
+
+    .step.active .step-number {
+        background-color: #2563eb;
+        color: white;
+    }
+
+    .step.completed .step-number {
+        background-color: #10b981;
+        color: white;
+    }
+
+    .step.inactive .step-number {
+        background-color: #e5e7eb;
+        color: #6b7280;
+    }
+
+    .form-step {
+        display: none;
+    }
+
+    .form-step.active {
+        display: block;
+    }
+
+    .field-mapping {
+        border: 1px solid #e5e7eb;
+        border-radius: 0.5rem;
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .preview-table {
+        max-height: 400px;
+        overflow-y: auto;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <!-- Header -->
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900">Create New Feed</h1>
+        <p class="text-gray-600 mt-2">Set up a custom data feed for your customers</p>
+    </div>
+
+    <!-- Step Indicator -->
+    <div class="step-indicator">
+        <div class="step active" id="step-1-indicator">
+            <div class="step-number">1</div>
+            <span class="text-sm font-medium">Basic Info</span>
+        </div>
+        <div class="step inactive" id="step-2-indicator">
+            <div class="step-number">2</div>
+            <span class="text-sm font-medium">Filters</span>
+        </div>
+        <div class="step inactive" id="step-3-indicator">
+            <div class="step-number">3</div>
+            <span class="text-sm font-medium">Fields</span>
+        </div>
+        <div class="step inactive" id="step-4-indicator">
+            <div class="step-number">4</div>
+            <span class="text-sm font-medium">Delivery</span>
+        </div>
+        <div class="step inactive" id="step-5-indicator">
+            <div class="step-number">5</div>
+            <span class="text-sm font-medium">Preview</span>
+        </div>
+    </div>
+
+    <!-- Form Container -->
+    <div class="bg-white rounded-lg shadow p-8">
+        <form id="feed-form" method="post">
+            {% csrf_token %}
+
+            <!-- Step 1: Basic Information -->
+            <div class="form-step active" id="step-1">
+                <h2 class="text-xl font-semibold text-gray-900 mb-6">Feed Basic Information</h2>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Feed Name *</label>
+                        {{ form.name|add_class:"w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" }}
+                        <p class="text-sm text-gray-500 mt-1">Choose a descriptive name for this feed</p>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Customer *</label>
+                        {{ form.customer|add_class:"w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" }}
+                        <p class="text-sm text-gray-500 mt-1">Select the customer for this feed</p>
+                    </div>
+
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                        {{ form.description|add_class:"w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" }}
+                        <p class="text-sm text-gray-500 mt-1">Optional description of what this feed contains</p>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Format *</label>
+                        {{ form.format|add_class:"w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" }}
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Update Frequency</label>
+                        {{ form.frequency|add_class:"w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" }}
+                    </div>
+
+                    <div class="md:col-span-2">
+                        <label class="flex items-center">
+                            {{ form.is_active|add_class:"mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" }}
+                            <span class="text-sm text-gray-700">Feed is active</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 2: Product Filters -->
+            <div class="form-step" id="step-2">
+                <h2 class="text-xl font-semibold text-gray-900 mb-6">Product Filters</h2>
+                <p class="text-gray-600 mb-6">Define which products should be included in this feed</p>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Brands</label>
+                        <select name="filter_brands" multiple class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" size="6">
+                            {% for brand in brands %}
+                                <option value="{{ brand.id }}">{{ brand.name }}</option>
+                            {% endfor %}
+                        </select>
+                        <p class="text-sm text-gray-500 mt-1">Hold Ctrl/Cmd to select multiple brands</p>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Categories</label>
+                        <select name="filter_categories" multiple class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" size="6">
+                            {% for category in categories %}
+                                <option value="{{ category.id }}">{{ category.name }}</option>
+                            {% endfor %}
+                        </select>
+                        <p class="text-sm text-gray-500 mt-1">Hold Ctrl/Cmd to select multiple categories</p>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Minimum Price</label>
+                        <input type="number" name="filter_price_min" step="0.01"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Maximum Price</label>
+                        <input type="number" name="filter_price_max" step="0.01"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+
+                    <div class="md:col-span-2">
+                        <h3 class="text-sm font-medium text-gray-700 mb-3">Additional Filters</h3>
+                        <div class="space-y-2">
+                            <label class="flex items-center">
+                                <input type="checkbox" name="filter_active_only" checked
+                                       class="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                <span class="text-sm text-gray-700">Active products only</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="checkbox" name="filter_in_stock_only"
+                                       class="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                <span class="text-sm text-gray-700">In-stock products only</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="checkbox" name="filter_with_images_only"
+                                       class="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                <span class="text-sm text-gray-700">Products with images only</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 3: Field Mapping -->
+            <div class="form-step" id="step-3">
+                <h2 class="text-xl font-semibold text-gray-900 mb-6">Field Mapping</h2>
+                <p class="text-gray-600 mb-6">Select which product fields to include and map them to feed columns</p>
+
+                <div id="field-mappings">
+                    <!-- Standard Fields -->
+                    <div class="field-mapping">
+                        <h3 class="font-medium text-gray-900 mb-3">Standard Product Fields</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {% for field in standard_fields %}
+                                <label class="flex items-center">
+                                    <input type="checkbox" name="fields" value="{{ field.key }}"
+                                           {% if field.default %}checked{% endif %}
+                                           class="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                    <span class="text-sm text-gray-700">{{ field.label }}</span>
+                                </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- Custom Field Mappings -->
+                    <div class="field-mapping">
+                        <h3 class="font-medium text-gray-900 mb-3">Custom Field Mappings</h3>
+                        <div id="custom-mappings">
+                            <div class="flex items-center space-x-4 mb-2">
+                                <input type="text" placeholder="Feed Column Name"
+                                       class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <select class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option value="">Select Source Field</option>
+                                    <option value="sku">SKU</option>
+                                    <option value="name">Name</option>
+                                    <option value="description">Description</option>
+                                    <option value="brand">Brand</option>
+                                    <option value="price">Price</option>
+                                    <option value="stock">Stock</option>
+                                </select>
+                                <button type="button" onclick="removeCustomMapping(this)"
+                                        class="text-red-600 hover:text-red-700">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <button type="button" onclick="addCustomMapping()"
+                                class="text-blue-600 hover:text-blue-700 text-sm">
+                            <i class="fas fa-plus mr-1"></i>Add Custom Mapping
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 4: Delivery Configuration -->
+            <div class="form-step" id="step-4">
+                <h2 class="text-xl font-semibold text-gray-900 mb-6">Delivery Configuration</h2>
+                <p class="text-gray-600 mb-6">Configure how the feed will be delivered to your customer</p>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Delivery Method</label>
+                        <select name="delivery_method" id="delivery-method"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="download">Download Only</option>
+                            <option value="email">Email Attachment</option>
+                            <option value="ftp">FTP Upload</option>
+                            <option value="sftp">SFTP Upload</option>
+                            <option value="api">API Endpoint</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">File Naming</label>
+                        <input type="text" name="filename_pattern" placeholder="feed_{date}.{format}"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <p class="text-sm text-gray-500 mt-1">Use {date}, {time}, {customer} as placeholders</p>
+                    </div>
+
+                    <!-- Email Configuration -->
+                    <div id="email-config" class="delivery-config md:col-span-2" style="display: none;">
+                        <h3 class="font-medium text-gray-900 mb-3">Email Configuration</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
+                                <input type="email" name="email_address"
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Subject</label>
+                                <input type="text" name="email_subject" placeholder="Your feed is ready"
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- FTP Configuration -->
+                    <div id="ftp-config" class="delivery-config md:col-span-2" style="display: none;">
+                        <h3 class="font-medium text-gray-900 mb-3">FTP Configuration</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">FTP Server</label>
+                                <input type="text" name="ftp_host" placeholder="ftp.example.com"
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Port</label>
+                                <input type="number" name="ftp_port" placeholder="21"
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Username</label>
+                                <input type="text" name="ftp_username"
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                                <input type="password" name="ftp_password"
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div class="md:col-span-2">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Remote Path</label>
+                                <input type="text" name="ftp_path" placeholder="/feeds/"
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 5: Preview -->
+            <div class="form-step" id="step-5">
+                <h2 class="text-xl font-semibold text-gray-900 mb-6">Feed Preview</h2>
+                <p class="text-gray-600 mb-6">Review your feed configuration and preview sample data</p>
+
+                <div class="mb-6">
+                    <h3 class="font-medium text-gray-900 mb-3">Configuration Summary</h3>
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <div id="config-summary" class="space-y-2 text-sm">
+                            <!-- Summary will be populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-6">
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="font-medium text-gray-900">Sample Data Preview</h3>
+                        <button type="button" onclick="generatePreview()"
+                                class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
+                            Generate Preview
+                        </button>
+                    </div>
+
+                    <div id="preview-container" class="border border-gray-200 rounded-lg">
+                        <div id="preview-loading" class="p-8 text-center text-gray-500" style="display: none;">
+                            <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
+                            <p>Generating preview...</p>
+                        </div>
+
+                        <div id="preview-content" class="preview-table overflow-x-auto">
+                            <p class="p-8 text-center text-gray-500">Click "Generate Preview" to see sample data</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Navigation Buttons -->
+            <div class="flex justify-between mt-8">
+                <button type="button" id="prev-btn" onclick="previousStep()"
+                        class="bg-gray-500 text-white px-6 py-2 rounded-lg hover:bg-gray-600 transition"
+                        style="display: none;">
+                    Previous
+                </button>
+
+                <div class="flex space-x-4">
+                    <button type="button" id="next-btn" onclick="nextStep()"
+                            class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition">
+                        Next
+                    </button>
+
+                    <button type="submit" id="submit-btn"
+                            class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition"
+                            style="display: none;">
+                        Create Feed
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentStep = 1;
+const totalSteps = 5;
+
+// Step navigation
+function nextStep() {
+    if (currentStep < totalSteps && validateCurrentStep()) {
+        currentStep++;
+        showStep(currentStep);
+    }
+}
+
+function previousStep() {
+    if (currentStep > 1) {
+        currentStep--;
+        showStep(currentStep);
+    }
+}
+
+function showStep(step) {
+    // Hide all steps
+    document.querySelectorAll('.form-step').forEach(el => {
+        el.classList.remove('active');
+    });
+
+    // Show current step
+    document.getElementById(`step-${step}`).classList.add('active');
+
+    // Update step indicators
+    for (let i = 1; i <= totalSteps; i++) {
+        const indicator = document.getElementById(`step-${i}-indicator`);
+        indicator.classList.remove('active', 'completed', 'inactive');
+
+        if (i < step) {
+            indicator.classList.add('completed');
+        } else if (i === step) {
+            indicator.classList.add('active');
+        } else {
+            indicator.classList.add('inactive');
+        }
+    }
+
+    // Update navigation buttons
+    document.getElementById('prev-btn').style.display = step > 1 ? 'block' : 'none';
+    document.getElementById('next-btn').style.display = step < totalSteps ? 'block' : 'none';
+    document.getElementById('submit-btn').style.display = step === totalSteps ? 'block' : 'none';
+
+    // Update configuration summary on last step
+    if (step === totalSteps) {
+        updateConfigSummary();
+    }
+}
+
+function validateCurrentStep() {
+    // Add validation logic for each step
+    return true;
+}
+
+// Delivery method configuration
+document.getElementById('delivery-method').addEventListener('change', function() {
+    const method = this.value;
+
+    // Hide all delivery configs
+    document.querySelectorAll('.delivery-config').forEach(el => {
+        el.style.display = 'none';
+    });
+
+    // Show relevant config
+    if (method === 'email') {
+        document.getElementById('email-config').style.display = 'block';
+    } else if (method === 'ftp' || method === 'sftp') {
+        document.getElementById('ftp-config').style.display = 'block';
+    }
+});
+
+// Custom field mappings
+function addCustomMapping() {
+    const container = document.getElementById('custom-mappings');
+    const div = document.createElement('div');
+    div.className = 'flex items-center space-x-4 mb-2';
+    div.innerHTML = `
+        <input type="text" placeholder="Feed Column Name" name="custom_column[]"
+               class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <select name="custom_source[]" class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <option value="">Select Source Field</option>
+            <option value="sku">SKU</option>
+            <option value="name">Name</option>
+            <option value="description">Description</option>
+            <option value="brand">Brand</option>
+            <option value="price">Price</option>
+            <option value="stock">Stock</option>
+        </select>
+        <button type="button" onclick="removeCustomMapping(this)"
+                class="text-red-600 hover:text-red-700">
+            <i class="fas fa-trash"></i>
+        </button>
+    `;
+    container.appendChild(div);
+}
+
+function removeCustomMapping(button) {
+    button.parentElement.remove();
+}
+
+// Configuration summary
+function updateConfigSummary() {
+    const summary = document.getElementById('config-summary');
+    const formData = new FormData(document.getElementById('feed-form'));
+
+    let html = '';
+    html += `<div><strong>Feed Name:</strong> ${formData.get('name') || 'Not specified'}</div>`;
+    html += `<div><strong>Customer:</strong> ${document.querySelector('[name="customer"] option:checked')?.text || 'Not selected'}</div>`;
+    html += `<div><strong>Format:</strong> ${formData.get('format') || 'Not specified'}</div>`;
+    html += `<div><strong>Delivery:</strong> ${formData.get('delivery_method') || 'Download only'}</div>`;
+
+    // Count selected fields
+    const selectedFields = document.querySelectorAll('[name="fields"]:checked').length;
+    html += `<div><strong>Fields:</strong> ${selectedFields} fields selected</div>`;
+
+    summary.innerHTML = html;
+}
+
+// Preview generation
+function generatePreview() {
+    const loading = document.getElementById('preview-loading');
+    const content = document.getElementById('preview-content');
+
+    loading.style.display = 'block';
+    content.innerHTML = '';
+
+    // Simulate API call for preview
+    setTimeout(() => {
+        loading.style.display = 'none';
+        content.innerHTML = `
+            <table class="min-w-full">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">SKU</th>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Brand</th>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Price</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    <tr><td class="px-4 py-2">ABC123</td><td class="px-4 py-2">Sample Product 1</td><td class="px-4 py-2">Brand A</td><td class="px-4 py-2">$19.99</td></tr>
+                    <tr><td class="px-4 py-2">DEF456</td><td class="px-4 py-2">Sample Product 2</td><td class="px-4 py-2">Brand B</td><td class="px-4 py-2">$29.99</td></tr>
+                    <tr><td class="px-4 py-2">GHI789</td><td class="px-4 py-2">Sample Product 3</td><td class="px-4 py-2">Brand A</td><td class="px-4 py-2">$39.99</td></tr>
+                </tbody>
+            </table>
+            <div class="p-4 text-sm text-gray-600 border-t">
+                Showing 3 of 150 estimated products that match your filters
+            </div>
+        `;
+    }, 2000);
+}
+
+// Initialize
+showStep(1);
+</script>
+{% endblock %}

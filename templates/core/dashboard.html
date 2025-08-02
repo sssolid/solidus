@@ -112,7 +112,7 @@
                                 Total Customers
                             </dt>
                             <dd class="text-lg font-semibold text-gray-900">
-                                {{ User.objects.filter(role='customer').count|floatformat:0 }}
+                                {{ total_customers|floatformat:0 }}
                             </dd>
                         </dl>
                     </div>

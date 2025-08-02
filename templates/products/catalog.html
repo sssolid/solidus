@@ -1,0 +1,350 @@
+<!-- templates/products/catalog.html -->
+{% extends 'base.html' %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block title %}Product Catalog{% endblock %}
+
+{% block extra_css %}
+<style>
+    .product-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .filter-sidebar {
+        max-height: 80vh;
+        overflow-y: auto;
+    }
+
+    .product-card {
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .product-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-8">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">Product Catalog</h1>
+            <p class="text-gray-600 mt-2">Browse our complete selection of auto parts</p>
+        </div>
+
+        <!-- View Toggle -->
+        <div class="flex space-x-2">
+            <button
+                hx-get="{% url 'products:catalog' %}?view=grid{{ request.GET|stringformat:'&%s' }}"
+                hx-target="#product-content"
+                class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition {% if view == 'grid' %}ring-2 ring-blue-300{% endif %}">
+                <i class="fas fa-th-large mr-2"></i>Grid
+            </button>
+            <button
+                hx-get="{% url 'products:catalog' %}?view=list{{ request.GET|stringformat:'&%s' }}"
+                hx-target="#product-content"
+                class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition {% if view == 'list' %}ring-2 ring-gray-300{% endif %}">
+                <i class="fas fa-list mr-2"></i>List
+            </button>
+        </div>
+    </div>
+
+    <div class="flex gap-8">
+        <!-- Filters Sidebar -->
+        <div class="w-1/4 filter-sidebar">
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold mb-4">Filters</h3>
+
+                <form hx-get="{% url 'products:catalog' %}" hx-target="#product-content" hx-trigger="change">
+                    <!-- Search -->
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Search</label>
+                        <input type="text" name="search" value="{{ request.GET.search }}"
+                               placeholder="Search products..."
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+
+                    <!-- Brand Filter -->
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Brand</label>
+                        <select name="brand" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="">All Brands</option>
+                            {% for brand in brands %}
+                                <option value="{{ brand.id }}" {% if request.GET.brand == brand.id|stringformat:'s' %}selected{% endif %}>
+                                    {{ brand.name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Category Filter -->
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Category</label>
+                        <select name="category" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="">All Categories</option>
+                            {% for category in categories %}
+                                <option value="{{ category.id }}" {% if request.GET.category == category.id|stringformat:'s' %}selected{% endif %}>
+                                    {{ category.name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Availability Filter -->
+                    <div class="mb-6">
+                        <label class="flex items-center">
+                            <input type="checkbox" name="in_stock" value="1"
+                                   {% if request.GET.in_stock %}checked{% endif %}
+                                   class="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                            <span class="text-sm text-gray-700">In Stock Only</span>
+                        </label>
+                    </div>
+
+                    <!-- Price Range -->
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Price Range</label>
+                        <div class="flex space-x-2">
+                            <input type="number" name="price_min" value="{{ request.GET.price_min }}"
+                                   placeholder="Min" step="0.01"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <input type="number" name="price_max" value="{{ request.GET.price_max }}"
+                                   placeholder="Max" step="0.01"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                    </div>
+
+                    <!-- Hidden fields to maintain state -->
+                    <input type="hidden" name="view" value="{{ view }}">
+                    <input type="hidden" name="sort" value="{{ request.GET.sort }}">
+
+                    <!-- Clear Filters -->
+                    <button type="button"
+                            hx-get="{% url 'products:catalog' %}"
+                            hx-target="#product-content"
+                            class="w-full px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition">
+                        Clear Filters
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Product Content -->
+        <div class="flex-1" id="product-content">
+            <!-- Sort Bar -->
+            <div class="flex justify-between items-center mb-6">
+                <p class="text-gray-600">
+                    Showing {{ products.start_index }}-{{ products.end_index }} of {{ products.paginator.count }} products
+                </p>
+
+                <div class="flex items-center space-x-2">
+                    <label class="text-sm text-gray-700">Sort by:</label>
+                    <select name="sort"
+                            hx-get="{% url 'products:catalog' %}"
+                            hx-include="form"
+                            hx-target="#product-content"
+                            class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="name" {% if request.GET.sort == 'name' %}selected{% endif %}>Name A-Z</option>
+                        <option value="-name" {% if request.GET.sort == '-name' %}selected{% endif %}>Name Z-A</option>
+                        <option value="price" {% if request.GET.sort == 'price' %}selected{% endif %}>Price Low-High</option>
+                        <option value="-price" {% if request.GET.sort == '-price' %}selected{% endif %}>Price High-Low</option>
+                        <option value="-created_at" {% if request.GET.sort == '-created_at' %}selected{% endif %}>Newest</option>
+                        <option value="created_at" {% if request.GET.sort == 'created_at' %}selected{% endif %}>Oldest</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Products -->
+            {% if view == 'grid' %}
+                <!-- Grid View -->
+                <div class="product-grid">
+                    {% for product in products %}
+                        <div class="product-card bg-white rounded-lg shadow hover:shadow-lg">
+                            <div class="relative">
+                                {% if product.primary_image %}
+                                    <img src="{{ product.primary_image.thumbnail_url }}"
+                                         alt="{{ product.name }}"
+                                         class="w-full h-48 object-cover rounded-t-lg">
+                                {% else %}
+                                    <div class="w-full h-48 bg-gray-200 rounded-t-lg flex items-center justify-center">
+                                        <i class="fas fa-image text-gray-400 text-4xl"></i>
+                                    </div>
+                                {% endif %}
+
+                                {% if not product.is_active %}
+                                    <span class="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded text-xs">
+                                        Discontinued
+                                    </span>
+                                {% elif product.stock_quantity <= product.low_stock_threshold %}
+                                    <span class="absolute top-2 right-2 bg-orange-500 text-white px-2 py-1 rounded text-xs">
+                                        Low Stock
+                                    </span>
+                                {% endif %}
+                            </div>
+
+                            <div class="p-4">
+                                <div class="mb-2">
+                                    <span class="text-xs text-gray-500 uppercase tracking-wide">{{ product.brand.name }}</span>
+                                </div>
+
+                                <h3 class="text-lg font-semibold text-gray-900 mb-2 line-clamp-2">
+                                    <a href="{% url 'products:detail' product.pk %}"
+                                       class="hover:text-blue-600 transition">
+                                        {{ product.name }}
+                                    </a>
+                                </h3>
+
+                                <p class="text-sm text-gray-600 mb-3 line-clamp-2">{{ product.description }}</p>
+
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <span class="text-xl font-bold text-gray-900">${{ product.retail_price }}</span>
+                                        {% if product.msrp and product.msrp > product.retail_price %}
+                                            <span class="text-sm text-gray-500 line-through ml-2">${{ product.msrp }}</span>
+                                        {% endif %}
+                                    </div>
+
+                                    <div class="text-sm text-gray-500">
+                                        {% if product.stock_quantity > 0 %}
+                                            <span class="text-green-600">{{ product.stock_quantity }} in stock</span>
+                                        {% else %}
+                                            <span class="text-red-600">Out of stock</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+
+                                <div class="mt-4">
+                                    <a href="{% url 'products:detail' product.pk %}"
+                                       class="w-full bg-blue-600 text-white text-center py-2 rounded-lg hover:bg-blue-700 transition block">
+                                        View Details
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    {% empty %}
+                        <div class="col-span-full text-center py-12">
+                            <i class="fas fa-search text-gray-400 text-6xl mb-4"></i>
+                            <h3 class="text-xl font-semibold text-gray-600 mb-2">No products found</h3>
+                            <p class="text-gray-500">Try adjusting your filters or search terms.</p>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <!-- List View -->
+                <div class="space-y-4">
+                    {% for product in products %}
+                        <div class="bg-white rounded-lg shadow p-6 flex">
+                            <div class="flex-shrink-0 mr-6">
+                                {% if product.primary_image %}
+                                    <img src="{{ product.primary_image.thumbnail_url }}"
+                                         alt="{{ product.name }}"
+                                         class="w-24 h-24 object-cover rounded-lg">
+                                {% else %}
+                                    <div class="w-24 h-24 bg-gray-200 rounded-lg flex items-center justify-center">
+                                        <i class="fas fa-image text-gray-400 text-2xl"></i>
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="flex-1">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <div class="mb-1">
+                                            <span class="text-xs text-gray-500 uppercase tracking-wide">{{ product.brand.name }}</span>
+                                        </div>
+                                        <h3 class="text-xl font-semibold text-gray-900 mb-2">
+                                            <a href="{% url 'products:detail' product.pk %}"
+                                               class="hover:text-blue-600 transition">
+                                                {{ product.name }}
+                                            </a>
+                                        </h3>
+                                        <p class="text-gray-600 mb-4">{{ product.description }}</p>
+
+                                        <div class="flex items-center space-x-4 text-sm text-gray-500">
+                                            <span>SKU: {{ product.sku }}</span>
+                                            <span>Stock: {{ product.stock_quantity }}</span>
+                                            {% for category in product.categories.all %}
+                                                <span class="bg-gray-100 px-2 py-1 rounded">{{ category.name }}</span>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+
+                                    <div class="text-right">
+                                        <div class="mb-2">
+                                            <span class="text-2xl font-bold text-gray-900">${{ product.retail_price }}</span>
+                                            {% if product.msrp and product.msrp > product.retail_price %}
+                                                <span class="text-sm text-gray-500 line-through block">${{ product.msrp }}</span>
+                                            {% endif %}
+                                        </div>
+
+                                        <a href="{% url 'products:detail' product.pk %}"
+                                           class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition">
+                                            View Details
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% empty %}
+                        <div class="text-center py-12">
+                            <i class="fas fa-search text-gray-400 text-6xl mb-4"></i>
+                            <h3 class="text-xl font-semibold text-gray-600 mb-2">No products found</h3>
+                            <p class="text-gray-500">Try adjusting your filters or search terms.</p>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <!-- Pagination -->
+            {% if products.has_other_pages %}
+                <div class="mt-8 flex justify-center">
+                    <nav class="flex space-x-2">
+                        {% if products.has_previous %}
+                            <a href="?{{ request.GET.urlencode }}&page={{ products.previous_page_number }}"
+                               class="px-3 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition">
+                                Previous
+                            </a>
+                        {% endif %}
+
+                        {% for num in products.paginator.page_range %}
+                            {% if products.number == num %}
+                                <span class="px-3 py-2 bg-blue-600 text-white rounded-md">{{ num }}</span>
+                            {% elif num > products.number|add:'-3' and num < products.number|add:'3' %}
+                                <a href="?{{ request.GET.urlencode }}&page={{ num }}"
+                                   class="px-3 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition">
+                                    {{ num }}
+                                </a>
+                            {% endif %}
+                        {% endfor %}
+
+                        {% if products.has_next %}
+                            <a href="?{{ request.GET.urlencode }}&page={{ products.next_page_number }}"
+                               class="px-3 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition">
+                                Next
+                            </a>
+                        {% endif %}
+                    </nav>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Auto-submit search after typing delay
+    let searchTimeout;
+    document.querySelector('input[name="search"]').addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            this.form.dispatchEvent(new Event('change'));
+        }, 500);
+    });
+</script>
+{% endblock %}

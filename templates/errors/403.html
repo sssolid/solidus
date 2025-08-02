@@ -1,0 +1,186 @@
+<!-- templates/errors/403.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Access Denied - Solidus</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .shield-animation {
+            animation: bounce 2s ease-in-out infinite;
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-10px); }
+            60% { transform: translateY(-5px); }
+        }
+
+        .fade-in {
+            opacity: 0;
+            animation: fadeIn 1s ease forwards;
+            animation-delay: 0.3s;
+        }
+
+        @keyframes fadeIn {
+            to { opacity: 1; }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen flex items-center justify-center">
+    <div class="max-w-2xl mx-auto px-4 text-center">
+        <!-- Error Illustration -->
+        <div class="shield-animation mb-8">
+            <div class="text-orange-500 mb-6">
+                <i class="fas fa-shield-alt text-8xl"></i>
+            </div>
+            <h1 class="text-6xl font-bold text-gray-800 mb-4">403</h1>
+        </div>
+
+        <!-- Error Message -->
+        <div class="fade-in">
+            <h2 class="text-3xl font-bold text-gray-900 mb-4">Access Denied</h2>
+            <p class="text-lg text-gray-600 mb-8 max-w-md mx-auto">
+                You don't have permission to access this resource. Please contact your administrator if you believe this is an error.
+            </p>
+
+            <!-- User Status -->
+            <div class="bg-white rounded-lg shadow-lg p-6 mb-8 max-w-md mx-auto">
+                <h3 class="font-semibold text-gray-900 mb-4">Your Access Level</h3>
+                {% if user.is_authenticated %}
+                    <div class="text-left space-y-2">
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Logged in as:</span>
+                            <span class="font-medium">{{ user.get_full_name|default:user.username }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Role:</span>
+                            <span class="font-medium">
+                                {% if user.is_superuser %}
+                                    <span class="text-red-600">Administrator</span>
+                                {% elif user.is_employee %}
+                                    <span class="text-blue-600">Employee</span>
+                                {% else %}
+                                    <span class="text-green-600">Customer</span>
+                                {% endif %}
+                            </span>
+                        </div>
+                        {% if user.customerprofile.company %}
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Company:</span>
+                                <span class="font-medium">{{ user.customerprofile.company }}</span>
+                            </div>
+                        {% endif %}
+                    </div>
+                {% else %}
+                    <p class="text-gray-600">You are not logged in</p>
+                {% endif %}
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex flex-wrap justify-center gap-4 mb-8">
+                {% if not user.is_authenticated %}
+                    <a href="{% url 'accounts:login' %}?next={{ request.path }}"
+                       class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition flex items-center">
+                        <i class="fas fa-sign-in-alt mr-2"></i>Login
+                    </a>
+                {% endif %}
+
+                <a href="{% url 'core:dashboard' %}"
+                   class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition flex items-center">
+                    <i class="fas fa-home mr-2"></i>Go to Dashboard
+                </a>
+
+                <button onclick="history.back()"
+                        class="bg-gray-600 text-white px-6 py-3 rounded-lg hover:bg-gray-700 transition flex items-center">
+                    <i class="fas fa-arrow-left mr-2"></i>Go Back
+                </button>
+            </div>
+
+            <!-- Permission Requirements -->
+            <div class="bg-orange-50 border border-orange-200 rounded-lg p-6 mb-8">
+                <h3 class="font-semibold text-orange-800 mb-4">
+                    <i class="fas fa-info-circle mr-2"></i>Required Permissions
+                </h3>
+                <p class="text-orange-700 text-sm">
+                    This page requires specific permissions that your account doesn't currently have.
+                    The required access level may include:
+                </p>
+                <ul class="text-orange-700 text-sm mt-2 space-y-1">
+                    <li><i class="fas fa-check mr-2"></i>Employee or Administrator role</li>
+                    <li><i class="fas fa-check mr-2"></i>Specific module permissions</li>
+                    <li><i class="fas fa-check mr-2"></i>Company-specific access rights</li>
+                </ul>
+            </div>
+
+            <!-- What You Can Do -->
+            <div class="bg-white rounded-lg shadow-lg p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">What You Can Do</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    <div>
+                        <h4 class="font-medium text-gray-700 mb-2">
+                            <i class="fas fa-user-shield mr-1 text-blue-600"></i>Request Access
+                        </h4>
+                        <p class="text-gray-600 mb-2">Contact your administrator</p>
+                        <a href="mailto:admin@solidus.example.com"
+                           class="text-blue-600 hover:text-blue-700">
+                            admin@solidus.example.com
+                        </a>
+                    </div>
+
+                    {% if user.is_authenticated %}
+                        <div>
+                            <h4 class="font-medium text-gray-700 mb-2">
+                                <i class="fas fa-eye mr-1 text-green-600"></i>Available Pages
+                            </h4>
+                            <div class="space-y-1">
+                                <a href="{% url 'core:dashboard' %}"
+                                   class="block text-blue-600 hover:text-blue-700">Dashboard</a>
+                                {% if user.is_customer %}
+                                    <a href="{% url 'products:catalog' %}"
+                                       class="block text-blue-600 hover:text-blue-700">Product Catalog</a>
+                                    <a href="{% url 'feeds:my_feeds' %}"
+                                       class="block text-blue-600 hover:text-blue-700">My Feeds</a>
+                                {% endif %}
+                                <a href="{% url 'accounts:profile' %}"
+                                   class="block text-blue-600 hover:text-blue-700">My Profile</a>
+                            </div>
+                        </div>
+                    {% else %}
+                        <div>
+                            <h4 class="font-medium text-gray-700 mb-2">
+                                <i class="fas fa-sign-in-alt mr-1 text-green-600"></i>Public Pages
+                            </h4>
+                            <div class="space-y-1">
+                                <a href="{% url 'accounts:login' %}"
+                                   class="block text-blue-600 hover:text-blue-700">Login</a>
+                                <a href="{% url 'accounts:register' %}"
+                                   class="block text-blue-600 hover:text-blue-700">Register</a>
+                                <a href="{% url 'products:catalog' %}"
+                                   class="block text-blue-600 hover:text-blue-700">Product Catalog</a>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Error Reference -->
+            <div class="mt-6 text-xs text-gray-400">
+                Access denied for: {{ request.path }} | User: {{ user.username|default:"Anonymous" }} | Time: {{ "now"|date:"Y-m-d H:i:s" }}
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Track 403 errors for security monitoring
+        if (typeof gtag !== 'undefined') {
+            gtag('event', 'exception', {
+                'description': '403 - Access Denied',
+                'fatal': false
+            });
+        }
+    </script>
+</body>
+</html>

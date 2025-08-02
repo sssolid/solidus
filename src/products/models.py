@@ -1,25 +1,26 @@
 # src/products/models.py
-from django.db import models
 from django.contrib.postgres.fields import ArrayField
 from django.contrib.postgres.indexes import GinIndex
 from django.core.cache import cache
+from django.db import models
 from django.db.models import JSONField
 from taggit.managers import TaggableManager
 
 
 class Brand(models.Model):
     """Product brands/manufacturers"""
+
     name = models.CharField(max_length=100, unique=True)
     code = models.CharField(max_length=20, unique=True)
-    logo = models.ImageField(upload_to='brands/', null=True, blank=True)
+    logo = models.ImageField(upload_to="brands/", null=True, blank=True)
     website = models.URLField(blank=True)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        db_table = 'brands'
-        ordering = ['name']
+        db_table = "brands"
+        ordering = ["name"]
 
     def __str__(self):
         return self.name
@@ -27,17 +28,14 @@ class Brand(models.Model):
 
 class Category(models.Model):
     """Product categories with hierarchy"""
+
     name = models.CharField(max_length=100)
     slug = models.SlugField(max_length=100, unique=True)
     parent = models.ForeignKey(
-        'self',
-        null=True,
-        blank=True,
-        on_delete=models.CASCADE,
-        related_name='children'
+        "self", null=True, blank=True, on_delete=models.CASCADE, related_name="children"
     )
     description = models.TextField(blank=True)
-    image = models.ImageField(upload_to='categories/', null=True, blank=True)
+    image = models.ImageField(upload_to="categories/", null=True, blank=True)
     sort_order = models.IntegerField(default=0)
     is_active = models.BooleanField(default=True)
 
@@ -49,12 +47,12 @@ class Category(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        db_table = 'categories'
-        ordering = ['sort_order', 'name']
-        verbose_name_plural = 'Categories'
+        db_table = "categories"
+        ordering = ["sort_order", "name"]
+        verbose_name_plural = "Categories"
         indexes = [
-            models.Index(fields=['slug']),
-            models.Index(fields=['parent']),
+            models.Index(fields=["slug"]),
+            models.Index(fields=["parent"]),
         ]
 
     def __str__(self):
@@ -83,11 +81,12 @@ class Category(models.Model):
 
 class Product(models.Model):
     """Main product model with automotive fitment support"""
+
     # Basic info
     sku = models.CharField(max_length=50, unique=True, db_index=True)
     name = models.CharField(max_length=255)
-    brand = models.ForeignKey(Brand, on_delete=models.PROTECT, related_name='products')
-    categories = models.ManyToManyField(Category, related_name='products')
+    brand = models.ForeignKey(Brand, on_delete=models.PROTECT, related_name="products")
+    categories = models.ManyToManyField(Category, related_name="products")
 
     # Descriptions
     short_description = models.TextField(blank=True)
@@ -109,7 +108,9 @@ class Product(models.Model):
 
     # Pricing
     msrp = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-    map_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    map_price = models.DecimalField(
+        max_digits=10, decimal_places=2, null=True, blank=True
+    )
 
     # Status
     is_active = models.BooleanField(default=True)
@@ -128,21 +129,21 @@ class Product(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     created_by = models.ForeignKey(
-        'accounts.User',
+        "accounts.User",
         on_delete=models.SET_NULL,
         null=True,
-        related_name='products_created'
+        related_name="products_created",
     )
 
     class Meta:
-        db_table = 'products'
-        ordering = ['-created_at']
+        db_table = "products"
+        ordering = ["-created_at"]
         indexes = [
-            models.Index(fields=['sku']),
-            models.Index(fields=['brand']),
-            models.Index(fields=['is_active', 'is_featured']),
-            GinIndex(fields=['part_numbers']),
-            GinIndex(fields=['oem_numbers']),
+            models.Index(fields=["sku"]),
+            models.Index(fields=["brand"]),
+            models.Index(fields=["is_active", "is_featured"]),
+            GinIndex(fields=["part_numbers"]),
+            GinIndex(fields=["oem_numbers"]),
         ]
 
     def __str__(self):
@@ -150,16 +151,19 @@ class Product(models.Model):
 
     def get_primary_image(self):
         """Get the primary product image"""
-        return self.assets.filter(
-            asset_type='image',
-            is_primary=True
-        ).select_related('file').first()
+        return (
+            self.assets.filter(asset_type="image", is_primary=True)
+            .select_related("file")
+            .first()
+        )
 
     def get_all_images(self):
         """Get all product images"""
-        return self.assets.filter(
-            asset_type='image'
-        ).select_related('file').order_by('-is_primary', 'sort_order')
+        return (
+            self.assets.filter(asset_type="image")
+            .select_related("file")
+            .order_by("-is_primary", "sort_order")
+        )
 
     def get_fitment_count(self):
         """Get count of vehicle fitments"""
@@ -177,14 +181,15 @@ class Product(models.Model):
 
 class VehicleMake(models.Model):
     """Vehicle manufacturers"""
+
     name = models.CharField(max_length=50, unique=True)
     code = models.CharField(max_length=10, unique=True)
     country = models.CharField(max_length=50, blank=True)
     is_active = models.BooleanField(default=True)
 
     class Meta:
-        db_table = 'vehicle_makes'
-        ordering = ['name']
+        db_table = "vehicle_makes"
+        ordering = ["name"]
 
     def __str__(self):
         return self.name
@@ -192,17 +197,20 @@ class VehicleMake(models.Model):
 
 class VehicleModel(models.Model):
     """Vehicle models"""
-    make = models.ForeignKey(VehicleMake, on_delete=models.CASCADE, related_name='models')
+
+    make = models.ForeignKey(
+        VehicleMake, on_delete=models.CASCADE, related_name="models"
+    )
     name = models.CharField(max_length=100)
     code = models.CharField(max_length=20)
     is_active = models.BooleanField(default=True)
 
     class Meta:
-        db_table = 'vehicle_models'
-        ordering = ['make', 'name']
-        unique_together = [['make', 'code']]
+        db_table = "vehicle_models"
+        ordering = ["make", "name"]
+        unique_together = [["make", "code"]]
         indexes = [
-            models.Index(fields=['make', 'name']),
+            models.Index(fields=["make", "name"]),
         ]
 
     def __str__(self):
@@ -211,7 +219,10 @@ class VehicleModel(models.Model):
 
 class ProductFitment(models.Model):
     """Vehicle fitment data for products"""
-    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='fitments')
+
+    product = models.ForeignKey(
+        Product, on_delete=models.CASCADE, related_name="fitments"
+    )
     make = models.ForeignKey(VehicleMake, on_delete=models.CASCADE)
     model = models.ForeignKey(VehicleModel, on_delete=models.CASCADE)
 
@@ -232,11 +243,11 @@ class ProductFitment(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        db_table = 'product_fitments'
+        db_table = "product_fitments"
         indexes = [
-            models.Index(fields=['product', 'make', 'model']),
-            models.Index(fields=['year_start', 'year_end']),
-            models.Index(fields=['make', 'model', 'year_start', 'year_end']),
+            models.Index(fields=["product", "make", "model"]),
+            models.Index(fields=["year_start", "year_end"]),
+            models.Index(fields=["make", "model", "year_start", "year_end"]),
         ]
 
     def __str__(self):
@@ -254,11 +265,18 @@ class ProductFitment(models.Model):
 
 class CustomerPricing(models.Model):
     """Customer-specific pricing"""
-    customer = models.ForeignKey('accounts.User', on_delete=models.CASCADE, related_name='custom_pricing')
-    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='customer_prices')
+
+    customer = models.ForeignKey(
+        "accounts.User", on_delete=models.CASCADE, related_name="custom_pricing"
+    )
+    product = models.ForeignKey(
+        Product, on_delete=models.CASCADE, related_name="customer_prices"
+    )
 
     price = models.DecimalField(max_digits=10, decimal_places=2)
-    discount_percent = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+    discount_percent = models.DecimalField(
+        max_digits=5, decimal_places=2, null=True, blank=True
+    )
 
     # Validity period
     valid_from = models.DateField(null=True, blank=True)
@@ -269,18 +287,18 @@ class CustomerPricing(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     created_by = models.ForeignKey(
-        'accounts.User',
+        "accounts.User",
         on_delete=models.SET_NULL,
         null=True,
-        related_name='pricing_created'
+        related_name="pricing_created",
     )
 
     class Meta:
-        db_table = 'customer_pricing'
-        unique_together = [['customer', 'product']]
+        db_table = "customer_pricing"
+        unique_together = [["customer", "product"]]
         indexes = [
-            models.Index(fields=['customer', 'product']),
-            models.Index(fields=['valid_from', 'valid_until']),
+            models.Index(fields=["customer", "product"]),
+            models.Index(fields=["valid_from", "valid_until"]),
         ]
 
     def __str__(self):

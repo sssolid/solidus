@@ -1,22 +1,21 @@
 # src/core/views.py
-from django.conf import settings
-from django.shortcuts import render, redirect, get_object_or_404
-from django.views.generic import TemplateView, ListView, DetailView
-from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
-from django.contrib.auth.decorators import login_required
-from django.db.models import Q, Count
-from django.http import JsonResponse, HttpResponse
-from django.views.decorators.http import require_POST
-from django.utils import timezone
-from django.contrib import messages
-from django.core.paginator import Paginator
-import json
 
-from .models import Notification, TaskQueue, SystemSetting
-from products.models import Product
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.db.models import Q
+from django.http import JsonResponse
+from django.shortcuts import redirect, render
+from django.utils import timezone
+from django.views.decorators.http import require_POST
+from django.views.generic import DetailView, ListView, TemplateView
+
+from accounts.models import User
 from assets.models import Asset
 from feeds.models import DataFeed, FeedGeneration
-from accounts.models import User
+from products.models import Product
+
+from .models import Notification, SystemSetting, TaskQueue
 
 
 class AdminRequiredMixin(UserPassesTestMixin):
@@ -28,7 +27,8 @@ class AdminRequiredMixin(UserPassesTestMixin):
 
 class DashboardView(LoginRequiredMixin, TemplateView):
     """Main dashboard view"""
-    template_name = 'core/dashboard.html'
+
+    template_name = "core/dashboard.html"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -37,69 +37,75 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         # Get dashboard stats based on user role
         if user.is_employee:
             # Employee dashboard
-            context.update({
-                'total_products': Product.objects.filter(is_active=True).count(),
-                'total_assets': Asset.objects.filter(is_active=True).count(),
-                'pending_tasks': TaskQueue.objects.filter(status='pending').count(),
-                'recent_products': Product.objects.order_by('-created_at')[:5],
-                'recent_assets': Asset.objects.order_by('-created_at')[:5],
-                'total_customers': User.objects.filter(role='customer', is_active=True).count(),
-                'active_feeds': DataFeed.objects.filter(is_active=True).count(),
-            })
+            context.update(
+                {
+                    "total_products": Product.objects.filter(is_active=True).count(),
+                    "total_assets": Asset.objects.filter(is_active=True).count(),
+                    "pending_tasks": TaskQueue.objects.filter(status="pending").count(),
+                    "recent_products": Product.objects.order_by("-created_at")[:5],
+                    "recent_assets": Asset.objects.order_by("-created_at")[:5],
+                    "total_customers": User.objects.filter(
+                        role="customer", is_active=True
+                    ).count(),
+                    "active_feeds": DataFeed.objects.filter(is_active=True).count(),
+                }
+            )
         else:
             # Customer dashboard
-            context.update({
-                'active_feeds': DataFeed.objects.filter(
-                    customer=user,
-                    is_active=True
-                ).count(),
-                'recent_generations': FeedGeneration.objects.filter(
-                    feed__customer=user
-                ).order_by('-started_at')[:5],
-                'available_products': Product.objects.filter(
-                    is_active=True,
-                    customer_prices__customer=user
-                ).distinct().count(),
-                'my_feeds': DataFeed.objects.filter(customer=user)[:5],
-            })
+            context.update(
+                {
+                    "active_feeds": DataFeed.objects.filter(
+                        customer=user, is_active=True
+                    ).count(),
+                    "recent_generations": FeedGeneration.objects.filter(
+                        feed__customer=user
+                    ).order_by("-started_at")[:5],
+                    "available_products": Product.objects.filter(
+                        is_active=True, customer_prices__customer=user
+                    )
+                    .distinct()
+                    .count(),
+                    "my_feeds": DataFeed.objects.filter(customer=user)[:5],
+                }
+            )
 
         # Common data
-        context.update({
-            'notifications': Notification.objects.filter(
-                user=user,
-                is_read=False
-            ).order_by('-created_at')[:5],
-            'notification_count': Notification.objects.filter(
-                user=user,
-                is_read=False
-            ).count(),
-        })
+        context.update(
+            {
+                "notifications": Notification.objects.filter(
+                    user=user, is_read=False
+                ).order_by("-created_at")[:5],
+                "notification_count": Notification.objects.filter(
+                    user=user, is_read=False
+                ).count(),
+            }
+        )
 
         return context
 
 
 class NotificationListView(LoginRequiredMixin, ListView):
     """List user notifications"""
+
     model = Notification
-    template_name = 'core/notification_list.html'
-    context_object_name = 'notifications'
+    template_name = "core/notification_list.html"
+    context_object_name = "notifications"
     paginate_by = 20
 
     def get_queryset(self):
-        return Notification.objects.filter(
-            user=self.request.user
-        ).order_by('-created_at')
+        return Notification.objects.filter(user=self.request.user).order_by(
+            "-created_at"
+        )
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
         # Mark notifications as read when viewing the list
-        Notification.objects.filter(
-            user=self.request.user,
-            is_read=False
-        ).update(is_read=True, read_at=timezone.now())
+        Notification.objects.filter(user=self.request.user, is_read=False).update(
+            is_read=True, read_at=timezone.now()
+        )
 
-        context['unread_count'] = 0  # Now that we've marked them as read
+        context["unread_count"] = 0  # Now that we've marked them as read
         return context
 
 
@@ -107,13 +113,14 @@ class NotificationListView(LoginRequiredMixin, ListView):
 def notification_dropdown(request):
     """HTMX view for notification dropdown"""
     notifications = Notification.objects.filter(
-        user=request.user,
-        is_read=False
-    ).order_by('-created_at')[:10]
+        user=request.user, is_read=False
+    ).order_by("-created_at")[:10]
 
-    return render(request, 'core/partials/notification_dropdown.html', {
-        'notifications': notifications
-    })
+    return render(
+        request,
+        "core/partials/notification_dropdown.html",
+        {"notifications": notifications},
+    )
 
 
 @require_POST
@@ -121,49 +128,42 @@ def notification_dropdown(request):
 def mark_notification_read(request, pk):
     """Mark single notification as read"""
     try:
-        notification = Notification.objects.get(
-            id=pk,
-            user=request.user
-        )
+        notification = Notification.objects.get(id=pk, user=request.user)
         notification.mark_as_read()
-        return JsonResponse({'success': True})
+        return JsonResponse({"success": True})
     except Notification.DoesNotExist:
-        return JsonResponse({'error': 'Notification not found'}, status=404)
+        return JsonResponse({"error": "Notification not found"}, status=404)
 
 
 @require_POST
 @login_required
 def mark_all_notifications_read(request):
     """Mark all user notifications as read"""
-    count = Notification.objects.filter(
-        user=request.user,
-        is_read=False
-    ).update(
-        is_read=True,
-        read_at=timezone.now()
+    count = Notification.objects.filter(user=request.user, is_read=False).update(
+        is_read=True, read_at=timezone.now()
     )
 
-    return JsonResponse({
-        'success': True,
-        'message': f'{count} notifications marked as read'
-    })
+    return JsonResponse(
+        {"success": True, "message": f"{count} notifications marked as read"}
+    )
 
 
 class GlobalSearchView(LoginRequiredMixin, TemplateView):
     """Global search across all content"""
-    template_name = 'core/search.html'
+
+    template_name = "core/search.html"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        query = self.request.GET.get('q', '')
+        query = self.request.GET.get("q", "")
 
         if query and len(query) >= 2:
             # Search products
             products = Product.objects.filter(
-                Q(name__icontains=query) |
-                Q(sku__icontains=query) |
-                Q(description__icontains=query),
-                is_active=True
+                Q(name__icontains=query)
+                | Q(sku__icontains=query)
+                | Q(description__icontains=query),
+                is_active=True,
             )
 
             # Filter by customer access if customer
@@ -172,14 +172,14 @@ class GlobalSearchView(LoginRequiredMixin, TemplateView):
                     customer_prices__customer=self.request.user
                 ).distinct()
 
-            context['products'] = products[:10]
+            context["products"] = products[:10]
 
             # Search assets
             assets = Asset.objects.filter(
-                Q(title__icontains=query) |
-                Q(description__icontains=query) |
-                Q(tags__name__icontains=query),
-                is_active=True
+                Q(title__icontains=query)
+                | Q(description__icontains=query)
+                | Q(tags__name__icontains=query),
+                is_active=True,
             ).distinct()
 
             # Filter by customer access if customer
@@ -191,45 +191,45 @@ class GlobalSearchView(LoginRequiredMixin, TemplateView):
                 else:
                     assets = assets.filter(is_public=True)
 
-            context['assets'] = assets[:10]
+            context["assets"] = assets[:10]
 
             # Search feeds (if employee or own feeds if customer)
             feeds = DataFeed.objects.filter(
-                Q(name__icontains=query) |
-                Q(description__icontains=query)
+                Q(name__icontains=query) | Q(description__icontains=query)
             )
 
             if self.request.user.is_customer:
                 feeds = feeds.filter(customer=self.request.user)
 
-            context['feeds'] = feeds[:10]
+            context["feeds"] = feeds[:10]
 
             # Search users (employee only)
             if self.request.user.is_employee:
                 users = User.objects.filter(
-                    Q(username__icontains=query) |
-                    Q(email__icontains=query) |
-                    Q(first_name__icontains=query) |
-                    Q(last_name__icontains=query) |
-                    Q(company_name__icontains=query)
+                    Q(username__icontains=query)
+                    | Q(email__icontains=query)
+                    | Q(first_name__icontains=query)
+                    | Q(last_name__icontains=query)
+                    | Q(company_name__icontains=query)
                 )[:10]
-                context['users'] = users
+                context["users"] = users
 
-        context['query'] = query
+        context["query"] = query
         return context
 
 
 class TaskQueueListView(AdminRequiredMixin, ListView):
     """List background tasks"""
+
     model = TaskQueue
-    template_name = 'core/task_list.html'
-    context_object_name = 'tasks'
+    template_name = "core/task_list.html"
+    context_object_name = "tasks"
     paginate_by = 50
 
     def get_queryset(self):
-        queryset = TaskQueue.objects.order_by('-created_at')
+        queryset = TaskQueue.objects.order_by("-created_at")
 
-        status = self.request.GET.get('status')
+        status = self.request.GET.get("status")
         if status:
             queryset = queryset.filter(status=status)
 
@@ -237,48 +237,50 @@ class TaskQueueListView(AdminRequiredMixin, ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['stats'] = {
-            'pending': TaskQueue.objects.filter(status='pending').count(),
-            'running': TaskQueue.objects.filter(status='running').count(),
-            'completed': TaskQueue.objects.filter(status='completed').count(),
-            'failed': TaskQueue.objects.filter(status='failed').count(),
+        context["stats"] = {
+            "pending": TaskQueue.objects.filter(status="pending").count(),
+            "running": TaskQueue.objects.filter(status="running").count(),
+            "completed": TaskQueue.objects.filter(status="completed").count(),
+            "failed": TaskQueue.objects.filter(status="failed").count(),
         }
-        context['status_filter'] = self.request.GET.get('status', '')
+        context["status_filter"] = self.request.GET.get("status", "")
         return context
 
 
 class TaskDetailView(AdminRequiredMixin, DetailView):
     """Task detail view"""
+
     model = TaskQueue
-    template_name = 'core/task_detail.html'
-    context_object_name = 'task'
-    slug_field = 'task_id'
-    slug_url_kwarg = 'task_id'
+    template_name = "core/task_detail.html"
+    context_object_name = "task"
+    slug_field = "task_id"
+    slug_url_kwarg = "task_id"
 
 
 class SystemSettingsView(AdminRequiredMixin, TemplateView):
     """System settings management"""
-    template_name = 'core/system_settings.html'
+
+    template_name = "core/system_settings.html"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
         # Group settings by category
         settings_groups = {}
-        for setting in SystemSetting.objects.all().order_by('key'):
-            category = setting.key.split('_')[0]  # Use first part as category
+        for setting in SystemSetting.objects.all().order_by("key"):
+            category = setting.key.split("_")[0]  # Use first part as category
             if category not in settings_groups:
                 settings_groups[category] = []
             settings_groups[category].append(setting)
 
-        context['settings_groups'] = settings_groups
+        context["settings_groups"] = settings_groups
         return context
 
     def post(self, request, *args, **kwargs):
         """Handle settings updates"""
         for key, value in request.POST.items():
-            if key.startswith('setting_'):
-                setting_key = key.replace('setting_', '')
+            if key.startswith("setting_"):
+                setting_key = key.replace("setting_", "")
                 try:
                     setting = SystemSetting.objects.get(key=setting_key)
                     setting.value = value
@@ -286,35 +288,33 @@ class SystemSettingsView(AdminRequiredMixin, TemplateView):
                 except SystemSetting.DoesNotExist:
                     # Create new setting
                     SystemSetting.objects.create(
-                        key=setting_key,
-                        value=value,
-                        setting_type='string'
+                        key=setting_key, value=value, setting_type="string"
                     )
 
-        messages.success(request, 'Settings updated successfully.')
-        return redirect('core:system_settings')
+        messages.success(request, "Settings updated successfully.")
+        return redirect("core:system_settings")
 
 
 @login_required
 def health_check(request):
     """System health check"""
     if not request.user.is_admin:
-        return JsonResponse({'error': 'Permission denied'}, status=403)
+        return JsonResponse({"error": "Permission denied"}, status=403)
 
     health_data = {
-        'status': 'healthy',
-        'timestamp': timezone.now().isoformat(),
-        'checks': {
-            'database': True,
-            'cache': True,
-            'storage': True,
-            'tasks': TaskQueue.objects.filter(status='pending').count() < 100,
-        }
+        "status": "healthy",
+        "timestamp": timezone.now().isoformat(),
+        "checks": {
+            "database": True,
+            "cache": True,
+            "storage": True,
+            "tasks": TaskQueue.objects.filter(status="pending").count() < 100,
+        },
     }
 
     # Check if any critical systems are down
-    if not all(health_data['checks'].values()):
-        health_data['status'] = 'degraded'
+    if not all(health_data["checks"].values()):
+        health_data["status"] = "degraded"
 
     return JsonResponse(health_data)
 
@@ -322,17 +322,24 @@ def health_check(request):
 # Error handlers
 def error_404(request, exception):
     """Custom 404 error handler"""
-    return render(request, 'errors/404.html', status=404)
+    return render(request, "errors/404.html", status=404)
 
 
 def error_500(request):
     """Custom 500 error handler"""
-    return render(request, 'errors/500.html', status=500)
+    return render(request, "errors/500.html", status=500)
 
 
 # Utility functions for notifications
-def create_notification(user, title, message, notification_type='info',
-                        action_url=None, action_label=None, content_object=None):
+def create_notification(
+    user,
+    title,
+    message,
+    notification_type="info",
+    action_url=None,
+    action_label=None,
+    content_object=None,
+):
     """Helper function to create notifications"""
     notification = Notification.objects.create(
         user=user,
@@ -341,30 +348,30 @@ def create_notification(user, title, message, notification_type='info',
         notification_type=notification_type,
         action_url=action_url,
         action_label=action_label,
-        content_object=content_object
+        content_object=content_object,
     )
 
     # Send real-time notification via WebSocket if available
     try:
-        from channels.layers import get_channel_layer
         from asgiref.sync import async_to_sync
+        from channels.layers import get_channel_layer
 
         channel_layer = get_channel_layer()
         if channel_layer:
             async_to_sync(channel_layer.group_send)(
-                f'user_{user.id}',
+                f"user_{user.id}",
                 {
-                    'type': 'notification',
-                    'notification': {
-                        'id': notification.id,
-                        'title': notification.title,
-                        'message': notification.message,
-                        'type': notification.notification_type,
-                        'action_url': notification.action_url,
-                        'action_label': notification.action_label,
-                        'timestamp': notification.created_at.isoformat(),
-                    }
-                }
+                    "type": "notification",
+                    "notification": {
+                        "id": notification.id,
+                        "title": notification.title,
+                        "message": notification.message,
+                        "type": notification.notification_type,
+                        "action_url": notification.action_url,
+                        "action_label": notification.action_label,
+                        "timestamp": notification.created_at.isoformat(),
+                    },
+                },
             )
     except ImportError:
         # Channels not available
@@ -373,56 +380,59 @@ def create_notification(user, title, message, notification_type='info',
     return notification
 
 
-def notify_admins(title, message, notification_type='info'):
+def notify_admins(title, message, notification_type="info"):
     """Helper function to notify all admins"""
-    admin_users = User.objects.filter(role='admin', is_active=True)
+    admin_users = User.objects.filter(role="admin", is_active=True)
 
     for admin in admin_users:
         create_notification(
             user=admin,
             title=title,
             message=message,
-            notification_type=notification_type
+            notification_type=notification_type,
         )
 
 
 def notify_user_product_update(user, product):
     """Notify user of product updates"""
-    if hasattr(user, 'notification_product_updates') and user.notification_product_updates:
+    if (
+        hasattr(user, "notification_product_updates")
+        and user.notification_product_updates
+    ):
         create_notification(
             user=user,
-            title='Product Updated',
+            title="Product Updated",
             message=f'Product "{product.name}" has been updated.',
-            notification_type='product_update',
-            action_url=f'/products/{product.id}/',
-            action_label='View Product',
-            content_object=product
+            notification_type="product_update",
+            action_url=f"/products/{product.id}/",
+            action_label="View Product",
+            content_object=product,
         )
 
 
 def notify_user_feed_ready(user, feed_generation):
     """Notify user when feed is ready"""
-    if hasattr(user, 'notification_feed_ready') and user.notification_feed_ready:
+    if hasattr(user, "notification_feed_ready") and user.notification_feed_ready:
         create_notification(
             user=user,
-            title='Feed Ready',
+            title="Feed Ready",
             message=f'Your feed "{feed_generation.feed.name}" is ready for download.',
-            notification_type='feed_ready',
-            action_url=f'/feeds/download/{feed_generation.id}/',
-            action_label='Download Feed',
-            content_object=feed_generation
+            notification_type="feed_ready",
+            action_url=f"/feeds/download/{feed_generation.id}/",
+            action_label="Download Feed",
+            content_object=feed_generation,
         )
 
 
 def notify_user_price_change(user, customer_pricing):
     """Notify user of price changes"""
-    if hasattr(user, 'notification_price_changes') and user.notification_price_changes:
+    if hasattr(user, "notification_price_changes") and user.notification_price_changes:
         create_notification(
             user=user,
-            title='Price Update',
+            title="Price Update",
             message=f'Pricing for "{customer_pricing.product.name}" has been updated.',
-            notification_type='price_change',
-            action_url=f'/products/{customer_pricing.product.id}/',
-            action_label='View Product',
-            content_object=customer_pricing.product
+            notification_type="price_change",
+            action_url=f"/products/{customer_pricing.product.id}/",
+            action_label="View Product",
+            content_object=customer_pricing.product,
         )

@@ -1,0 +1,479 @@
+<!-- templates/assets/upload.html -->
+{% extends 'base.html' %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block title %}Upload Assets{% endblock %}
+
+{% block extra_css %}
+<style>
+    .drop-zone {
+        border: 2px dashed #d1d5db;
+        border-radius: 0.5rem;
+        padding: 3rem 2rem;
+        text-align: center;
+        transition: all 0.2s;
+        cursor: pointer;
+    }
+
+    .drop-zone.dragover {
+        border-color: #2563eb;
+        background-color: #eff6ff;
+    }
+
+    .file-preview {
+        border: 1px solid #e5e7eb;
+        border-radius: 0.5rem;
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .progress-bar {
+        width: 100%;
+        height: 8px;
+        background-color: #f3f4f6;
+        border-radius: 4px;
+        overflow: hidden;
+    }
+
+    .progress-fill {
+        height: 100%;
+        background-color: #2563eb;
+        transition: width 0.3s ease;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <!-- Header -->
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900">Upload Assets</h1>
+        <p class="text-gray-600 mt-2">Upload images, documents, and other media files to the asset library</p>
+    </div>
+
+    <!-- Upload Methods -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        <!-- Drag & Drop Upload -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <h2 class="text-xl font-semibold text-gray-900 mb-4">Drag & Drop Upload</h2>
+
+            <div id="drop-zone" class="drop-zone">
+                <i class="fas fa-cloud-upload-alt text-gray-400 text-4xl mb-4"></i>
+                <p class="text-lg text-gray-600 mb-2">Drag files here or click to browse</p>
+                <p class="text-sm text-gray-500 mb-4">Support for images, documents, videos up to 100MB</p>
+
+                <input type="file" id="file-input" multiple accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx" class="hidden">
+
+                <button onclick="document.getElementById('file-input').click()"
+                        class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition">
+                    Choose Files
+                </button>
+            </div>
+
+            <!-- File List -->
+            <div id="file-list" class="mt-6 space-y-4"></div>
+        </div>
+
+        <!-- Bulk Upload -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <h2 class="text-xl font-semibold text-gray-900 mb-4">Bulk Upload Settings</h2>
+
+            <form id="bulk-settings-form">
+                <!-- Category Selection -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Default Category</label>
+                    <select name="category_id" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">Select Category</option>
+                        {% for category in categories %}
+                            <option value="{{ category.id }}">{{ category.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Tags -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Tags (comma-separated)</label>
+                    <input type="text" name="tags" placeholder="automotive, parts, images"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+
+                <!-- Permissions -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Permissions</label>
+                    <div class="space-y-2">
+                        <label class="flex items-center">
+                            <input type="radio" name="permission_level" value="public" checked
+                                   class="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300">
+                            <span class="text-sm text-gray-700">Public - Visible to all users</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="radio" name="permission_level" value="employee"
+                                   class="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300">
+                            <span class="text-sm text-gray-700">Employee Only - Internal use</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="radio" name="permission_level" value="private"
+                                   class="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300">
+                            <span class="text-sm text-gray-700">Private - Restricted access</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Processing Options -->
+                <div class="mb-6">
+                    <h3 class="text-sm font-medium text-gray-700 mb-3">Processing Options</h3>
+                    <div class="space-y-2">
+                        <label class="flex items-center">
+                            <input type="checkbox" name="generate_thumbnails" checked
+                                   class="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                            <span class="text-sm text-gray-700">Generate thumbnails</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="checkbox" name="extract_metadata" checked
+                                   class="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                            <span class="text-sm text-gray-700">Extract metadata</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="checkbox" name="optimize_images"
+                                   class="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                            <span class="text-sm text-gray-700">Optimize images for web</span>
+                        </label>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Upload Progress -->
+    <div id="upload-progress" class="bg-white rounded-lg shadow p-6 hidden">
+        <h2 class="text-xl font-semibold text-gray-900 mb-4">Upload Progress</h2>
+
+        <div class="mb-4">
+            <div class="flex justify-between text-sm text-gray-600 mb-1">
+                <span>Overall Progress</span>
+                <span id="overall-progress-text">0%</span>
+            </div>
+            <div class="progress-bar">
+                <div id="overall-progress-fill" class="progress-fill" style="width: 0%"></div>
+            </div>
+        </div>
+
+        <div id="file-progress-list" class="space-y-2"></div>
+
+        <div class="mt-4 flex justify-between">
+            <div>
+                <span class="text-sm text-gray-600">
+                    <span id="completed-count">0</span> of <span id="total-count">0</span> files completed
+                </span>
+            </div>
+            <button id="cancel-upload" class="text-red-600 hover:text-red-700 text-sm">Cancel Upload</button>
+        </div>
+    </div>
+
+    <!-- Recent Uploads -->
+    <div class="bg-white rounded-lg shadow p-6">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-xl font-semibold text-gray-900">Recent Uploads</h2>
+            <a href="{% url 'assets:list' %}" class="text-blue-600 hover:text-blue-700 text-sm">View All Assets</a>
+        </div>
+
+        {% if recent_assets %}
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                {% for asset in recent_assets %}
+                    <div class="border border-gray-200 rounded-lg p-3">
+                        {% if asset.is_image %}
+                            <img src="{{ asset.thumbnail_url }}" alt="{{ asset.title }}"
+                                 class="w-full h-32 object-cover rounded mb-2">
+                        {% else %}
+                            <div class="w-full h-32 bg-gray-100 rounded mb-2 flex items-center justify-center">
+                                <i class="fas fa-{{ asset.icon }} text-gray-400 text-2xl"></i>
+                            </div>
+                        {% endif %}
+
+                        <h4 class="font-medium text-gray-900 text-sm mb-1 truncate">{{ asset.title }}</h4>
+                        <p class="text-xs text-gray-500">{{ asset.created_at|timesince }} ago</p>
+
+                        <div class="mt-2 flex justify-between items-center">
+                            <span class="text-xs text-gray-500">{{ asset.file_size_human }}</span>
+                            <a href="{% url 'assets:detail' asset.pk %}"
+                               class="text-blue-600 hover:text-blue-700 text-xs">View</a>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="text-center py-8">
+                <i class="fas fa-upload text-gray-400 text-4xl mb-4"></i>
+                <p class="text-gray-500">No recent uploads. Start by uploading your first asset!</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+class AssetUploader {
+    constructor() {
+        this.files = [];
+        this.uploadQueue = [];
+        this.isUploading = false;
+        this.csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+        this.initEventListeners();
+    }
+
+    initEventListeners() {
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
+
+        // Drag and drop events
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('dragover');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+
+            const files = Array.from(e.dataTransfer.files);
+            this.addFiles(files);
+        });
+
+        // File input change
+        fileInput.addEventListener('change', (e) => {
+            const files = Array.from(e.target.files);
+            this.addFiles(files);
+        });
+    }
+
+    addFiles(files) {
+        files.forEach(file => {
+            if (this.validateFile(file)) {
+                const fileId = Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                this.files.push({
+                    id: fileId,
+                    file: file,
+                    progress: 0,
+                    status: 'pending'
+                });
+
+                this.renderFilePreview(fileId, file);
+            }
+        });
+
+        this.updateUploadButton();
+    }
+
+    validateFile(file) {
+        const maxSize = 100 * 1024 * 1024; // 100MB
+        const allowedTypes = [
+            'image/jpeg', 'image/png', 'image/gif', 'image/webp',
+            'video/mp4', 'video/webm',
+            'application/pdf',
+            'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'application/vnd.ms-powerpoint', 'application/vnd.openxmlformats-officedocument.presentationml.presentation'
+        ];
+
+        if (file.size > maxSize) {
+            alert(`File "${file.name}" is too large. Maximum size is 100MB.`);
+            return false;
+        }
+
+        if (!allowedTypes.includes(file.type)) {
+            alert(`File type "${file.type}" is not supported.`);
+            return false;
+        }
+
+        return true;
+    }
+
+    renderFilePreview(fileId, file) {
+        const fileList = document.getElementById('file-list');
+        const preview = document.createElement('div');
+        preview.className = 'file-preview';
+        preview.id = `preview-${fileId}`;
+
+        const isImage = file.type.startsWith('image/');
+        let imagePreview = '';
+
+        if (isImage) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                preview.querySelector('.file-image').src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+            imagePreview = '<img class="file-image w-16 h-16 object-cover rounded mr-4" src="" alt="Preview">';
+        } else {
+            imagePreview = `<div class="w-16 h-16 bg-gray-100 rounded mr-4 flex items-center justify-center">
+                <i class="fas fa-file text-gray-400 text-xl"></i>
+            </div>`;
+        }
+
+        preview.innerHTML = `
+            <div class="flex items-center">
+                ${imagePreview}
+                <div class="flex-1">
+                    <h4 class="font-medium text-gray-900">${file.name}</h4>
+                    <p class="text-sm text-gray-500">${this.formatFileSize(file.size)}</p>
+                    <div class="mt-2">
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 0%"></div>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1">Ready to upload</p>
+                    </div>
+                </div>
+                <button onclick="uploader.removeFile('${fileId}')"
+                        class="ml-4 text-red-600 hover:text-red-700">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        `;
+
+        fileList.appendChild(preview);
+    }
+
+    removeFile(fileId) {
+        this.files = this.files.filter(f => f.id !== fileId);
+        document.getElementById(`preview-${fileId}`).remove();
+        this.updateUploadButton();
+    }
+
+    updateUploadButton() {
+        const fileList = document.getElementById('file-list');
+        if (this.files.length > 0 && !document.getElementById('upload-all-button')) {
+            const button = document.createElement('button');
+            button.id = 'upload-all-button';
+            button.className = 'mt-4 w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition font-medium';
+            button.textContent = `Upload ${this.files.length} File${this.files.length > 1 ? 's' : ''}`;
+            button.onclick = () => this.startUpload();
+
+            fileList.appendChild(button);
+        } else if (this.files.length === 0 && document.getElementById('upload-all-button')) {
+            document.getElementById('upload-all-button').remove();
+        }
+    }
+
+    async startUpload() {
+        if (this.isUploading) return;
+
+        this.isUploading = true;
+        document.getElementById('upload-progress').classList.remove('hidden');
+        document.getElementById('total-count').textContent = this.files.length;
+
+        let completed = 0;
+
+        for (const fileObj of this.files) {
+            try {
+                await this.uploadFile(fileObj);
+                completed++;
+                document.getElementById('completed-count').textContent = completed;
+                this.updateOverallProgress(completed, this.files.length);
+            } catch (error) {
+                console.error('Upload error:', error);
+                this.updateFileStatus(fileObj.id, 'error', 'Upload failed');
+            }
+        }
+
+        this.isUploading = false;
+
+        if (completed === this.files.length) {
+            setTimeout(() => {
+                location.reload(); // Refresh to show new uploads
+            }, 2000);
+        }
+    }
+
+    async uploadFile(fileObj) {
+        const formData = new FormData();
+        formData.append('file', fileObj.file);
+
+        // Add bulk settings
+        const settingsForm = document.getElementById('bulk-settings-form');
+        const formDataSettings = new FormData(settingsForm);
+
+        for (const [key, value] of formDataSettings.entries()) {
+            formData.append(key, value);
+        }
+
+        formData.append('csrfmiddlewaretoken', this.csrfToken);
+
+        return new Promise((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+
+            xhr.upload.addEventListener('progress', (e) => {
+                if (e.lengthComputable) {
+                    const progress = (e.loaded / e.total) * 100;
+                    this.updateFileProgress(fileObj.id, progress);
+                }
+            });
+
+            xhr.addEventListener('load', () => {
+                if (xhr.status === 200) {
+                    this.updateFileStatus(fileObj.id, 'success', 'Upload complete');
+                    resolve();
+                } else {
+                    reject(new Error(`HTTP ${xhr.status}`));
+                }
+            });
+
+            xhr.addEventListener('error', () => {
+                reject(new Error('Network error'));
+            });
+
+            xhr.open('POST', '{% url "assets:upload" %}');
+            xhr.send(formData);
+        });
+    }
+
+    updateFileProgress(fileId, progress) {
+        const preview = document.getElementById(`preview-${fileId}`);
+        const progressFill = preview.querySelector('.progress-fill');
+        const statusText = preview.querySelector('.text-xs');
+
+        progressFill.style.width = `${progress}%`;
+        statusText.textContent = `${Math.round(progress)}% uploaded`;
+    }
+
+    updateFileStatus(fileId, status, message) {
+        const preview = document.getElementById(`preview-${fileId}`);
+        const statusText = preview.querySelector('.text-xs');
+        const progressFill = preview.querySelector('.progress-fill');
+
+        if (status === 'success') {
+            progressFill.style.backgroundColor = '#10b981';
+            statusText.textContent = message;
+            statusText.className = 'text-xs text-green-600 mt-1';
+        } else if (status === 'error') {
+            progressFill.style.backgroundColor = '#ef4444';
+            statusText.textContent = message;
+            statusText.className = 'text-xs text-red-600 mt-1';
+        }
+    }
+
+    updateOverallProgress(completed, total) {
+        const progress = (completed / total) * 100;
+        document.getElementById('overall-progress-fill').style.width = `${progress}%`;
+        document.getElementById('overall-progress-text').textContent = `${Math.round(progress)}%`;
+    }
+
+    formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+}
+
+// Initialize uploader
+const uploader = new AssetUploader();
+</script>
+{% endblock %}

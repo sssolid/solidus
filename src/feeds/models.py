@@ -1,46 +1,46 @@
 # src/feeds/models.py
-from django.db import models
-from django.contrib.postgres.fields import ArrayField
-from django.conf import settings
-from django.utils import timezone
-from datetime import timedelta
 import uuid
+from datetime import timedelta
+
+from django.conf import settings
+from django.contrib.postgres.fields import ArrayField
+from django.db import models
+from django.utils import timezone
 
 
 class DataFeed(models.Model):
     """Data feed configurations for customers"""
+
     FEED_TYPES = [
-        ('product_catalog', 'Product Catalog'),
-        ('inventory', 'Inventory'),
-        ('pricing', 'Pricing'),
-        ('assets', 'Digital Assets'),
-        ('fitment', 'Vehicle Fitment'),
-        ('custom', 'Custom'),
+        ("product_catalog", "Product Catalog"),
+        ("inventory", "Inventory"),
+        ("pricing", "Pricing"),
+        ("assets", "Digital Assets"),
+        ("fitment", "Vehicle Fitment"),
+        ("custom", "Custom"),
     ]
 
     FORMAT_CHOICES = [
-        ('csv', 'CSV'),
-        ('xml', 'XML'),
-        ('json', 'JSON'),
-        ('xlsx', 'Excel'),
-        ('txt', 'Text (Tab-delimited)'),
+        ("csv", "CSV"),
+        ("xml", "XML"),
+        ("json", "JSON"),
+        ("xlsx", "Excel"),
+        ("txt", "Text (Tab-delimited)"),
     ]
 
     FREQUENCY_CHOICES = [
-        ('manual', 'Manual'),
-        ('hourly', 'Hourly'),
-        ('daily', 'Daily'),
-        ('weekly', 'Weekly'),
-        ('monthly', 'Monthly'),
+        ("manual", "Manual"),
+        ("hourly", "Hourly"),
+        ("daily", "Daily"),
+        ("weekly", "Weekly"),
+        ("monthly", "Monthly"),
     ]
 
     # Basic info
     name = models.CharField(max_length=255)
     slug = models.SlugField(max_length=255, unique=True)
     customer = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        related_name='data_feeds'
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="data_feeds"
     )
 
     # Feed configuration
@@ -48,8 +48,8 @@ class DataFeed(models.Model):
     format = models.CharField(max_length=10, choices=FORMAT_CHOICES)
 
     # Content filters
-    categories = models.ManyToManyField('products.Category', blank=True)
-    brands = models.ManyToManyField('products.Brand', blank=True)
+    categories = models.ManyToManyField("products.Category", blank=True)
+    brands = models.ManyToManyField("products.Brand", blank=True)
     product_tags = ArrayField(models.CharField(max_length=50), default=list, blank=True)
 
     # Field configuration
@@ -58,23 +58,29 @@ class DataFeed(models.Model):
 
     # Schedule
     is_active = models.BooleanField(default=True)
-    frequency = models.CharField(max_length=20, choices=FREQUENCY_CHOICES, default='manual')
+    frequency = models.CharField(
+        max_length=20, choices=FREQUENCY_CHOICES, default="manual"
+    )
     schedule_time = models.TimeField(null=True, blank=True)  # For daily feeds
-    schedule_day = models.IntegerField(null=True, blank=True)  # 0-6 for weekly, 1-31 for monthly
+    schedule_day = models.IntegerField(
+        null=True, blank=True
+    )  # 0-6 for weekly, 1-31 for monthly
 
     # Delivery configuration
     delivery_method = models.CharField(
         max_length=20,
         choices=[
-            ('download', 'Direct Download'),
-            ('email', 'Email'),
-            ('ftp', 'FTP'),
-            ('sftp', 'SFTP'),
-            ('api', 'API Webhook'),
+            ("download", "Direct Download"),
+            ("email", "Email"),
+            ("ftp", "FTP"),
+            ("sftp", "SFTP"),
+            ("api", "API Webhook"),
         ],
-        default='download'
+        default="download",
     )
-    delivery_config = models.JSONField(default=dict, blank=True)  # FTP credentials, email, etc.
+    delivery_config = models.JSONField(
+        default=dict, blank=True
+    )  # FTP credentials, email, etc.
 
     # Options
     include_images = models.BooleanField(default=False)
@@ -90,11 +96,11 @@ class DataFeed(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        db_table = 'data_feeds'
-        ordering = ['customer', 'name']
+        db_table = "data_feeds"
+        ordering = ["customer", "name"]
         indexes = [
-            models.Index(fields=['customer', 'is_active']),
-            models.Index(fields=['frequency', 'is_active']),
+            models.Index(fields=["customer", "is_active"]),
+            models.Index(fields=["frequency", "is_active"]),
         ]
 
     def __str__(self):
@@ -102,24 +108,24 @@ class DataFeed(models.Model):
 
     def get_next_run_time(self):
         """Calculate next scheduled run time"""
-        if self.frequency == 'manual' or not self.is_active:
+        if self.frequency == "manual" or not self.is_active:
             return None
 
         now = timezone.now()
 
-        if self.frequency == 'hourly':
+        if self.frequency == "hourly":
             return now + timedelta(hours=1)
-        elif self.frequency == 'daily' and self.schedule_time:
+        elif self.frequency == "daily" and self.schedule_time:
             next_run = timezone.datetime.combine(now.date(), self.schedule_time)
             if next_run <= now:
                 next_run += timedelta(days=1)
             return next_run
-        elif self.frequency == 'weekly' and self.schedule_day is not None:
+        elif self.frequency == "weekly" and self.schedule_day is not None:
             days_ahead = self.schedule_day - now.weekday()
             if days_ahead <= 0:
                 days_ahead += 7
             return now + timedelta(days=days_ahead)
-        elif self.frequency == 'monthly' and self.schedule_day:
+        elif self.frequency == "monthly" and self.schedule_day:
             # Handle month-end cases
             next_month = now.replace(day=1) + timedelta(days=32)
             next_month = next_month.replace(day=1)
@@ -134,7 +140,10 @@ class DataFeed(models.Model):
 
 class FeedGeneration(models.Model):
     """Track individual feed generation instances"""
-    feed = models.ForeignKey(DataFeed, on_delete=models.CASCADE, related_name='generations')
+
+    feed = models.ForeignKey(
+        DataFeed, on_delete=models.CASCADE, related_name="generations"
+    )
 
     # Generation details
     generation_id = models.UUIDField(default=uuid.uuid4, unique=True)
@@ -145,14 +154,14 @@ class FeedGeneration(models.Model):
     status = models.CharField(
         max_length=20,
         choices=[
-            ('pending', 'Pending'),
-            ('generating', 'Generating'),
-            ('generated', 'Generated'),
-            ('delivering', 'Delivering'),
-            ('completed', 'Completed'),
-            ('failed', 'Failed'),
+            ("pending", "Pending"),
+            ("generating", "Generating"),
+            ("generated", "Generated"),
+            ("delivering", "Delivering"),
+            ("completed", "Completed"),
+            ("failed", "Failed"),
         ],
-        default='pending'
+        default="pending",
     )
 
     # File info
@@ -173,12 +182,12 @@ class FeedGeneration(models.Model):
     metadata = models.JSONField(default=dict, blank=True)
 
     class Meta:
-        db_table = 'feed_generations'
-        ordering = ['-started_at']
+        db_table = "feed_generations"
+        ordering = ["-started_at"]
         indexes = [
-            models.Index(fields=['feed', 'started_at']),
-            models.Index(fields=['generation_id']),
-            models.Index(fields=['status']),
+            models.Index(fields=["feed", "started_at"]),
+            models.Index(fields=["generation_id"]),
+            models.Index(fields=["status"]),
         ]
 
     def __str__(self):
@@ -194,56 +203,59 @@ class FeedGeneration(models.Model):
 
 class FeedSubscription(models.Model):
     """Customer subscriptions to specific data changes"""
+
     customer = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name='feed_subscriptions'
+        related_name="feed_subscriptions",
     )
 
     # Subscription type
     subscription_type = models.CharField(
         max_length=30,
         choices=[
-            ('new_products', 'New Products'),
-            ('price_changes', 'Price Changes'),
-            ('inventory_updates', 'Inventory Updates'),
-            ('product_updates', 'Product Updates'),
-            ('new_assets', 'New Assets'),
-            ('discontinued', 'Discontinued Products'),
-        ]
+            ("new_products", "New Products"),
+            ("price_changes", "Price Changes"),
+            ("inventory_updates", "Inventory Updates"),
+            ("product_updates", "Product Updates"),
+            ("new_assets", "New Assets"),
+            ("discontinued", "Discontinued Products"),
+        ],
     )
 
     # Filters
-    categories = models.ManyToManyField('products.Category', blank=True)
-    brands = models.ManyToManyField('products.Brand', blank=True)
-    specific_products = models.ManyToManyField('products.Product', blank=True)
+    categories = models.ManyToManyField("products.Category", blank=True)
+    brands = models.ManyToManyField("products.Brand", blank=True)
+    specific_products = models.ManyToManyField("products.Product", blank=True)
 
     # Notification settings
     is_active = models.BooleanField(default=True)
     notification_method = models.CharField(
         max_length=20,
         choices=[
-            ('email', 'Email'),
-            ('webhook', 'Webhook'),
-            ('in_app', 'In-App Notification'),
+            ("email", "Email"),
+            ("webhook", "Webhook"),
+            ("in_app", "In-App Notification"),
         ],
-        default='email'
+        default="email",
     )
     notification_config = models.JSONField(default=dict, blank=True)
 
     # Frequency limiting
-    min_interval_hours = models.IntegerField(default=24)  # Minimum hours between notifications
+    min_interval_hours = models.IntegerField(
+        default=24
+    )  # Minimum hours between notifications
     last_notified = models.DateTimeField(null=True, blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        db_table = 'feed_subscriptions'
-        unique_together = [['customer', 'subscription_type']]
+        db_table = "feed_subscriptions"
+        unique_together = [["customer", "subscription_type"]]
         indexes = [
-            models.Index(fields=['customer', 'is_active']),
-            models.Index(fields=['subscription_type', 'is_active']),
+            models.Index(fields=["customer", "is_active"]),
+            models.Index(fields=["subscription_type", "is_active"]),
         ]
 
     def __str__(self):
@@ -260,10 +272,9 @@ class FeedSubscription(models.Model):
 
 class ChangeNotification(models.Model):
     """Track notifications sent for data changes"""
+
     subscription = models.ForeignKey(
-        FeedSubscription,
-        on_delete=models.CASCADE,
-        related_name='notifications'
+        FeedSubscription, on_delete=models.CASCADE, related_name="notifications"
     )
 
     # Notification details
@@ -279,12 +290,12 @@ class ChangeNotification(models.Model):
     delivery_status = models.CharField(
         max_length=20,
         choices=[
-            ('pending', 'Pending'),
-            ('sent', 'Sent'),
-            ('delivered', 'Delivered'),
-            ('failed', 'Failed'),
+            ("pending", "Pending"),
+            ("sent", "Sent"),
+            ("delivered", "Delivered"),
+            ("failed", "Failed"),
         ],
-        default='pending'
+        default="pending",
     )
     delivery_details = models.JSONField(default=dict, blank=True)
 
@@ -293,11 +304,11 @@ class ChangeNotification(models.Model):
     clicked_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
-        db_table = 'change_notifications'
-        ordering = ['-sent_at']
+        db_table = "change_notifications"
+        ordering = ["-sent_at"]
         indexes = [
-            models.Index(fields=['subscription', 'sent_at']),
-            models.Index(fields=['notification_id']),
+            models.Index(fields=["subscription", "sent_at"]),
+            models.Index(fields=["notification_id"]),
         ]
 
     def __str__(self):

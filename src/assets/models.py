@@ -1,25 +1,23 @@
 # src/assets/models.py
-import os
 import hashlib
-from django.db import models
+import os
+
+from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
 from django.contrib.postgres.indexes import GinIndex
 from django.core.files.storage import default_storage
-from taggit.managers import TaggableManager
-from django.conf import settings
+from django.db import models
 from django.utils import timezone
+from taggit.managers import TaggableManager
 
 
 class AssetCategory(models.Model):
     """Categories for organizing assets"""
+
     name = models.CharField(max_length=100)
     slug = models.SlugField(max_length=100, unique=True)
     parent = models.ForeignKey(
-        'self',
-        null=True,
-        blank=True,
-        on_delete=models.CASCADE,
-        related_name='children'
+        "self", null=True, blank=True, on_delete=models.CASCADE, related_name="children"
     )
     description = models.TextField(blank=True)
     icon = models.CharField(max_length=50, blank=True)
@@ -29,21 +27,19 @@ class AssetCategory(models.Model):
     # Access control
     requires_permission = models.BooleanField(default=False)
     allowed_roles = ArrayField(
-        models.CharField(max_length=20),
-        default=list,
-        blank=True
+        models.CharField(max_length=20), default=list, blank=True
     )
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        db_table = 'asset_categories'
-        ordering = ['sort_order', 'name']
-        verbose_name_plural = 'Asset Categories'
+        db_table = "asset_categories"
+        ordering = ["sort_order", "name"]
+        verbose_name_plural = "Asset Categories"
         indexes = [
-            models.Index(fields=['slug']),
-            models.Index(fields=['parent']),
+            models.Index(fields=["slug"]),
+            models.Index(fields=["parent"]),
         ]
 
     def __str__(self):
@@ -54,12 +50,13 @@ class AssetCategory(models.Model):
 
 class Asset(models.Model):
     """Main asset model for digital asset management"""
+
     ASSET_TYPES = [
-        ('image', 'Image'),
-        ('video', 'Video'),
-        ('document', 'Document'),
-        ('archive', 'Archive'),
-        ('other', 'Other'),
+        ("image", "Image"),
+        ("video", "Video"),
+        ("document", "Document"),
+        ("archive", "Archive"),
+        ("other", "Other"),
     ]
 
     # Basic info
@@ -74,12 +71,16 @@ class Asset(models.Model):
     mime_type = models.CharField(max_length=100)
 
     # Organization
-    categories = models.ManyToManyField(AssetCategory, related_name='assets', blank=True)
+    categories = models.ManyToManyField(
+        AssetCategory, related_name="assets", blank=True
+    )
     tags = TaggableManager(blank=True)
 
     # Metadata
     metadata = models.JSONField(default=dict, blank=True)  # EXIF and other metadata
-    custom_metadata = models.JSONField(default=dict, blank=True)  # User-defined metadata
+    custom_metadata = models.JSONField(
+        default=dict, blank=True
+    )  # User-defined metadata
 
     # Status
     is_active = models.BooleanField(default=True)
@@ -92,7 +93,7 @@ class Asset(models.Model):
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
-        related_name='assets_created'
+        related_name="assets_created",
     )
 
     # Usage tracking
@@ -101,14 +102,14 @@ class Asset(models.Model):
     last_accessed = models.DateTimeField(null=True, blank=True)
 
     class Meta:
-        db_table = 'assets'
-        ordering = ['-created_at']
+        db_table = "assets"
+        ordering = ["-created_at"]
         indexes = [
-            models.Index(fields=['asset_type']),
-            models.Index(fields=['file_hash']),
-            models.Index(fields=['is_active', 'is_public']),
-            models.Index(fields=['created_at']),
-            GinIndex(fields=['metadata'], name='asset_metadata_gin'),
+            models.Index(fields=["asset_type"]),
+            models.Index(fields=["file_hash"]),
+            models.Index(fields=["is_active", "is_public"]),
+            models.Index(fields=["created_at"]),
+            GinIndex(fields=["metadata"], name="asset_metadata_gin"),
         ]
 
     def __str__(self):
@@ -125,13 +126,13 @@ class Asset(models.Model):
         """Increment download counter"""
         self.download_count += 1
         self.last_accessed = timezone.now()
-        self.save(update_fields=['download_count', 'last_accessed'])
+        self.save(update_fields=["download_count", "last_accessed"])
 
     def increment_view_count(self):
         """Increment view counter"""
         self.view_count += 1
         self.last_accessed = timezone.now()
-        self.save(update_fields=['view_count', 'last_accessed'])
+        self.save(update_fields=["view_count", "last_accessed"])
 
     def get_file_extension(self):
         """Get file extension"""
@@ -140,7 +141,8 @@ class Asset(models.Model):
 
 class AssetFile(models.Model):
     """Actual file storage for assets with versions"""
-    asset = models.ForeignKey(Asset, on_delete=models.CASCADE, related_name='files')
+
+    asset = models.ForeignKey(Asset, on_delete=models.CASCADE, related_name="files")
 
     # File paths
     file_path = models.CharField(max_length=500)
@@ -153,7 +155,7 @@ class AssetFile(models.Model):
 
     # Processing info
     is_processed = models.BooleanField(default=False)
-    processing_status = models.CharField(max_length=50, default='pending')
+    processing_status = models.CharField(max_length=50, default="pending")
     processing_error = models.TextField(blank=True)
 
     # Image specific
@@ -163,11 +165,11 @@ class AssetFile(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        db_table = 'asset_files'
-        ordering = ['-version']
-        unique_together = [['asset', 'version']]
+        db_table = "asset_files"
+        ordering = ["-version"]
+        unique_together = [["asset", "version"]]
         indexes = [
-            models.Index(fields=['asset', 'is_current']),
+            models.Index(fields=["asset", "is_current"]),
         ]
 
     def __str__(self):
@@ -188,21 +190,24 @@ class AssetFile(models.Model):
 
 class ProductAsset(models.Model):
     """Link between products and assets"""
-    product = models.ForeignKey('products.Product', on_delete=models.CASCADE, related_name='assets')
-    asset = models.ForeignKey(Asset, on_delete=models.CASCADE, related_name='products')
+
+    product = models.ForeignKey(
+        "products.Product", on_delete=models.CASCADE, related_name="assets"
+    )
+    asset = models.ForeignKey(Asset, on_delete=models.CASCADE, related_name="products")
 
     # Asset role
     asset_type = models.CharField(
         max_length=50,
         choices=[
-            ('image', 'Product Image'),
-            ('manual', 'Manual'),
-            ('datasheet', 'Data Sheet'),
-            ('installation', 'Installation Guide'),
-            ('marketing', 'Marketing Material'),
-            ('video', 'Video'),
-            ('other', 'Other'),
-        ]
+            ("image", "Product Image"),
+            ("manual", "Manual"),
+            ("datasheet", "Data Sheet"),
+            ("installation", "Installation Guide"),
+            ("marketing", "Marketing Material"),
+            ("video", "Video"),
+            ("other", "Other"),
+        ],
     )
 
     # Display settings
@@ -216,11 +221,11 @@ class ProductAsset(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        db_table = 'product_assets'
-        ordering = ['sort_order', 'created_at']
+        db_table = "product_assets"
+        ordering = ["sort_order", "created_at"]
         indexes = [
-            models.Index(fields=['product', 'asset_type']),
-            models.Index(fields=['is_primary']),
+            models.Index(fields=["product", "asset_type"]),
+            models.Index(fields=["is_primary"]),
         ]
 
     def __str__(self):
@@ -228,30 +233,27 @@ class ProductAsset(models.Model):
 
     def save(self, *args, **kwargs):
         # Ensure only one primary image per product
-        if self.is_primary and self.asset_type == 'image':
+        if self.is_primary and self.asset_type == "image":
             ProductAsset.objects.filter(
-                product=self.product,
-                asset_type='image',
-                is_primary=True
+                product=self.product, asset_type="image", is_primary=True
             ).exclude(pk=self.pk).update(is_primary=False)
         super().save(*args, **kwargs)
 
 
 class AssetCollection(models.Model):
     """Collections for grouping assets"""
+
     name = models.CharField(max_length=255)
     slug = models.SlugField(max_length=255, unique=True)
     description = models.TextField(blank=True)
 
     # Assets in collection
-    assets = models.ManyToManyField(Asset, related_name='collections', blank=True)
+    assets = models.ManyToManyField(Asset, related_name="collections", blank=True)
 
     # Access control
     is_public = models.BooleanField(default=False)
     allowed_users = models.ManyToManyField(
-        settings.AUTH_USER_MODEL,
-        related_name='allowed_collections',
-        blank=True
+        settings.AUTH_USER_MODEL, related_name="allowed_collections", blank=True
     )
 
     # Metadata
@@ -260,7 +262,7 @@ class AssetCollection(models.Model):
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='collection_covers'
+        related_name="collection_covers",
     )
 
     created_at = models.DateTimeField(auto_now_add=True)
@@ -269,15 +271,15 @@ class AssetCollection(models.Model):
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
-        related_name='asset_collections_created'
+        related_name="asset_collections_created",
     )
 
     class Meta:
-        db_table = 'asset_collections'
-        ordering = ['-created_at']
+        db_table = "asset_collections"
+        ordering = ["-created_at"]
         indexes = [
-            models.Index(fields=['slug']),
-            models.Index(fields=['is_public']),
+            models.Index(fields=["slug"]),
+            models.Index(fields=["is_public"]),
         ]
 
     def __str__(self):
@@ -286,8 +288,11 @@ class AssetCollection(models.Model):
 
 class AssetDownload(models.Model):
     """Track asset downloads"""
-    asset = models.ForeignKey(Asset, on_delete=models.CASCADE, related_name='downloads')
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
+
+    asset = models.ForeignKey(Asset, on_delete=models.CASCADE, related_name="downloads")
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True
+    )
 
     # Download info
     ip_address = models.GenericIPAddressField()
@@ -301,11 +306,11 @@ class AssetDownload(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        db_table = 'asset_downloads'
-        ordering = ['-created_at']
+        db_table = "asset_downloads"
+        ordering = ["-created_at"]
         indexes = [
-            models.Index(fields=['asset', 'user']),
-            models.Index(fields=['created_at']),
+            models.Index(fields=["asset", "user"]),
+            models.Index(fields=["created_at"]),
         ]
 
     def __str__(self):

@@ -1,0 +1,447 @@
+<!-- templates/products/detail.html -->
+{% extends 'base.html' %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block title %}{{ product.name }} | {{ product.brand.name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .image-gallery {
+        display: grid;
+        grid-template-columns: 100px 1fr;
+        gap: 1rem;
+        max-height: 500px;
+    }
+
+    .thumbnail-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        overflow-y: auto;
+    }
+
+    .thumbnail {
+        width: 80px;
+        height: 80px;
+        object-fit: cover;
+        border: 2px solid transparent;
+        border-radius: 0.5rem;
+        cursor: pointer;
+        transition: border-color 0.2s;
+    }
+
+    .thumbnail.active {
+        border-color: #2563eb;
+    }
+
+    .main-image {
+        width: 100%;
+        height: 400px;
+        object-fit: cover;
+        border-radius: 0.5rem;
+    }
+
+    .specification-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <!-- Breadcrumb -->
+    <nav class="mb-8 text-sm">
+        <ol class="flex items-center space-x-2 text-gray-500">
+            <li><a href="{% url 'products:catalog' %}" class="hover:text-blue-600">Products</a></li>
+            <li><i class="fas fa-chevron-right text-xs"></i></li>
+            {% if product.categories.first %}
+                <li><a href="{% url 'products:catalog' %}?category={{ product.categories.first.id }}" class="hover:text-blue-600">{{ product.categories.first.name }}</a></li>
+                <li><i class="fas fa-chevron-right text-xs"></i></li>
+            {% endif %}
+            <li class="text-gray-900">{{ product.name }}</li>
+        </ol>
+    </nav>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-12">
+        <!-- Image Gallery -->
+        <div>
+            {% if product.asset_links.exists %}
+                <div class="image-gallery">
+                    <!-- Thumbnails -->
+                    <div class="thumbnail-list">
+                        {% for asset_link in product.asset_links.all %}
+                            {% if asset_link.asset.is_image %}
+                                <img src="{{ asset_link.asset.thumbnail_url }}"
+                                     alt="{{ asset_link.asset.title }}"
+                                     class="thumbnail {% if forloop.first %}active{% endif %}"
+                                     onclick="changeMainImage('{{ asset_link.asset.file.url }}', this)">
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+
+                    <!-- Main Image -->
+                    <div>
+                        {% with first_image=product.asset_links.first.asset %}
+                            <img id="main-image"
+                                 src="{{ first_image.file.url }}"
+                                 alt="{{ product.name }}"
+                                 class="main-image">
+                        {% endwith %}
+                    </div>
+                </div>
+            {% else %}
+                <div class="w-full h-400 bg-gray-200 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-image text-gray-400 text-6xl"></i>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Product Information -->
+        <div>
+            <!-- Header -->
+            <div class="mb-6">
+                <div class="mb-2">
+                    <span class="text-sm text-gray-500 uppercase tracking-wide">{{ product.brand.name }}</span>
+                </div>
+                <h1 class="text-3xl font-bold text-gray-900 mb-4">{{ product.name }}</h1>
+
+                <!-- Status Badges -->
+                <div class="flex space-x-2 mb-4">
+                    {% if not product.is_active %}
+                        <span class="bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm">Discontinued</span>
+                    {% elif product.stock_quantity <= 0 %}
+                        <span class="bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm">Out of Stock</span>
+                    {% elif product.stock_quantity <= product.low_stock_threshold %}
+                        <span class="bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-sm">Low Stock</span>
+                    {% else %}
+                        <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm">In Stock</span>
+                    {% endif %}
+
+                    {% if product.is_featured %}
+                        <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm">Featured</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Pricing -->
+            <div class="mb-8">
+                <div class="flex items-baseline space-x-4 mb-2">
+                    {% if user.is_authenticated and user.is_customer %}
+                        <!-- Customer pricing -->
+                        {% if customer_price %}
+                            <span class="text-3xl font-bold text-green-600">${{ customer_price }}</span>
+                            <span class="text-lg text-gray-500 line-through">${{ product.retail_price }}</span>
+                            <span class="bg-green-100 text-green-800 px-2 py-1 rounded text-sm">Your Price</span>
+                        {% else %}
+                            <span class="text-3xl font-bold text-gray-900">${{ product.retail_price }}</span>
+                        {% endif %}
+                    {% else %}
+                        <span class="text-3xl font-bold text-gray-900">${{ product.retail_price }}</span>
+                    {% endif %}
+
+                    {% if product.msrp and product.msrp > product.retail_price %}
+                        <span class="text-lg text-gray-500 line-through">MSRP: ${{ product.msrp }}</span>
+                    {% endif %}
+                </div>
+
+                {% if product.cost %}
+                    <p class="text-sm text-gray-600">SKU: {{ product.sku }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Description -->
+            {% if product.description %}
+                <div class="mb-8">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-3">Description</h3>
+                    <p class="text-gray-700 leading-relaxed">{{ product.description|linebreaks }}</p>
+                </div>
+            {% endif %}
+
+            <!-- Categories and Tags -->
+            <div class="mb-8">
+                <div class="flex flex-wrap gap-2">
+                    {% for category in product.categories.all %}
+                        <a href="{% url 'products:catalog' %}?category={{ category.id }}"
+                           class="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-sm hover:bg-gray-200 transition">
+                            {{ category.name }}
+                        </a>
+                    {% endfor %}
+
+                    {% for tag in product.tags.all %}
+                        <a href="{% url 'products:catalog' %}?search={{ tag.name }}"
+                           class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm hover:bg-blue-200 transition">
+                            #{{ tag.name }}
+                        </a>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Stock Information -->
+            <div class="mb-8 p-4 bg-gray-50 rounded-lg">
+                <div class="flex justify-between items-center">
+                    <span class="text-gray-700">Stock Quantity:</span>
+                    <span class="font-semibold {% if product.stock_quantity <= 0 %}text-red-600{% elif product.stock_quantity <= product.low_stock_threshold %}text-orange-600{% else %}text-green-600{% endif %}">
+                        {{ product.stock_quantity }} units
+                    </span>
+                </div>
+
+                {% if product.location %}
+                    <div class="flex justify-between items-center mt-2">
+                        <span class="text-gray-700">Location:</span>
+                        <span class="text-gray-900">{{ product.location }}</span>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Actions -->
+            <div class="flex space-x-4">
+                {% if user.is_authenticated %}
+                    {% if user.is_employee %}
+                        <a href="{% url 'products:edit' product.pk %}"
+                           class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition flex items-center">
+                            <i class="fas fa-edit mr-2"></i>Edit Product
+                        </a>
+                        <a href="{% url 'products:assets' product.pk %}"
+                           class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition flex items-center">
+                            <i class="fas fa-images mr-2"></i>Manage Assets
+                        </a>
+                    {% else %}
+                        <button class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition flex items-center">
+                            <i class="fas fa-shopping-cart mr-2"></i>Add to Quote
+                        </button>
+                    {% endif %}
+                {% endif %}
+
+                <button onclick="sharePage()"
+                        class="bg-gray-600 text-white px-6 py-3 rounded-lg hover:bg-gray-700 transition flex items-center">
+                    <i class="fas fa-share mr-2"></i>Share
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabs Section -->
+    <div class="mb-12">
+        <div class="border-b border-gray-200 mb-6">
+            <nav class="-mb-px flex space-x-8">
+                <button onclick="showTab('specifications')"
+                        class="tab-button py-2 px-1 border-b-2 border-blue-600 text-blue-600 font-medium text-sm">
+                    Specifications
+                </button>
+                <button onclick="showTab('fitment')"
+                        class="tab-button py-2 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 font-medium text-sm">
+                    Vehicle Fitment
+                </button>
+                <button onclick="showTab('assets')"
+                        class="tab-button py-2 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 font-medium text-sm">
+                    Documents & Media
+                </button>
+            </nav>
+        </div>
+
+        <!-- Specifications Tab -->
+        <div id="specifications-tab" class="tab-content">
+            <div class="specification-grid">
+                {% if product.weight %}
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h4 class="font-semibold text-gray-900 mb-2">Weight</h4>
+                        <p class="text-gray-700">{{ product.weight }} lbs</p>
+                    </div>
+                {% endif %}
+
+                {% if product.dimensions %}
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h4 class="font-semibold text-gray-900 mb-2">Dimensions</h4>
+                        <p class="text-gray-700">{{ product.dimensions }}</p>
+                    </div>
+                {% endif %}
+
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <h4 class="font-semibold text-gray-900 mb-2">SKU</h4>
+                    <p class="text-gray-700">{{ product.sku }}</p>
+                </div>
+
+                {% if product.upc %}
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h4 class="font-semibold text-gray-900 mb-2">UPC</h4>
+                        <p class="text-gray-700">{{ product.upc }}</p>
+                    </div>
+                {% endif %}
+
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <h4 class="font-semibold text-gray-900 mb-2">Brand</h4>
+                    <p class="text-gray-700">{{ product.brand.name }}</p>
+                </div>
+
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <h4 class="font-semibold text-gray-900 mb-2">Status</h4>
+                    <p class="text-gray-700">
+                        {% if product.is_active %}Active{% else %}Discontinued{% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Vehicle Fitment Tab -->
+        <div id="fitment-tab" class="tab-content hidden">
+            {% if product.fitments.exists %}
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Year Range</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Make</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Model</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Engine</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            {% for fitment in product.fitments.all %}
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        {{ fitment.year_start }}{% if fitment.year_end %} - {{ fitment.year_end }}{% endif %}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ fitment.make }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ fitment.model }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ fitment.engine|default:"-" }}</td>
+                                    <td class="px-6 py-4 text-sm text-gray-900">{{ fitment.notes|default:"-" }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-8">
+                    <i class="fas fa-car text-gray-400 text-4xl mb-4"></i>
+                    <p class="text-gray-500">No vehicle fitment information available.</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Assets Tab -->
+        <div id="assets-tab" class="tab-content hidden">
+            {% if product.asset_links.exists %}
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {% for asset_link in product.asset_links.all %}
+                        <div class="bg-white border border-gray-200 rounded-lg p-4">
+                            <div class="flex items-center justify-between mb-3">
+                                <h4 class="font-medium text-gray-900">{{ asset_link.asset.title }}</h4>
+                                <i class="fas fa-{{ asset_link.asset.icon }} text-gray-400"></i>
+                            </div>
+
+                            {% if asset_link.asset.is_image %}
+                                <img src="{{ asset_link.asset.thumbnail_url }}"
+                                     alt="{{ asset_link.asset.title }}"
+                                     class="w-full h-32 object-cover rounded mb-3">
+                            {% endif %}
+
+                            <p class="text-sm text-gray-600 mb-3">{{ asset_link.asset.description|truncatewords:10 }}</p>
+
+                            <div class="flex justify-between items-center text-xs text-gray-500">
+                                <span>{{ asset_link.asset.file_size_human }}</span>
+                                <a href="{{ asset_link.asset.file.url }}"
+                                   target="_blank"
+                                   class="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 transition">
+                                    Download
+                                </a>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center py-8">
+                    <i class="fas fa-file text-gray-400 text-4xl mb-4"></i>
+                    <p class="text-gray-500">No documents or media available.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Related Products -->
+    {% if related_products %}
+        <div class="border-t border-gray-200 pt-12">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6">Related Products</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                {% for related in related_products %}
+                    <div class="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition">
+                        {% if related.primary_image %}
+                            <img src="{{ related.primary_image.thumbnail_url }}"
+                                 alt="{{ related.name }}"
+                                 class="w-full h-48 object-cover">
+                        {% else %}
+                            <div class="w-full h-48 bg-gray-200 flex items-center justify-center">
+                                <i class="fas fa-image text-gray-400 text-2xl"></i>
+                            </div>
+                        {% endif %}
+
+                        <div class="p-4">
+                            <h3 class="font-semibold text-gray-900 mb-2 line-clamp-2">
+                                <a href="{% url 'products:detail' related.pk %}" class="hover:text-blue-600">
+                                    {{ related.name }}
+                                </a>
+                            </h3>
+                            <p class="text-lg font-bold text-gray-900">${{ related.retail_price }}</p>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Image gallery functionality
+    function changeMainImage(src, thumbnail) {
+        document.getElementById('main-image').src = src;
+
+        // Update active thumbnail
+        document.querySelectorAll('.thumbnail').forEach(thumb => {
+            thumb.classList.remove('active');
+        });
+        thumbnail.classList.add('active');
+    }
+
+    // Tab functionality
+    function showTab(tabName) {
+        // Hide all tab contents
+        document.querySelectorAll('.tab-content').forEach(tab => {
+            tab.classList.add('hidden');
+        });
+
+        // Reset all tab buttons
+        document.querySelectorAll('.tab-button').forEach(button => {
+            button.classList.remove('border-blue-600', 'text-blue-600');
+            button.classList.add('border-transparent', 'text-gray-500');
+        });
+
+        // Show selected tab content
+        document.getElementById(tabName + '-tab').classList.remove('hidden');
+
+        // Activate selected tab button
+        event.target.classList.remove('border-transparent', 'text-gray-500');
+        event.target.classList.add('border-blue-600', 'text-blue-600');
+    }
+
+    // Share functionality
+    function sharePage() {
+        if (navigator.share) {
+            navigator.share({
+                title: '{{ product.name }} | {{ product.brand.name }}',
+                text: '{{ product.description|truncatewords:20 }}',
+                url: window.location.href
+            });
+        } else {
+            // Fallback: copy to clipboard
+            navigator.clipboard.writeText(window.location.href).then(() => {
+                alert('Link copied to clipboard!');
+            });
+        }
+    }
+</script>
+{% endblock %}

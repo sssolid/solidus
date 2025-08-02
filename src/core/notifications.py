@@ -1,7 +1,8 @@
 # src/core/notifications.py
-from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
 from django.db import models
+
 from .models import Notification
 
 
@@ -26,7 +27,7 @@ class NotificationService:
             notification_type=notification_type,
             title=title,
             message=message,
-            **kwargs
+            **kwargs,
         )
 
         # Send through WebSocket if user is connected
@@ -41,23 +42,20 @@ class NotificationService:
 
         # Prepare notification data
         notification_data = {
-            'id': notification.id,
-            'type': notification.notification_type,
-            'title': notification.title,
-            'message': notification.message,
-            'created_at': notification.created_at.isoformat(),
-            'is_read': notification.is_read,
-            'action_url': notification.action_url,
-            'action_label': notification.action_label,
+            "id": notification.id,
+            "type": notification.notification_type,
+            "title": notification.title,
+            "message": notification.message,
+            "created_at": notification.created_at.isoformat(),
+            "is_read": notification.is_read,
+            "action_url": notification.action_url,
+            "action_label": notification.action_label,
         }
 
         # Send to user's group
         async_to_sync(channel_layer.group_send)(
             f"user_{user.id}",
-            {
-                'type': 'notification_message',
-                'notification': notification_data
-            }
+            {"type": "notification_message", "notification": notification_data},
         )
 
     @staticmethod
@@ -69,12 +67,12 @@ class NotificationService:
             async_to_sync(channel_layer.group_send)(
                 f"user_{user.id}",
                 {
-                    'type': 'bulk_update',
-                    'entity': entity,
-                    'action': action,
-                    'count': count,
-                    'details': details or {}
-                }
+                    "type": "bulk_update",
+                    "entity": entity,
+                    "action": action,
+                    "count": count,
+                    "details": details or {},
+                },
             )
 
     @staticmethod
@@ -85,12 +83,12 @@ class NotificationService:
         async_to_sync(channel_layer.group_send)(
             f"user_{user.id}",
             {
-                'type': 'feed_status',
-                'feed_id': str(feed_id),
-                'status': status,
-                'progress': progress,
-                'message': message
-            }
+                "type": "feed_status",
+                "feed_id": str(feed_id),
+                "status": status,
+                "progress": progress,
+                "message": message,
+            },
         )
 
     @staticmethod
@@ -101,44 +99,46 @@ class NotificationService:
         # If no specific users, notify all employees and subscribed customers
         if users is None:
             users = User.objects.filter(
-                models.Q(role__in=['admin', 'employee']) |
-                models.Q(
-                    feed_subscriptions__subscription_type='product_updates',
+                models.Q(role__in=["admin", "employee"])
+                | models.Q(
+                    feed_subscriptions__subscription_type="product_updates",
                     feed_subscriptions__is_active=True,
-                    feed_subscriptions__specific_products=product
+                    feed_subscriptions__specific_products=product,
                 )
             ).distinct()
 
         for user in users:
-            if user.get_notification_preference('product_updates'):
+            if user.get_notification_preference("product_updates"):
                 NotificationService.send_notification(
                     user=user,
-                    notification_type='product_update',
+                    notification_type="product_update",
                     title=f"Product Updated: {product.name}",
                     message=f"The product {product.sku} has been updated.",
                     content_object=product,
                     action_url=f"/products/{product.id}/",
-                    action_label="View Product"
+                    action_label="View Product",
                 )
 
     @staticmethod
     def notify_price_change(product, old_price, new_price, affected_users):
         """Notify about price changes"""
         for user in affected_users:
-            if user.get_notification_preference('price_changes'):
+            if user.get_notification_preference("price_changes"):
                 NotificationService.send_notification(
                     user=user,
-                    notification_type='price_change',
+                    notification_type="price_change",
                     title=f"Price Change: {product.name}",
                     message=f"Price changed from ${old_price} to ${new_price}",
                     content_object=product,
                     metadata={
-                        'old_price': str(old_price),
-                        'new_price': str(new_price),
-                        'change_percentage': round(((new_price - old_price) / old_price) * 100, 2)
+                        "old_price": str(old_price),
+                        "new_price": str(new_price),
+                        "change_percentage": round(
+                            ((new_price - old_price) / old_price) * 100, 2
+                        ),
                     },
                     action_url=f"/products/{product.id}/",
-                    action_label="View Product"
+                    action_label="View Product",
                 )
 
     @staticmethod
@@ -149,27 +149,29 @@ class NotificationService:
         if users is None:
             # Notify employees and customers with access to the asset's categories
             users = User.objects.filter(
-                models.Q(role__in=['admin', 'employee']) |
-                models.Q(
-                    feed_subscriptions__subscription_type='new_assets',
-                    feed_subscriptions__is_active=True
+                models.Q(role__in=["admin", "employee"])
+                | models.Q(
+                    feed_subscriptions__subscription_type="new_assets",
+                    feed_subscriptions__is_active=True,
                 )
             ).distinct()
 
         for user in users:
             # Check if user can access this asset category
             categories = asset.categories.all()
-            can_access = any(user.can_access_asset_category(cat.slug) for cat in categories)
+            can_access = any(
+                user.can_access_asset_category(cat.slug) for cat in categories
+            )
 
-            if can_access and user.get_notification_preference('new_assets'):
+            if can_access and user.get_notification_preference("new_assets"):
                 NotificationService.send_notification(
                     user=user,
-                    notification_type='new_asset',
+                    notification_type="new_asset",
                     title=f"New Asset Available: {asset.title}",
                     message=f"A new {asset.asset_type} has been added to the system.",
                     content_object=asset,
                     action_url=f"/assets/{asset.id}/",
-                    action_label="View Asset"
+                    action_label="View Asset",
                 )
 
     @staticmethod
@@ -177,18 +179,18 @@ class NotificationService:
         """Notify when a data feed is ready"""
         user = feed_generation.feed.customer
 
-        if user.get_notification_preference('feed_ready'):
+        if user.get_notification_preference("feed_ready"):
             NotificationService.send_notification(
                 user=user,
-                notification_type='feed_ready',
+                notification_type="feed_ready",
                 title=f"Data Feed Ready: {feed_generation.feed.name}",
                 message=f"Your {feed_generation.feed.get_feed_type_display()} feed is ready for download.",
                 content_object=feed_generation,
                 metadata={
-                    'feed_id': str(feed_generation.generation_id),
-                    'row_count': feed_generation.row_count,
-                    'file_size': feed_generation.file_size
+                    "feed_id": str(feed_generation.generation_id),
+                    "row_count": feed_generation.row_count,
+                    "file_size": feed_generation.file_size,
                 },
                 action_url=f"/feeds/download/{feed_generation.generation_id}/",
-                action_label="Download Feed"
+                action_label="Download Feed",
             )
