@@ -1,4 +1,4 @@
-# audit/middleware.py
+# src/audit/middleware.py
 import uuid
 import json
 from django.utils.deprecation import MiddlewareMixin

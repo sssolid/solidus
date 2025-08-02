@@ -1,4 +1,4 @@
-# products/urls.py
+# src/products/urls.py
 from django.urls import path
 from . import views
 
@@ -6,11 +6,11 @@ app_name = 'products'
 
 urlpatterns = [
     # Product catalog (customer view)
-    path('catalog/', views.ProductCatalogView.as_view(), name='catalog'),
-    path('catalog/<int:pk>/', views.ProductDetailView.as_view(), name='detail'),
+    path('', views.ProductCatalogView.as_view(), name='catalog'),
+    path('<int:pk>/', views.ProductDetailView.as_view(), name='detail'),
 
     # Product management (admin/employee)
-    path('', views.ProductListView.as_view(), name='list'),
+    path('manage/', views.ProductListView.as_view(), name='list'),
     path('create/', views.ProductCreateView.as_view(), name='create'),
     path('<int:pk>/edit/', views.ProductEditView.as_view(), name='edit'),
     path('<int:pk>/delete/', views.product_delete, name='delete'),
@@ -27,7 +27,7 @@ urlpatterns = [
 
     # Customer pricing
     path('<int:pk>/pricing/', views.ProductPricingView.as_view(), name='pricing'),
-    path('pricing/<int:pk>/edit/', views.edit_customer_price, name='edit_price'),
+    path('pricing/<int:pk>/edit/', views.edit_customer_price, name='edit_pricing'),
 
     # Categories
     path('categories/', views.CategoryListView.as_view(), name='category_list'),

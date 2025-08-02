@@ -1,4 +1,4 @@
-# assets/utils.py
+# src/assets/utils.py
 import os
 import subprocess
 import json
@@ -382,7 +382,7 @@ class BulkAssetProcessor:
                     temp_path.unlink(missing_ok=True)
 
                 # Queue for processing
-                from src.core.models import TaskQueue
+                from core.models import TaskQueue
                 TaskQueue.objects.create(
                     task_type='asset_processing',
                     task_data={

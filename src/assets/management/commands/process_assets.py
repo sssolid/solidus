@@ -1,9 +1,9 @@
-# assets/management/commands/process_assets.py
+# src/assets/management/commands/process_assets.py
 from django.core.management.base import BaseCommand
 from django.utils import timezone
-from src.core.models import TaskQueue
-from src.assets.models import AssetFile
-from src.assets.utils import AssetFileHandler
+from core.models import TaskQueue
+from assets.models import AssetFile
+from assets.utils import AssetFileHandler
 import logging
 
 logger = logging.getLogger('solidus.assets')

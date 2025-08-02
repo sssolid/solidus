@@ -3,22 +3,27 @@ FROM python:3.12-slim
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
+ENV DEBIAN_FRONTEND=noninteractive
 
 ENV PYTHONPATH="/app/src"
 
+# Set work directory
+WORKDIR /app
+
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
-    postgresql-client \
     build-essential \
+    postgresql-client \
     libpq-dev \
     imagemagick \
-    libimage-exiftool-perl \
+    libmagick++-dev \
+    exiftool \
+    nginx \
+    supervisor \
     curl \
+    wget \
     git \
-  && rm -rf /var/lib/apt/lists/*
-
-# Create app directory
-WORKDIR /app
+    && rm -rf /var/lib/apt/lists/*
 
 # Install uv (and make it globally available)
 RUN curl -Ls https://astral.sh/uv/install.sh | bash && \

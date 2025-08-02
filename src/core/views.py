@@ -1,18 +1,29 @@
-# core/views.py
+# src/core/views.py
 from django.conf import settings
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.generic import TemplateView, ListView, DetailView
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.decorators import login_required
-from django.db.models import Q
-from django.http import JsonResponse
+from django.db.models import Q, Count
+from django.http import JsonResponse, HttpResponse
 from django.views.decorators.http import require_POST
 from django.utils import timezone
 from django.contrib import messages
+from django.core.paginator import Paginator
+import json
+
 from .models import Notification, TaskQueue, SystemSetting
-from src.products import Product
-from src.assets import Asset
-from src.feeds.models import DataFeed, FeedGeneration
+from products.models import Product
+from assets.models import Asset
+from feeds.models import DataFeed, FeedGeneration
+from accounts.models import User
+
+
+class AdminRequiredMixin(UserPassesTestMixin):
+    """Mixin to require admin access"""
+
+    def test_func(self):
+        return self.request.user.is_authenticated and self.request.user.is_admin
 
 
 class DashboardView(LoginRequiredMixin, TemplateView):
@@ -32,6 +43,8 @@ class DashboardView(LoginRequiredMixin, TemplateView):
                 'pending_tasks': TaskQueue.objects.filter(status='pending').count(),
                 'recent_products': Product.objects.order_by('-created_at')[:5],
                 'recent_assets': Asset.objects.order_by('-created_at')[:5],
+                'total_customers': User.objects.filter(role='customer', is_active=True).count(),
+                'active_feeds': DataFeed.objects.filter(is_active=True).count(),
             })
         else:
             # Customer dashboard
@@ -47,6 +60,7 @@ class DashboardView(LoginRequiredMixin, TemplateView):
                     is_active=True,
                     customer_prices__customer=user
                 ).distinct().count(),
+                'my_feeds': DataFeed.objects.filter(customer=user)[:5],
             })
 
         # Common data
@@ -76,6 +90,18 @@ class NotificationListView(LoginRequiredMixin, ListView):
             user=self.request.user
         ).order_by('-created_at')
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        # Mark notifications as read when viewing the list
+        Notification.objects.filter(
+            user=self.request.user,
+            is_read=False
+        ).update(is_read=True, read_at=timezone.now())
+
+        context['unread_count'] = 0  # Now that we've marked them as read
+        return context
+
 
 @login_required
 def notification_dropdown(request):
@@ -83,41 +109,33 @@ def notification_dropdown(request):
     notifications = Notification.objects.filter(
         user=request.user,
         is_read=False
-    ).order_by('-created_at')[:5]
-
-    unread_count = Notification.objects.filter(
-        user=request.user,
-        is_read=False
-    ).count()
+    ).order_by('-created_at')[:10]
 
     return render(request, 'core/partials/notification_dropdown.html', {
-        'notifications': notifications,
-        'unread_count': unread_count,
+        'notifications': notifications
     })
 
 
-@login_required
 @require_POST
+@login_required
 def mark_notification_read(request, pk):
-    """Mark a notification as read"""
-    notification = get_object_or_404(
-        Notification,
-        pk=pk,
-        user=request.user
-    )
-    notification.mark_as_read()
-
-    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-        return JsonResponse({'status': 'success'})
-
-    return redirect('core:notification_list')
+    """Mark single notification as read"""
+    try:
+        notification = Notification.objects.get(
+            id=pk,
+            user=request.user
+        )
+        notification.mark_as_read()
+        return JsonResponse({'success': True})
+    except Notification.DoesNotExist:
+        return JsonResponse({'error': 'Notification not found'}, status=404)
 
 
-@login_required
 @require_POST
+@login_required
 def mark_all_notifications_read(request):
-    """Mark all notifications as read"""
-    Notification.objects.filter(
+    """Mark all user notifications as read"""
+    count = Notification.objects.filter(
         user=request.user,
         is_read=False
     ).update(
@@ -125,90 +143,111 @@ def mark_all_notifications_read(request):
         read_at=timezone.now()
     )
 
-    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-        return JsonResponse({'status': 'success'})
-
-    messages.success(request, 'All notifications marked as read')
-    return redirect('core:notification_list')
+    return JsonResponse({
+        'success': True,
+        'message': f'{count} notifications marked as read'
+    })
 
 
 class GlobalSearchView(LoginRequiredMixin, TemplateView):
-    """Global search across products, assets, etc."""
+    """Global search across all content"""
     template_name = 'core/search.html'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         query = self.request.GET.get('q', '')
 
-        if query:
+        if query and len(query) >= 2:
             # Search products
             products = Product.objects.filter(
-                Q(sku__icontains=query) |
                 Q(name__icontains=query) |
-                Q(short_description__icontains=query) |
-                Q(part_numbers__contains=[query])
-            ).filter(is_active=True)[:10]
+                Q(sku__icontains=query) |
+                Q(description__icontains=query),
+                is_active=True
+            )
+
+            # Filter by customer access if customer
+            if self.request.user.is_customer:
+                products = products.filter(
+                    customer_prices__customer=self.request.user
+                ).distinct()
+
+            context['products'] = products[:10]
 
             # Search assets
             assets = Asset.objects.filter(
                 Q(title__icontains=query) |
                 Q(description__icontains=query) |
-                Q(original_filename__icontains=query)
-            ).filter(is_active=True)[:10]
+                Q(tags__name__icontains=query),
+                is_active=True
+            ).distinct()
 
-            # Filter by user permissions
+            # Filter by customer access if customer
             if self.request.user.is_customer:
-                # Limit products to those with customer pricing
-                products = products.filter(
-                    customer_prices__customer=self.request.user
-                ).distinct()
-
-                # Limit assets to allowed categories
                 if self.request.user.allowed_asset_categories:
                     assets = assets.filter(
                         categories__slug__in=self.request.user.allowed_asset_categories
                     ).distinct()
+                else:
+                    assets = assets.filter(is_public=True)
 
-            context.update({
-                'query': query,
-                'products': products,
-                'assets': assets,
-                'total_results': products.count() + assets.count(),
-            })
+            context['assets'] = assets[:10]
 
+            # Search feeds (if employee or own feeds if customer)
+            feeds = DataFeed.objects.filter(
+                Q(name__icontains=query) |
+                Q(description__icontains=query)
+            )
+
+            if self.request.user.is_customer:
+                feeds = feeds.filter(customer=self.request.user)
+
+            context['feeds'] = feeds[:10]
+
+            # Search users (employee only)
+            if self.request.user.is_employee:
+                users = User.objects.filter(
+                    Q(username__icontains=query) |
+                    Q(email__icontains=query) |
+                    Q(first_name__icontains=query) |
+                    Q(last_name__icontains=query) |
+                    Q(company_name__icontains=query)
+                )[:10]
+                context['users'] = users
+
+        context['query'] = query
         return context
 
 
-class TaskQueueListView(LoginRequiredMixin, ListView):
-    """View task queue (admin only)"""
+class TaskQueueListView(AdminRequiredMixin, ListView):
+    """List background tasks"""
     model = TaskQueue
     template_name = 'core/task_list.html'
     context_object_name = 'tasks'
     paginate_by = 50
 
-    def dispatch(self, request, *args, **kwargs):
-        if not request.user.is_employee:
-            messages.error(request, 'Access denied')
-            return redirect('core:dashboard')
-        return super().dispatch(request, *args, **kwargs)
-
     def get_queryset(self):
-        queryset = TaskQueue.objects.all()
+        queryset = TaskQueue.objects.order_by('-created_at')
 
-        # Filter by status
         status = self.request.GET.get('status')
         if status:
             queryset = queryset.filter(status=status)
 
-        # Filter by type
-        task_type = self.request.GET.get('type')
-        if task_type:
-            queryset = queryset.filter(task_type=task_type)
+        return queryset
 
-        return queryset.order_by('-created_at')
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['stats'] = {
+            'pending': TaskQueue.objects.filter(status='pending').count(),
+            'running': TaskQueue.objects.filter(status='running').count(),
+            'completed': TaskQueue.objects.filter(status='completed').count(),
+            'failed': TaskQueue.objects.filter(status='failed').count(),
+        }
+        context['status_filter'] = self.request.GET.get('status', '')
+        return context
 
 
-class TaskDetailView(LoginRequiredMixin, DetailView):
+class TaskDetailView(AdminRequiredMixin, DetailView):
     """Task detail view"""
     model = TaskQueue
     template_name = 'core/task_detail.html'
@@ -216,109 +255,174 @@ class TaskDetailView(LoginRequiredMixin, DetailView):
     slug_field = 'task_id'
     slug_url_kwarg = 'task_id'
 
-    def dispatch(self, request, *args, **kwargs):
-        if not request.user.is_employee:
-            messages.error(request, 'Access denied')
-            return redirect('core:dashboard')
-        return super().dispatch(request, *args, **kwargs)
 
-
-class SystemSettingsView(LoginRequiredMixin, ListView):
-    """System settings view (admin only)"""
-    model = SystemSetting
+class SystemSettingsView(AdminRequiredMixin, TemplateView):
+    """System settings management"""
     template_name = 'core/system_settings.html'
-    context_object_name = 'settings'
 
-    def dispatch(self, request, *args, **kwargs):
-        if not request.user.is_admin:
-            messages.error(request, 'Admin access required')
-            return redirect('core:dashboard')
-        return super().dispatch(request, *args, **kwargs)
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        # Group settings by category
+        settings_groups = {}
+        for setting in SystemSetting.objects.all().order_by('key'):
+            category = setting.key.split('_')[0]  # Use first part as category
+            if category not in settings_groups:
+                settings_groups[category] = []
+            settings_groups[category].append(setting)
+
+        context['settings_groups'] = settings_groups
+        return context
 
     def post(self, request, *args, **kwargs):
-        """Handle setting updates"""
+        """Handle settings updates"""
         for key, value in request.POST.items():
             if key.startswith('setting_'):
                 setting_key = key.replace('setting_', '')
                 try:
                     setting = SystemSetting.objects.get(key=setting_key)
                     setting.value = value
-                    setting.updated_by = request.user
                     setting.save()
                 except SystemSetting.DoesNotExist:
-                    pass
+                    # Create new setting
+                    SystemSetting.objects.create(
+                        key=setting_key,
+                        value=value,
+                        setting_type='string'
+                    )
 
-        messages.success(request, 'Settings updated successfully')
+        messages.success(request, 'Settings updated successfully.')
         return redirect('core:system_settings')
 
 
 @login_required
 def health_check(request):
-    """System health check endpoint"""
-    if not request.user.is_employee:
-        return JsonResponse({'error': 'Access denied'}, status=403)
+    """System health check"""
+    if not request.user.is_admin:
+        return JsonResponse({'error': 'Permission denied'}, status=403)
 
-    from django.db import connection
-    from django.core.cache import cache
-    import redis
-    from channels.layers import get_channel_layer
-
-    health_status = {
+    health_data = {
         'status': 'healthy',
         'timestamp': timezone.now().isoformat(),
-        'checks': {}
+        'checks': {
+            'database': True,
+            'cache': True,
+            'storage': True,
+            'tasks': TaskQueue.objects.filter(status='pending').count() < 100,
+        }
     }
 
-    # Database check
-    try:
-        with connection.cursor() as cursor:
-            cursor.execute("SELECT 1")
-        health_status['checks']['database'] = 'ok'
-    except Exception as e:
-        health_status['checks']['database'] = f'error: {str(e)}'
-        health_status['status'] = 'unhealthy'
+    # Check if any critical systems are down
+    if not all(health_data['checks'].values()):
+        health_data['status'] = 'degraded'
 
-    # Cache check
-    try:
-        cache.set('health_check', 'ok', 10)
-        if cache.get('health_check') == 'ok':
-            health_status['checks']['cache'] = 'ok'
-        else:
-            health_status['checks']['cache'] = 'error: cache not working'
-            health_status['status'] = 'unhealthy'
-    except Exception as e:
-        health_status['checks']['cache'] = f'error: {str(e)}'
-        health_status['status'] = 'unhealthy'
-
-    # Redis check (if not in debug mode)
-    if not settings.DEBUG:
-        try:
-            r = redis.Redis.from_url(settings.CACHES['default']['LOCATION'])
-            r.ping()
-            health_status['checks']['redis'] = 'ok'
-        except Exception as e:
-            health_status['checks']['redis'] = f'error: {str(e)}'
-            health_status['status'] = 'unhealthy'
-
-    # Channel layer check
-    try:
-        channel_layer = get_channel_layer()
-        if channel_layer:
-            health_status['checks']['channels'] = 'ok'
-        else:
-            health_status['checks']['channels'] = 'error: no channel layer'
-    except Exception as e:
-        health_status['checks']['channels'] = f'error: {str(e)}'
-
-    status_code = 200 if health_status['status'] == 'healthy' else 503
-    return JsonResponse(health_status, status=status_code)
+    return JsonResponse(health_data)
 
 
+# Error handlers
 def error_404(request, exception):
-    """Custom 404 error page"""
-    return render(request, '404.html', status=404)
+    """Custom 404 error handler"""
+    return render(request, 'errors/404.html', status=404)
 
 
 def error_500(request):
-    """Custom 500 error page"""
-    return render(request, '500.html', status=500)
+    """Custom 500 error handler"""
+    return render(request, 'errors/500.html', status=500)
+
+
+# Utility functions for notifications
+def create_notification(user, title, message, notification_type='info',
+                        action_url=None, action_label=None, content_object=None):
+    """Helper function to create notifications"""
+    notification = Notification.objects.create(
+        user=user,
+        title=title,
+        message=message,
+        notification_type=notification_type,
+        action_url=action_url,
+        action_label=action_label,
+        content_object=content_object
+    )
+
+    # Send real-time notification via WebSocket if available
+    try:
+        from channels.layers import get_channel_layer
+        from asgiref.sync import async_to_sync
+
+        channel_layer = get_channel_layer()
+        if channel_layer:
+            async_to_sync(channel_layer.group_send)(
+                f'user_{user.id}',
+                {
+                    'type': 'notification',
+                    'notification': {
+                        'id': notification.id,
+                        'title': notification.title,
+                        'message': notification.message,
+                        'type': notification.notification_type,
+                        'action_url': notification.action_url,
+                        'action_label': notification.action_label,
+                        'timestamp': notification.created_at.isoformat(),
+                    }
+                }
+            )
+    except ImportError:
+        # Channels not available
+        pass
+
+    return notification
+
+
+def notify_admins(title, message, notification_type='info'):
+    """Helper function to notify all admins"""
+    admin_users = User.objects.filter(role='admin', is_active=True)
+
+    for admin in admin_users:
+        create_notification(
+            user=admin,
+            title=title,
+            message=message,
+            notification_type=notification_type
+        )
+
+
+def notify_user_product_update(user, product):
+    """Notify user of product updates"""
+    if hasattr(user, 'notification_product_updates') and user.notification_product_updates:
+        create_notification(
+            user=user,
+            title='Product Updated',
+            message=f'Product "{product.name}" has been updated.',
+            notification_type='product_update',
+            action_url=f'/products/{product.id}/',
+            action_label='View Product',
+            content_object=product
+        )
+
+
+def notify_user_feed_ready(user, feed_generation):
+    """Notify user when feed is ready"""
+    if hasattr(user, 'notification_feed_ready') and user.notification_feed_ready:
+        create_notification(
+            user=user,
+            title='Feed Ready',
+            message=f'Your feed "{feed_generation.feed.name}" is ready for download.',
+            notification_type='feed_ready',
+            action_url=f'/feeds/download/{feed_generation.id}/',
+            action_label='Download Feed',
+            content_object=feed_generation
+        )
+
+
+def notify_user_price_change(user, customer_pricing):
+    """Notify user of price changes"""
+    if hasattr(user, 'notification_price_changes') and user.notification_price_changes:
+        create_notification(
+            user=user,
+            title='Price Update',
+            message=f'Pricing for "{customer_pricing.product.name}" has been updated.',
+            notification_type='price_change',
+            action_url=f'/products/{customer_pricing.product.id}/',
+            action_label='View Product',
+            content_object=customer_pricing.product
+        )

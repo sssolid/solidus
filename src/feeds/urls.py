@@ -1,4 +1,4 @@
-# feeds/urls.py
+# src/feeds/urls.py
 from django.urls import path
 from . import views
 

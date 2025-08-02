@@ -1,114 +1,597 @@
-# products/views.py
-from django.http import HttpResponse
+# src/products/views.py
+from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.views.generic import ListView, DetailView, CreateView, UpdateView
 from django.views import View
-from django.views.generic import TemplateView
+from django.http import JsonResponse, HttpResponse
+from django.contrib import messages
+from django.urls import reverse, reverse_lazy
+from django.db.models import Q, Prefetch
+from django.core.paginator import Paginator
+from django.utils.decorators import method_decorator
+from django.views.decorators.http import require_POST
+
+from .models import Product, Brand, Category, ProductFitment, CustomerPricing
+from .forms import (
+    ProductForm, ProductFitmentForm, BrandForm, CategoryForm,
+    ProductSearchForm
+)
+from assets.models import ProductAsset
+from accounts.forms import CustomerPricingForm
+
+
+class EmployeeRequiredMixin(UserPassesTestMixin):
+    """Mixin to require employee or admin access"""
+
+    def test_func(self):
+        return self.request.user.is_authenticated and self.request.user.is_employee
 
 
 # ----- Product catalog (customer view) -----
-class ProductCatalogView(View):
-    def get(self, request):
-        return HttpResponse("Product catalog view placeholder")
+class ProductCatalogView(LoginRequiredMixin, ListView):
+    """Product catalog view for customers"""
+    model = Product
+    template_name = 'products/catalog.html'
+    context_object_name = 'products'
+    paginate_by = 24
+
+    def get_queryset(self):
+        queryset = Product.objects.filter(is_active=True).select_related('brand').prefetch_related(
+            'categories',
+            'tags',
+            Prefetch(
+                'assets',
+                queryset=ProductAsset.objects.filter(
+                    asset_type='image',
+                    is_primary=True
+                ).select_related('asset')
+            )
+        )
+
+        # Filter by customer access if customer
+        if self.request.user.is_customer:
+            queryset = queryset.filter(
+                customer_prices__customer=self.request.user
+            ).distinct()
+
+        # Apply search and filters
+        form = ProductSearchForm(self.request.GET)
+        if form.is_valid():
+            if form.cleaned_data.get('query'):
+                query = form.cleaned_data['query']
+                queryset = queryset.filter(
+                    Q(name__icontains=query) |
+                    Q(sku__icontains=query) |
+                    Q(description__icontains=query) |
+                    Q(part_numbers__icontains=query) |
+                    Q(oem_numbers__icontains=query)
+                )
+
+            if form.cleaned_data.get('brand'):
+                queryset = queryset.filter(brand=form.cleaned_data['brand'])
+
+            if form.cleaned_data.get('category'):
+                queryset = queryset.filter(categories=form.cleaned_data['category'])
+
+            if form.cleaned_data.get('is_featured'):
+                queryset = queryset.filter(is_featured=True)
+
+            if form.cleaned_data.get('price_min'):
+                queryset = queryset.filter(msrp__gte=form.cleaned_data['price_min'])
+
+            if form.cleaned_data.get('price_max'):
+                queryset = queryset.filter(msrp__lte=form.cleaned_data['price_max'])
+
+        return queryset.distinct()
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['search_form'] = ProductSearchForm(self.request.GET)
+        context['brands'] = Brand.objects.filter(is_active=True)
+        context['categories'] = Category.objects.filter(is_active=True)
+        return context
 
 
-class ProductDetailView(View):
-    def get(self, request, pk):
-        return HttpResponse(f"Product detail view placeholder for product ID {pk}")
+class ProductDetailView(LoginRequiredMixin, DetailView):
+    """Product detail view"""
+    model = Product
+    template_name = 'products/detail.html'
+    context_object_name = 'product'
+
+    def get_queryset(self):
+        queryset = Product.objects.select_related('brand').prefetch_related(
+            'categories',
+            'tags',
+            'assets__asset',
+            'fitments'
+        )
+
+        # Filter by customer access if customer
+        if self.request.user.is_customer:
+            queryset = queryset.filter(
+                customer_prices__customer=self.request.user
+            ).distinct()
+
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        product = self.object
+
+        # Get customer pricing if applicable
+        if self.request.user.is_customer:
+            try:
+                customer_pricing = CustomerPricing.objects.get(
+                    customer=self.request.user,
+                    product=product
+                )
+                context['customer_price'] = customer_pricing.price
+                context['customer_pricing'] = customer_pricing
+            except CustomerPricing.DoesNotExist:
+                pass
+
+        # Get product assets by type
+        context['images'] = product.assets.filter(asset_type='image').order_by('-is_primary', 'sort_order')
+        context['documents'] = product.assets.filter(asset_type__in=['manual', 'datasheet', 'installation'])
+
+        # Get related products
+        context['related_products'] = Product.objects.filter(
+            categories__in=product.categories.all(),
+            is_active=True
+        ).exclude(id=product.id).distinct()[:6]
+
+        return context
 
 
 # ----- Product management (admin/employee) -----
-class ProductListView(View):
-    def get(self, request):
-        return HttpResponse("Product list view placeholder")
+class ProductListView(EmployeeRequiredMixin, ListView):
+    """Product list view for management"""
+    model = Product
+    template_name = 'products/list.html'
+    context_object_name = 'products'
+    paginate_by = 50
+
+    def get_queryset(self):
+        queryset = Product.objects.select_related('brand').prefetch_related('categories')
+
+        # Apply search and filters
+        form = ProductSearchForm(self.request.GET)
+        if form.is_valid():
+            if form.cleaned_data.get('query'):
+                query = form.cleaned_data['query']
+                queryset = queryset.filter(
+                    Q(name__icontains=query) |
+                    Q(sku__icontains=query) |
+                    Q(description__icontains=query)
+                )
+
+            if form.cleaned_data.get('brand'):
+                queryset = queryset.filter(brand=form.cleaned_data['brand'])
+
+            if form.cleaned_data.get('category'):
+                queryset = queryset.filter(categories=form.cleaned_data['category'])
+
+        return queryset.order_by('-created_at')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['search_form'] = ProductSearchForm(self.request.GET)
+        return context
 
 
-class ProductCreateView(View):
-    def get(self, request):
-        return HttpResponse("Product create form placeholder")
+class ProductCreateView(EmployeeRequiredMixin, CreateView):
+    """Create new product"""
+    model = Product
+    form_class = ProductForm
+    template_name = 'products/create.html'
 
-    def post(self, request):
-        return HttpResponse("Handle product create POST placeholder")
+    def form_valid(self, form):
+        form.instance.created_by = self.request.user
+        response = super().form_valid(form)
+        messages.success(self.request, f'Product "{self.object.name}" created successfully.')
+        return response
+
+    def get_success_url(self):
+        return reverse('products:detail', kwargs={'pk': self.object.pk})
 
 
-class ProductEditView(View):
-    def get(self, request, pk):
-        return HttpResponse(f"Edit form for product ID {pk} placeholder")
+class ProductEditView(EmployeeRequiredMixin, UpdateView):
+    """Edit existing product"""
+    model = Product
+    form_class = ProductForm
+    template_name = 'products/edit.html'
 
-    def post(self, request, pk):
-        return HttpResponse(f"Handle product edit POST for product ID {pk} placeholder")
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        messages.success(self.request, f'Product "{self.object.name}" updated successfully.')
+        return response
+
+    def get_success_url(self):
+        return reverse('products:detail', kwargs={'pk': self.object.pk})
 
 
+@require_POST
+@login_required
 def product_delete(request, pk):
-    return HttpResponse(f"Handle product delete for product ID {pk} placeholder")
+    """Delete product"""
+    if not request.user.is_employee:
+        messages.error(request, 'You do not have permission to delete products.')
+        return redirect('products:list')
+
+    product = get_object_or_404(Product, pk=pk)
+    product_name = product.name
+    product.delete()
+    messages.success(request, f'Product "{product_name}" deleted successfully.')
+    return redirect('products:list')
 
 
 # ----- Product assets -----
-class ProductAssetsView(View):
-    def get(self, request, pk):
-        return HttpResponse(f"Product assets view for product ID {pk} placeholder")
+class ProductAssetsView(EmployeeRequiredMixin, DetailView):
+    """Manage product assets"""
+    model = Product
+    template_name = 'products/assets.html'
+    context_object_name = 'product'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        product = self.object
+
+        context['product_assets'] = product.assets.select_related('asset').order_by('-is_primary', 'sort_order')
+        context['available_assets'] = Asset.objects.filter(is_active=True).exclude(
+            id__in=product.assets.values_list('asset_id', flat=True)
+        )
+
+        return context
 
 
+@require_POST
+@login_required
 def add_product_asset(request, pk):
-    return HttpResponse(f"Add product asset for product ID {pk} placeholder")
+    """Add asset to product"""
+    if not request.user.is_employee:
+        return JsonResponse({'error': 'Permission denied'}, status=403)
+
+    product = get_object_or_404(Product, pk=pk)
+    asset_id = request.POST.get('asset_id')
+    asset_type = request.POST.get('asset_type', 'image')
+
+    if not asset_id:
+        return JsonResponse({'error': 'Asset ID required'}, status=400)
+
+    try:
+        from assets.models import Asset
+        asset = Asset.objects.get(id=asset_id)
+
+        product_asset, created = ProductAsset.objects.get_or_create(
+            product=product,
+            asset=asset,
+            defaults={
+                'asset_type': asset_type,
+                'sort_order': 0
+            }
+        )
+
+        if created:
+            return JsonResponse({'success': True, 'message': 'Asset added successfully'})
+        else:
+            return JsonResponse({'error': 'Asset already linked to product'}, status=400)
+
+    except Asset.DoesNotExist:
+        return JsonResponse({'error': 'Asset not found'}, status=404)
 
 
+@require_POST
+@login_required
 def remove_product_asset(request, pk):
-    return HttpResponse(f"Remove product asset ID {pk} placeholder")
+    """Remove asset from product"""
+    if not request.user.is_employee:
+        return JsonResponse({'error': 'Permission denied'}, status=403)
+
+    try:
+        product_asset = get_object_or_404(ProductAsset, pk=pk)
+        product_asset.delete()
+        return JsonResponse({'success': True, 'message': 'Asset removed successfully'})
+    except ProductAsset.DoesNotExist:
+        return JsonResponse({'error': 'Product asset not found'}, status=404)
 
 
 # ----- Vehicle fitment -----
-class ProductFitmentView(View):
-    def get(self, request, pk):
-        return HttpResponse(f"Product fitment view for product ID {pk} placeholder")
+class ProductFitmentView(EmployeeRequiredMixin, DetailView):
+    """Manage product fitments"""
+    model = Product
+    template_name = 'products/fitment.html'
+    context_object_name = 'product'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        product = self.object
+
+        context['fitments'] = product.fitments.all().order_by('year_start', 'make', 'model')
+        context['fitment_form'] = ProductFitmentForm()
+
+        return context
+
+    def post(self, request, *args, **kwargs):
+        """Handle fitment form submission"""
+        self.object = self.get_object()
+        form = ProductFitmentForm(request.POST)
+
+        if form.is_valid():
+            fitment = form.save(commit=False)
+            fitment.product = self.object
+            fitment.save()
+            messages.success(request, 'Fitment added successfully.')
+            return redirect('products:fitment', pk=self.object.pk)
+
+        context = self.get_context_data()
+        context['fitment_form'] = form
+        return render(request, self.template_name, context)
 
 
+@require_POST
+@login_required
 def add_fitment(request, pk):
-    return HttpResponse(f"Add fitment for product ID {pk} placeholder")
+    """Add fitment to product via AJAX"""
+    if not request.user.is_employee:
+        return JsonResponse({'error': 'Permission denied'}, status=403)
+
+    product = get_object_or_404(Product, pk=pk)
+    form = ProductFitmentForm(request.POST)
+
+    if form.is_valid():
+        fitment = form.save(commit=False)
+        fitment.product = product
+        fitment.save()
+        return JsonResponse({
+            'success': True,
+            'message': 'Fitment added successfully',
+            'fitment_id': fitment.id
+        })
+    else:
+        return JsonResponse({'error': 'Invalid fitment data', 'errors': form.errors}, status=400)
 
 
+@require_POST
+@login_required
 def delete_fitment(request, pk):
-    return HttpResponse(f"Delete fitment ID {pk} placeholder")
+    """Delete fitment"""
+    if not request.user.is_employee:
+        return JsonResponse({'error': 'Permission denied'}, status=403)
+
+    try:
+        fitment = get_object_or_404(ProductFitment, pk=pk)
+        fitment.delete()
+        return JsonResponse({'success': True, 'message': 'Fitment deleted successfully'})
+    except ProductFitment.DoesNotExist:
+        return JsonResponse({'error': 'Fitment not found'}, status=404)
 
 
 # ----- Customer pricing -----
-class ProductPricingView(View):
-    def get(self, request, pk):
-        return HttpResponse(f"Product pricing view for product ID {pk} placeholder")
+class ProductPricingView(EmployeeRequiredMixin, DetailView):
+    """Manage customer pricing for product"""
+    model = Product
+    template_name = 'products/pricing.html'
+    context_object_name = 'product'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        product = self.object
+
+        context['customer_prices'] = CustomerPricing.objects.filter(
+            product=product
+        ).select_related('customer')
+
+        return context
 
 
+@login_required
 def edit_customer_price(request, pk):
-    return HttpResponse(f"Edit customer price for product ID {pk} placeholder")
+    """Edit customer pricing"""
+    if not request.user.is_employee:
+        messages.error(request, 'You do not have permission to edit pricing.')
+        return redirect('products:list')
+
+    try:
+        customer_pricing = get_object_or_404(CustomerPricing, pk=pk)
+    except CustomerPricing.DoesNotExist:
+        messages.error(request, 'Customer pricing not found.')
+        return redirect('products:list')
+
+    if request.method == 'POST':
+        form = CustomerPricingForm(request.POST, instance=customer_pricing)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Customer pricing updated successfully.')
+            return redirect('products:pricing', pk=customer_pricing.product.pk)
+    else:
+        form = CustomerPricingForm(instance=customer_pricing)
+
+    return render(request, 'products/edit_pricing.html', {
+        'form': form,
+        'customer_pricing': customer_pricing,
+        'product': customer_pricing.product
+    })
 
 
 # ----- Categories -----
-class CategoryListView(View):
-    def get(self, request):
-        return HttpResponse("Category list view placeholder")
+class CategoryListView(ListView):
+    """List all categories"""
+    model = Category
+    template_name = 'products/categories.html'
+    context_object_name = 'categories'
+
+    def get_queryset(self):
+        return Category.objects.filter(is_active=True).order_by('parent', 'name')
 
 
-class CategoryDetailView(View):
-    def get(self, request, slug):
-        return HttpResponse(f"Category detail view for slug '{slug}' placeholder")
+class CategoryDetailView(DetailView):
+    """Category detail view with products"""
+    model = Category
+    template_name = 'products/category_detail.html'
+    context_object_name = 'category'
+    slug_field = 'slug'
+    slug_url_kwarg = 'slug'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        category = self.object
+
+        products = Product.objects.filter(
+            categories=category,
+            is_active=True
+        ).select_related('brand')
+
+        # Filter by customer access if customer
+        if self.request.user.is_authenticated and self.request.user.is_customer:
+            products = products.filter(
+                customer_prices__customer=self.request.user
+            ).distinct()
+
+        paginator = Paginator(products, 24)
+        page = self.request.GET.get('page')
+        context['products'] = paginator.get_page(page)
+
+        return context
 
 
 # ----- Brands -----
-class BrandListView(View):
-    def get(self, request):
-        return HttpResponse("Brand list view placeholder")
+class BrandListView(ListView):
+    """List all brands"""
+    model = Brand
+    template_name = 'products/brands.html'
+    context_object_name = 'brands'
+
+    def get_queryset(self):
+        return Brand.objects.filter(is_active=True).order_by('name')
 
 
-class BrandDetailView(View):
-    def get(self, request, pk):
-        return HttpResponse(f"Brand detail view for brand ID {pk} placeholder")
+class BrandDetailView(DetailView):
+    """Brand detail view with products"""
+    model = Brand
+    template_name = 'products/brand_detail.html'
+    context_object_name = 'brand'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        brand = self.object
+
+        products = Product.objects.filter(
+            brand=brand,
+            is_active=True
+        )
+
+        # Filter by customer access if customer
+        if self.request.user.is_authenticated and self.request.user.is_customer:
+            products = products.filter(
+                customer_prices__customer=self.request.user
+            ).distinct()
+
+        paginator = Paginator(products, 24)
+        page = self.request.GET.get('page')
+        context['products'] = paginator.get_page(page)
+
+        return context
 
 
 # ----- AJAX endpoints -----
+@login_required
 def product_search(request):
-    return HttpResponse("AJAX: Product search placeholder")
+    """AJAX product search"""
+    query = request.GET.get('q', '')
+
+    if len(query) < 2:
+        return JsonResponse({'products': []})
+
+    products = Product.objects.filter(
+        Q(name__icontains=query) |
+        Q(sku__icontains=query) |
+        Q(part_numbers__icontains=query),
+        is_active=True
+    )[:10]
+
+    # Filter by customer access if customer
+    if request.user.is_customer:
+        products = products.filter(
+            customer_prices__customer=request.user
+        ).distinct()
+
+    product_list = []
+    for product in products:
+        product_list.append({
+            'id': product.id,
+            'sku': product.sku,
+            'name': product.name,
+            'brand': product.brand.name if product.brand else '',
+            'url': reverse('products:detail', kwargs={'pk': product.pk})
+        })
+
+    return JsonResponse({'products': product_list})
 
 
+@login_required
 def fitment_lookup(request):
-    return HttpResponse("AJAX: Fitment lookup placeholder")
+    """AJAX fitment lookup"""
+    year = request.GET.get('year')
+    make = request.GET.get('make')
+    model = request.GET.get('model')
+
+    fitments = ProductFitment.objects.filter(
+        year_start__lte=year,
+        year_end__gte=year
+    )
+
+    if make:
+        fitments = fitments.filter(make__icontains=make)
+    if model:
+        fitments = fitments.filter(model__icontains=model)
+
+    fitments = fitments.select_related('product')[:20]
+
+    fitment_list = []
+    for fitment in fitments:
+        fitment_list.append({
+            'product_id': fitment.product.id,
+            'product_name': fitment.product.name,
+            'product_sku': fitment.product.sku,
+            'year_range': f"{fitment.year_start}-{fitment.year_end}",
+            'make': fitment.make,
+            'model': fitment.model,
+            'engine': fitment.engine or '',
+        })
+
+    return JsonResponse({'fitments': fitment_list})
 
 
+@require_POST
+@login_required
 def bulk_update(request):
-    return HttpResponse("AJAX: Bulk update placeholder")
+    """AJAX bulk update products"""
+    if not request.user.is_employee:
+        return JsonResponse({'error': 'Permission denied'}, status=403)
+
+    product_ids = request.POST.getlist('product_ids[]')
+    action = request.POST.get('action')
+
+    if not product_ids or not action:
+        return JsonResponse({'error': 'Missing required parameters'}, status=400)
+
+    products = Product.objects.filter(id__in=product_ids)
+    count = products.count()
+
+    if action == 'activate':
+        products.update(is_active=True)
+        message = f'{count} products activated'
+    elif action == 'deactivate':
+        products.update(is_active=False)
+        message = f'{count} products deactivated'
+    elif action == 'feature':
+        products.update(is_featured=True)
+        message = f'{count} products marked as featured'
+    elif action == 'unfeature':
+        products.update(is_featured=False)
+        message = f'{count} products unmarked as featured'
+    else:
+        return JsonResponse({'error': 'Invalid action'}, status=400)
+
+    return JsonResponse({'success': True, 'message': message})

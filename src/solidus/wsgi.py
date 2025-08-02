@@ -1,3 +1,4 @@
+# src/solidus/wsgi.py
 """
 WSGI config for solidus project.
 

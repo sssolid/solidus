@@ -1,4 +1,4 @@
-# core/urls.py
+# src/core/urls.py
 from django.urls import path
 from . import views
 

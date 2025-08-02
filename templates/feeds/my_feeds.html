@@ -1,0 +1,401 @@
+<!-- templates/feeds/my_feeds.html -->
+{% extends 'base.html' %}
+
+{% block title %}My Feeds - Solidus{% endblock %}
+
+{% block content %}
+<div class="px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Header -->
+    <div class="sm:flex sm:items-center">
+        <div class="sm:flex-auto">
+            <h1 class="text-2xl font-bold text-gray-900">
+                {% if user.is_customer %}My Data Feeds{% else %}Data Feeds{% endif %}
+            </h1>
+            <p class="mt-2 text-sm text-gray-700">
+                {% if user.is_customer %}
+                    Manage your data feeds, view generation history, and download files.
+                {% else %}
+                    Manage all customer data feeds and monitor generation status.
+                {% endif %}
+            </p>
+        </div>
+        <div class="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
+            {% if user.is_employee %}
+            <a href="{% url 'feeds:create' %}"
+               class="inline-flex items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 sm:w-auto">
+                <i class="fas fa-plus mr-2"></i>
+                Create Feed
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    {% if user.is_customer %}
+    <div class="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <!-- Active Feeds -->
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-rss text-3xl text-blue-600"></i>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Active Feeds</dt>
+                            <dd class="text-lg font-semibold text-gray-900">{{ feeds|length }}</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Active Subscriptions -->
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-bell text-3xl text-green-600"></i>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Active Subscriptions</dt>
+                            <dd class="text-lg font-semibold text-gray-900">{{ active_subscriptions }}</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Downloads -->
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-download text-3xl text-purple-600"></i>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Recent Downloads</dt>
+                            <dd class="text-lg font-semibold text-gray-900">{{ recent_generations|length }}</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Feeds List -->
+    {% if feeds %}
+    <div class="mt-8 bg-white shadow rounded-lg overflow-hidden">
+        <div class="px-4 py-5 sm:px-6 border-b border-gray-200">
+            <h3 class="text-lg font-medium text-gray-900">
+                Data Feeds ({{ page_obj.paginator.count }} total)
+            </h3>
+        </div>
+
+        <div class="divide-y divide-gray-200">
+            {% for feed in feeds %}
+            <div class="px-4 py-5 sm:px-6 hover:bg-gray-50">
+                <div class="flex items-center justify-between">
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center space-x-3">
+                            <div class="flex-shrink-0">
+                                {% if feed.feed_type == 'product_catalog' %}
+                                    <i class="fas fa-shopping-cart text-2xl text-blue-600"></i>
+                                {% elif feed.feed_type == 'assets' %}
+                                    <i class="fas fa-images text-2xl text-green-600"></i>
+                                {% elif feed.feed_type == 'fitment' %}
+                                    <i class="fas fa-car text-2xl text-purple-600"></i>
+                                {% else %}
+                                    <i class="fas fa-database text-2xl text-gray-600"></i>
+                                {% endif %}
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-lg font-medium text-gray-900 truncate">
+                                    <a href="{% url 'feeds:detail' feed.id %}" class="hover:text-blue-600">
+                                        {{ feed.name }}
+                                    </a>
+                                </p>
+                                {% if feed.description %}
+                                <p class="text-sm text-gray-500 truncate">{{ feed.description }}</p>
+                                {% endif %}
+                                <div class="mt-2 flex items-center space-x-4 text-sm text-gray-500">
+                                    <span class="flex items-center">
+                                        <i class="fas fa-tag mr-1"></i>
+                                        {{ feed.get_feed_type_display }}
+                                    </span>
+                                    <span class="flex items-center">
+                                        <i class="fas fa-file-code mr-1"></i>
+                                        {{ feed.get_format_display }}
+                                    </span>
+                                    {% if not user.is_customer %}
+                                    <span class="flex items-center">
+                                        <i class="fas fa-user mr-1"></i>
+                                        {{ feed.customer.company_name|default:feed.customer.get_full_name }}
+                                    </span>
+                                    {% endif %}
+                                    <span class="flex items-center">
+                                        <i class="fas fa-calendar mr-1"></i>
+                                        {{ feed.created_at|date:"M d, Y" }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center space-x-4">
+                        <!-- Status Badge -->
+                        {% if feed.is_active %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                <i class="fas fa-check-circle mr-1"></i>
+                                Active
+                            </span>
+                        {% else %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                <i class="fas fa-pause-circle mr-1"></i>
+                                Inactive
+                            </span>
+                        {% endif %}
+
+                        <!-- Last Generation Status -->
+                        {% with feed.generations.first as last_generation %}
+                        {% if last_generation %}
+                            {% if last_generation.status == 'completed' %}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                    <i class="fas fa-check mr-1"></i>
+                                    Last: {{ last_generation.completed_at|date:"M d" }}
+                                </span>
+                            {% elif last_generation.status == 'running' %}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                    <i class="fas fa-spinner fa-spin mr-1"></i>
+                                    Generating...
+                                </span>
+                            {% elif last_generation.status == 'failed' %}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                    <i class="fas fa-exclamation-triangle mr-1"></i>
+                                    Failed
+                                </span>
+                            {% endif %}
+                        {% endif %}
+                        {% endwith %}
+
+                        <!-- Actions -->
+                        <div class="flex items-center space-x-2">
+                            <a href="{% url 'feeds:detail' feed.id %}"
+                               class="text-blue-600 hover:text-blue-900"
+                               title="View Details">
+                                <i class="fas fa-eye"></i>
+                            </a>
+
+                            {% if feed.is_active %}
+                            <button onclick="generateFeed({{ feed.id }}, '{{ feed.name|escapejs }}')"
+                                    class="text-green-600 hover:text-green-900"
+                                    title="Generate Feed">
+                                <i class="fas fa-play"></i>
+                            </button>
+                            {% endif %}
+
+                            {% if user.is_employee or feed.customer == user %}
+                            <a href="{% url 'feeds:edit' feed.id %}"
+                               class="text-purple-600 hover:text-purple-900"
+                               title="Edit Feed">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            {% endif %}
+
+                            <!-- Latest Download Link -->
+                            {% with feed.generations.filter.status__completed.first as latest_completed %}
+                            {% if latest_completed %}
+                            <a href="{% url 'feeds:download' latest_completed.id %}"
+                               class="text-orange-600 hover:text-orange-900"
+                               title="Download Latest">
+                                <i class="fas fa-download"></i>
+                            </a>
+                            {% endif %}
+                            {% endwith %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Generations -->
+                {% if feed.generations.exists %}
+                <div class="mt-4 border-t border-gray-100 pt-4">
+                    <h4 class="text-sm font-medium text-gray-900 mb-2">Recent Generations</h4>
+                    <div class="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                        {% for generation in feed.generations.all|slice:":3" %}
+                        <div class="flex items-center justify-between p-2 bg-gray-50 rounded">
+                            <div class="flex items-center space-x-2">
+                                {% if generation.status == 'completed' %}
+                                    <i class="fas fa-check-circle text-green-500"></i>
+                                {% elif generation.status == 'running' %}
+                                    <i class="fas fa-spinner fa-spin text-yellow-500"></i>
+                                {% elif generation.status == 'failed' %}
+                                    <i class="fas fa-exclamation-circle text-red-500"></i>
+                                {% else %}
+                                    <i class="fas fa-clock text-gray-500"></i>
+                                {% endif %}
+                                <span class="text-xs text-gray-700">
+                                    {{ generation.started_at|date:"M d, H:i" }}
+                                </span>
+                            </div>
+                            {% if generation.status == 'completed' %}
+                            <a href="{% url 'feeds:download' generation.id %}"
+                               class="text-xs text-blue-600 hover:text-blue-900">
+                                Download
+                            </a>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        {% if page_obj.has_other_pages %}
+        <div class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+            <div class="flex-1 flex justify-between sm:hidden">
+                {% if page_obj.has_previous %}
+                    <a href="?page={{ page_obj.previous_page_number }}"
+                       class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                        Previous
+                    </a>
+                {% endif %}
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}"
+                       class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                        Next
+                    </a>
+                {% endif %}
+            </div>
+            <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                <div>
+                    <p class="text-sm text-gray-700">
+                        Showing
+                        <span class="font-medium">{{ page_obj.start_index }}</span>
+                        to
+                        <span class="font-medium">{{ page_obj.end_index }}</span>
+                        of
+                        <span class="font-medium">{{ page_obj.paginator.count }}</span>
+                        results
+                    </p>
+                </div>
+                <div>
+                    <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                        {% if page_obj.has_previous %}
+                            <a href="?page={{ page_obj.previous_page_number }}"
+                               class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                <i class="fas fa-chevron-left"></i>
+                            </a>
+                        {% endif %}
+
+                        {% for num in page_obj.paginator.page_range %}
+                            {% if page_obj.number == num %}
+                                <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-blue-50 text-sm font-medium text-blue-600">
+                                    {{ num }}
+                                </span>
+                            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                <a href="?page={{ num }}"
+                                   class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
+                                    {{ num }}
+                                </a>
+                            {% endif %}
+                        {% endfor %}
+
+                        {% if page_obj.has_next %}
+                            <a href="?page={{ page_obj.next_page_number }}"
+                               class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                <i class="fas fa-chevron-right"></i>
+                            </a>
+                        {% endif %}
+                    </nav>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    {% else %}
+    <!-- Empty State -->
+    <div class="mt-8 text-center py-12 bg-white shadow rounded-lg">
+        <i class="fas fa-rss text-4xl text-gray-400 mb-4"></i>
+        <h3 class="mt-2 text-sm font-medium text-gray-900">No feeds yet</h3>
+        <p class="mt-1 text-sm text-gray-500">
+            {% if user.is_customer %}
+                Contact your account manager to set up data feeds for your account.
+            {% else %}
+                Get started by creating a new data feed for a customer.
+            {% endif %}
+        </p>
+        {% if user.is_employee %}
+        <div class="mt-6">
+            <a href="{% url 'feeds:create' %}"
+               class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                <i class="fas fa-plus mr-2"></i>
+                Create Feed
+            </a>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Recent Downloads Section (for customers) -->
+    {% if user.is_customer and recent_generations %}
+    <div class="mt-8 bg-white shadow rounded-lg">
+        <div class="px-4 py-5 sm:px-6 border-b border-gray-200">
+            <h3 class="text-lg font-medium text-gray-900">Recent Downloads</h3>
+        </div>
+        <div class="divide-y divide-gray-200">
+            {% for generation in recent_generations %}
+            <div class="px-4 py-4 flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <i class="fas fa-file-download text-blue-600"></i>
+                    <div>
+                        <p class="text-sm font-medium text-gray-900">{{ generation.feed.name }}</p>
+                        <p class="text-xs text-gray-500">{{ generation.completed_at|date:"M d, Y H:i" }}</p>
+                    </div>
+                </div>
+                <a href="{% url 'feeds:download' generation.id %}"
+                   class="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded text-blue-700 bg-blue-100 hover:bg-blue-200">
+                    <i class="fas fa-download mr-1"></i>
+                    Download
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+function generateFeed(feedId, feedName) {
+    if (!confirm(`Generate feed "${feedName}"? This may take several minutes.`)) {
+        return;
+    }
+
+    fetch(`/feeds/${feedId}/generate/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            location.reload();
+        } else {
+            alert('Error: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while generating the feed.');
+    });
+}
+</script>
+{% endblock %}

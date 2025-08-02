@@ -1,0 +1,174 @@
+# requirements.txt
+# Core Django
+Django==4.2.7
+djangorestframework==3.14.0
+
+# Database
+psycopg[binary]==3.1.12
+django-environ==0.11.2
+
+# Frontend & UI
+django-htmx==1.17.0
+django-widget-tweaks==1.5.0
+
+# File handling & Media
+Pillow==10.0.1
+python-magic==0.4.27
+
+# Tags and content
+django-taggit==4.0.0
+
+# Asset management
+django-cleanup==8.0.0
+
+# Development tools
+django-extensions==3.2.3
+
+# Background tasks (production)
+celery==5.3.4
+redis==5.0.1
+
+# Caching
+django-redis==5.4.0
+
+# Search (optional)
+django-elasticsearch-dsl==7.3.0
+
+# API documentation
+drf-spectacular==0.26.5
+
+# Security
+django-ratelimit==4.1.0
+django-cors-headers==4.3.1
+
+# File storage (production)
+django-storages==1.14.2
+boto3==1.29.7
+
+# Monitoring & Logging
+sentry-sdk[django]==1.38.0
+django-prometheus==2.3.1
+
+# Image processing
+opencv-python==4.8.1.78
+pytesseract==0.3.10
+
+# Document processing
+PyPDF2==3.0.1
+python-docx==1.1.0
+
+# Excel handling
+openpyxl==3.1.2
+xlsxwriter==3.1.9
+
+# CSV processing
+pandas==2.1.3
+
+# HTTP requests
+requests==2.31.0
+
+# Date/time utilities
+python-dateutil==2.8.2
+
+# Validation
+marshmallow==3.20.1
+
+# Testing
+pytest==7.4.3
+pytest-django==4.7.0
+factory-boy==3.3.0
+coverage==7.3.2
+
+# Code quality
+black==23.11.0
+flake8==6.1.0
+isort==5.12.0
+pylint==3.0.3
+pylint-django==2.5.5
+
+# Security scanning
+bandit==1.7.5
+safety==2.3.5
+
+# Performance monitoring
+django-debug-toolbar==4.2.0
+
+# Load testing
+locust==2.17.0
+
+# Documentation
+Sphinx==7.2.6
+sphinx-rtd-theme==1.3.0
+
+# Development utilities
+ipython==8.17.2
+jupyter==1.0.0
+
+# Production server
+gunicorn==21.2.0
+whitenoise==6.6.0
+
+# Environment management
+python-decouple==3.8
+
+# Form handling
+django-crispy-forms==2.1
+crispy-tailwind==0.5.0
+
+# Notifications
+channels==4.0.0
+channels-redis==4.1.0
+
+# File compression
+django-compressor==4.4
+
+# Internationalization (if needed)
+django-modeltranslation==0.18.11
+
+# Admin enhancements
+django-admin-interface==0.21.2
+
+# API throttling
+django-rest-framework-api-key==2.3.0
+
+# WebSocket support
+daphne==4.0.0
+
+# Task scheduling
+django-celery-beat==2.5.0
+
+# Email backends
+django-anymail==10.2
+
+# Social authentication (optional)
+django-allauth==0.57.0
+
+# Content management
+django-ckeditor==6.7.0
+
+# Audit logging
+django-simple-history==3.4.0
+
+# Permissions
+django-guardian==2.4.0
+
+# Sitemap generation
+django-sitemap==2.3
+
+# Health checks
+django-health-check==3.17.0
+
+# Backup utilities
+django-dbbackup==4.0.2
+
+# Development server enhancements
+django-livereload-server==0.4
+
+# API versioning
+djangorestframework-versioning==0.1.1
+
+# Pagination
+django-rest-framework-datatables==0.7.0
+
+# Fixtures
+django-fixture-magic==0.1.5

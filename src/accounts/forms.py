@@ -1,9 +1,9 @@
-# accounts/forms.py
+# src/accounts/forms.py
 from django import forms
 from django.contrib.auth.forms import UserCreationForm as BaseUserCreationForm
 from django.core.exceptions import ValidationError
 from .models import User, CustomerProfile
-from src.products import Product, CustomerPricing
+from products.models import Product, CustomerPricing
 
 
 class UserCreationForm(BaseUserCreationForm):
@@ -113,7 +113,7 @@ class UserEditForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # Populate asset category choices
-        from src.assets import AssetCategory
+        from assets.models import AssetCategory
         self.fields['allowed_asset_categories'].choices = [
             (cat.slug, cat.name) for cat in AssetCategory.objects.filter(is_active=True)
         ]

@@ -1,4 +1,4 @@
-# assets/models.py
+# src/assets/models.py
 import os
 import hashlib
 from django.db import models

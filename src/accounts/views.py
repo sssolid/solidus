@@ -1,38 +1,45 @@
-# accounts/views.py
-from django.shortcuts import redirect, get_object_or_404
-from django.views.generic import TemplateView, ListView, DetailView, CreateView, UpdateView
+# src/accounts/views.py
+from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib.auth import login, logout, update_session_auth_hash
 from django.contrib.auth.views import LoginView, LogoutView, PasswordChangeView
-from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.views.generic import ListView, DetailView, CreateView, UpdateView, TemplateView
+from django.views import View
+from django.http import JsonResponse, HttpResponse
 from django.contrib import messages
-from django.urls import reverse_lazy
+from django.urls import reverse, reverse_lazy
 from django.db.models import Q, Count
-from django.http import JsonResponse
-from django.views.decorators.http import require_POST, require_http_methods
+from django.core.paginator import Paginator
+from django.utils.decorators import method_decorator
+from django.views.decorators.http import require_POST
+from django.contrib.auth.forms import PasswordChangeForm
+
 from .models import User, CustomerProfile
 from .forms import (
-    UserCreationForm, UserEditForm, ProfileEditForm
+    UserCreationForm, UserEditForm, ProfileEditForm, UserSettingsForm,
+    CustomerProfileForm, CustomerPricingForm
 )
-from src.products import CustomerPricing
-from src.feeds.models import DataFeed, FeedGeneration
-from src.audit.models import AuditLog
+from products.models import CustomerPricing
+from feeds.models import DataFeed, FeedGeneration
+from audit.models import AuditLog
 
 
+class EmployeeRequiredMixin(UserPassesTestMixin):
+    """Mixin to require employee or admin access"""
+
+    def test_func(self):
+        return self.request.user.is_authenticated and self.request.user.is_employee
+
+
+# ----- Authentication Views -----
 class CustomLoginView(LoginView):
     """Custom login view"""
     template_name = 'accounts/login.html'
     redirect_authenticated_user = True
 
     def get_success_url(self):
-        next_url = self.request.GET.get('next')
-        if next_url:
-            return next_url
-
-        # Redirect based on user role
-        if self.request.user.is_employee:
-            return reverse_lazy('core:dashboard')
-        else:
-            return reverse_lazy('products:catalog')
+        return reverse('core:dashboard')
 
     def form_valid(self, form):
         response = super().form_valid(form)
@@ -43,10 +50,11 @@ class CustomLoginView(LoginView):
 
 class CustomLogoutView(LogoutView):
     """Custom logout view"""
-    next_page = 'accounts:login'
+    template_name = 'accounts/logout.html'
 
     def dispatch(self, request, *args, **kwargs):
-        messages.info(request, 'You have been logged out successfully.')
+        if request.user.is_authenticated:
+            messages.success(request, 'You have been successfully logged out.')
         return super().dispatch(request, *args, **kwargs)
 
 
@@ -61,6 +69,7 @@ class CustomPasswordChangeView(LoginRequiredMixin, PasswordChangeView):
         return response
 
 
+# ----- Profile Views -----
 class ProfileView(LoginRequiredMixin, TemplateView):
     """User profile view"""
     template_name = 'accounts/profile.html'
@@ -81,6 +90,13 @@ class ProfileView(LoginRequiredMixin, TemplateView):
                 'custom_pricing_count': CustomerPricing.objects.filter(
                     customer=user
                 ).count(),
+                'recent_feeds': DataFeed.objects.filter(
+                    customer=user
+                ).order_by('-created_at')[:5],
+                'recent_downloads': FeedGeneration.objects.filter(
+                    feed__customer=user,
+                    status='completed'
+                ).order_by('-completed_at')[:5],
             })
         else:
             # Employee statistics
@@ -91,6 +107,7 @@ class ProfileView(LoginRequiredMixin, TemplateView):
                 'recent_activity': AuditLog.objects.filter(
                     user=user
                 ).order_by('-timestamp')[:10],
+                'created_products': user.products_created.count() if hasattr(user, 'products_created') else 0,
             })
 
         return context
@@ -117,42 +134,71 @@ class UserSettingsView(LoginRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['notification_types'] = [
-            ('product_updates', 'Product Updates'),
-            ('price_changes', 'Price Changes'),
-            ('new_assets', 'New Assets'),
-            ('feed_ready', 'Feed Notifications'),
-            ('system', 'System Notifications'),
-        ]
+
+        # Get user settings from profile or defaults
+        user = self.request.user
+        initial_data = {
+            'notification_product_updates': getattr(user, 'notification_product_updates', True),
+            'notification_price_changes': getattr(user, 'notification_price_changes', True),
+            'notification_new_assets': getattr(user, 'notification_new_assets', True),
+            'notification_feed_ready': getattr(user, 'notification_feed_ready', True),
+            'notification_system': getattr(user, 'notification_system', True),
+        }
+
+        context['settings_form'] = UserSettingsForm(initial=initial_data)
+        context['password_form'] = PasswordChangeForm(user=user)
+
         return context
 
     def post(self, request, *args, **kwargs):
-        # Handle notification preferences
-        for notification_type, _ in self.get_context_data()['notification_types']:
-            enabled = request.POST.get(f'notification_{notification_type}') == 'on'
-            request.user.set_notification_preference(notification_type, enabled)
+        if 'settings_submit' in request.POST:
+            return self._handle_settings_form(request)
+        elif 'password_submit' in request.POST:
+            return self._handle_password_form(request)
 
-        messages.success(request, 'Your settings have been updated.')
-        return redirect('accounts:settings')
+        return self.get(request, *args, **kwargs)
+
+    def _handle_settings_form(self, request):
+        form = UserSettingsForm(request.POST)
+        if form.is_valid():
+            # Save settings to user model or profile
+            user = request.user
+            for field, value in form.cleaned_data.items():
+                setattr(user, field, value)
+            user.save()
+
+            messages.success(request, 'Your settings have been updated successfully.')
+            return redirect('accounts:settings')
+        else:
+            context = self.get_context_data()
+            context['settings_form'] = form
+            return render(request, self.template_name, context)
+
+    def _handle_password_form(self, request):
+        form = PasswordChangeForm(user=request.user, data=request.POST)
+        if form.is_valid():
+            user = form.save()
+            update_session_auth_hash(request, user)
+            messages.success(request, 'Your password has been changed successfully.')
+            return redirect('accounts:settings')
+        else:
+            context = self.get_context_data()
+            context['password_form'] = form
+            return render(request, self.template_name, context)
 
 
-class UserListView(LoginRequiredMixin, ListView):
-    """List all users (admin/employee only)"""
+# ----- User Management (Admin/Employee) -----
+class UserListView(EmployeeRequiredMixin, ListView):
+    """List all users"""
     model = User
     template_name = 'accounts/user_list.html'
     context_object_name = 'users'
-    paginate_by = 25
-
-    def dispatch(self, request, *args, **kwargs):
-        if not request.user.is_employee:
-            messages.error(request, 'Access denied.')
-            return redirect('core:dashboard')
-        return super().dispatch(request, *args, **kwargs)
+    paginate_by = 50
 
     def get_queryset(self):
-        queryset = User.objects.all()
+        queryset = User.objects.all().order_by('-created_at')
 
-        # Search functionality
+        # Apply search filter
         search = self.request.GET.get('search')
         if search:
             queryset = queryset.filter(
@@ -163,234 +209,263 @@ class UserListView(LoginRequiredMixin, ListView):
                 Q(company_name__icontains=search)
             )
 
-        # Filter by role
+        # Apply role filter
         role = self.request.GET.get('role')
         if role:
             queryset = queryset.filter(role=role)
 
-        # Filter by status
+        # Apply status filter
         status = self.request.GET.get('status')
         if status == 'active':
             queryset = queryset.filter(is_active=True)
         elif status == 'inactive':
             queryset = queryset.filter(is_active=False)
 
-        return queryset.order_by('-created_at')
+        return queryset
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['total_users'] = User.objects.count()
-        context['role_counts'] = User.objects.values('role').annotate(count=Count('id'))
+        context['total_customers'] = User.objects.filter(role='customer').count()
+        context['total_employees'] = User.objects.filter(role='employee').count()
+        context['total_admins'] = User.objects.filter(role='admin').count()
+
+        # For filters
+        context['search'] = self.request.GET.get('search', '')
+        context['role_filter'] = self.request.GET.get('role', '')
+        context['status_filter'] = self.request.GET.get('status', '')
+
         return context
 
 
-class UserDetailView(LoginRequiredMixin, DetailView):
-    """User detail view (admin/employee only)"""
+class UserCreateView(EmployeeRequiredMixin, CreateView):
+    """Create new user"""
+    model = User
+    form_class = UserCreationForm
+    template_name = 'accounts/user_create.html'
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        messages.success(self.request, f'User "{self.object.username}" created successfully.')
+        return response
+
+    def get_success_url(self):
+        return reverse('accounts:user_detail', kwargs={'pk': self.object.pk})
+
+
+class UserDetailView(EmployeeRequiredMixin, DetailView):
+    """User detail view"""
     model = User
     template_name = 'accounts/user_detail.html'
-    context_object_name = 'user_obj'
-
-    def dispatch(self, request, *args, **kwargs):
-        if not request.user.is_employee:
-            messages.error(request, 'Access denied.')
-            return redirect('core:dashboard')
-        return super().dispatch(request, *args, **kwargs)
+    context_object_name = 'profile_user'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        user_obj = self.object
+        user = self.object
 
-        if user_obj.is_customer:
+        if user.is_customer:
             # Customer-specific data
             context.update({
-                'customer_profile': getattr(user_obj, 'customer_profile', None),
-                'active_feeds': DataFeed.objects.filter(
-                    customer=user_obj, is_active=True
-                ),
+                'feeds': DataFeed.objects.filter(customer=user),
+                'pricing_count': CustomerPricing.objects.filter(customer=user).count(),
                 'recent_downloads': FeedGeneration.objects.filter(
-                    feed__customer=user_obj
-                ).order_by('-started_at')[:5],
-                'custom_pricing': CustomerPricing.objects.filter(
-                    customer=user_obj
-                ).select_related('product')[:10],
+                    feed__customer=user,
+                    status='completed'
+                ).order_by('-completed_at')[:10],
             })
-
-        # Audit log
-        context['recent_activity'] = AuditLog.objects.filter(
-            user=user_obj
-        ).order_by('-timestamp')[:20]
+        else:
+            # Employee-specific data
+            context.update({
+                'recent_activity': AuditLog.objects.filter(
+                    user=user
+                ).order_by('-timestamp')[:20],
+            })
 
         return context
 
 
-class UserCreateView(LoginRequiredMixin, CreateView):
-    """Create new user (admin only)"""
-    model = User
-    form_class = UserCreationForm
-    template_name = 'accounts/user_form.html'
-    success_url = reverse_lazy('accounts:user_list')
-
-    def dispatch(self, request, *args, **kwargs):
-        if not request.user.is_admin:
-            messages.error(request, 'Admin access required.')
-            return redirect('accounts:user_list')
-        return super().dispatch(request, *args, **kwargs)
-
-    def form_valid(self, form):
-        response = super().form_valid(form)
-        messages.success(self.request, f'User {self.object.username} created successfully.')
-
-        # Create customer profile if needed
-        if self.object.is_customer:
-            CustomerProfile.objects.create(user=self.object)
-
-        # Send welcome email
-        # TODO: Implement email sending
-
-        return response
-
-
-class UserEditView(LoginRequiredMixin, UpdateView):
-    """Edit user (admin only)"""
+class UserEditView(EmployeeRequiredMixin, UpdateView):
+    """Edit user"""
     model = User
     form_class = UserEditForm
-    template_name = 'accounts/user_form.html'
-    context_object_name = 'user_obj'
-
-    def dispatch(self, request, *args, **kwargs):
-        if not request.user.is_admin:
-            messages.error(request, 'Admin access required.')
-            return redirect('accounts:user_list')
-        return super().dispatch(request, *args, **kwargs)
-
-    def get_success_url(self):
-        return reverse_lazy('accounts:user_detail', kwargs={'pk': self.object.pk})
+    template_name = 'accounts/user_edit.html'
 
     def form_valid(self, form):
         response = super().form_valid(form)
-        messages.success(self.request, f'User {self.object.username} updated successfully.')
+        messages.success(self.request, f'User "{self.object.username}" updated successfully.')
         return response
 
+    def get_success_url(self):
+        return reverse('accounts:user_detail', kwargs={'pk': self.object.pk})
 
-@login_required
+
 @require_POST
+@login_required
 def toggle_user_status(request, pk):
     """Toggle user active status"""
-    if not request.user.is_admin:
-        return JsonResponse({'error': 'Access denied'}, status=403)
+    if not request.user.is_employee:
+        return JsonResponse({'error': 'Permission denied'}, status=403)
 
     user = get_object_or_404(User, pk=pk)
 
-    # Don't allow disabling self
+    # Prevent self-deactivation
     if user == request.user:
-        return JsonResponse({'error': 'Cannot disable your own account'}, status=400)
+        return JsonResponse({'error': 'Cannot deactivate your own account'}, status=400)
 
     user.is_active = not user.is_active
     user.save()
 
     status = 'activated' if user.is_active else 'deactivated'
-    messages.success(request, f'User {user.username} has been {status}.')
-
-    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-        return JsonResponse({
-            'success': True,
-            'is_active': user.is_active,
-            'message': f'User {status} successfully'
-        })
-
-    return redirect('accounts:user_detail', pk=pk)
+    return JsonResponse({
+        'success': True,
+        'is_active': user.is_active,
+        'message': f'User {status} successfully'
+    })
 
 
-class CustomerListView(LoginRequiredMixin, ListView):
-    """List customer accounts"""
+# ----- Customer Management -----
+class CustomerListView(EmployeeRequiredMixin, ListView):
+    """List customers"""
     model = User
     template_name = 'accounts/customer_list.html'
     context_object_name = 'customers'
-    paginate_by = 25
-
-    def dispatch(self, request, *args, **kwargs):
-        if not request.user.is_employee:
-            messages.error(request, 'Access denied.')
-            return redirect('core:dashboard')
-        return super().dispatch(request, *args, **kwargs)
+    paginate_by = 50
 
     def get_queryset(self):
-        return User.objects.filter(role='customer').annotate(
-            feed_count=Count('data_feeds'),
-            download_count=Count('data_feeds__generations', distinct=True)
-        ).order_by('company_name', 'username')
+        queryset = User.objects.filter(role='customer').order_by('-created_at')
+
+        # Apply search filter
+        search = self.request.GET.get('search')
+        if search:
+            queryset = queryset.filter(
+                Q(username__icontains=search) |
+                Q(email__icontains=search) |
+                Q(company_name__icontains=search) |
+                Q(customer_number__icontains=search)
+            )
+
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['total_customers'] = User.objects.filter(role='customer').count()
+        context['active_customers'] = User.objects.filter(
+            role='customer',
+            is_active=True
+        ).count()
+        context['search'] = self.request.GET.get('search', '')
+        return context
 
 
-class CustomerDetailView(UserDetailView):
-    """Customer detail view with additional business data"""
+class CustomerDetailView(EmployeeRequiredMixin, DetailView):
+    """Customer detail view"""
+    model = User
     template_name = 'accounts/customer_detail.html'
+    context_object_name = 'customer'
 
     def get_queryset(self):
         return User.objects.filter(role='customer')
 
-
-class CustomerPricingView(LoginRequiredMixin, ListView):
-    """Manage customer-specific pricing"""
-    model = CustomerPricing
-    template_name = 'accounts/customer_pricing.html'
-    context_object_name = 'pricing_list'
-    paginate_by = 50
-
-    def dispatch(self, request, *args, **kwargs):
-        if not request.user.is_employee:
-            messages.error(request, 'Access denied.')
-            return redirect('core:dashboard')
-        return super().dispatch(request, *args, **kwargs)
-
-    def get_queryset(self):
-        self.customer = get_object_or_404(User, pk=self.kwargs['pk'], role='customer')
-        return CustomerPricing.objects.filter(
-            customer=self.customer
-        ).select_related('product', 'product__brand').order_by('product__sku')
-
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['customer'] = self.customer
+        customer = self.object
+
+        context.update({
+            'feeds': DataFeed.objects.filter(customer=customer),
+            'pricing_rules': CustomerPricing.objects.filter(
+                customer=customer
+            ).select_related('product'),
+            'recent_generations': FeedGeneration.objects.filter(
+                feed__customer=customer
+            ).order_by('-started_at')[:10],
+            'subscriptions': customer.subscriptions.all() if hasattr(customer, 'subscriptions') else [],
+        })
+
         return context
 
 
-@login_required
-@require_http_methods(['GET'])
-def check_username_availability(request):
-    """Check if username is available (AJAX)"""
-    username = request.GET.get('username', '').strip()
+class CustomerPricingView(EmployeeRequiredMixin, DetailView):
+    """Manage customer pricing"""
+    model = User
+    template_name = 'accounts/customer_pricing.html'
+    context_object_name = 'customer'
 
-    if not username:
-        return JsonResponse({'available': False, 'message': 'Username is required'})
+    def get_queryset(self):
+        return User.objects.filter(role='customer')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        customer = self.object
+
+        pricing_rules = CustomerPricing.objects.filter(
+            customer=customer
+        ).select_related('product').order_by('product__name')
+
+        paginator = Paginator(pricing_rules, 50)
+        page = self.request.GET.get('page')
+        context['pricing_rules'] = paginator.get_page(page)
+
+        context['pricing_form'] = CustomerPricingForm(customer=customer)
+
+        return context
+
+    def post(self, request, *args, **kwargs):
+        """Handle new pricing rule creation"""
+        self.object = self.get_object()
+        customer = self.object
+
+        form = CustomerPricingForm(request.POST, customer=customer)
+        if form.is_valid():
+            pricing = form.save(commit=False)
+            pricing.customer = customer
+            pricing.save()
+            messages.success(request, 'Customer pricing rule added successfully.')
+            return redirect('accounts:customer_pricing', pk=customer.pk)
+
+        context = self.get_context_data()
+        context['pricing_form'] = form
+        return render(request, self.template_name, context)
+
+
+# ----- AJAX Endpoints -----
+@login_required
+def check_username_availability(request):
+    """Check if username is available"""
+    username = request.GET.get('username', '')
 
     if len(username) < 3:
-        return JsonResponse({'available': False, 'message': 'Username must be at least 3 characters'})
+        return JsonResponse({
+            'available': False,
+            'message': 'Username must be at least 3 characters long'
+        })
 
-    exists = User.objects.filter(username__iexact=username).exists()
+    is_available = not User.objects.filter(username=username).exists()
 
     return JsonResponse({
-        'available': not exists,
-        'message': 'Username is already taken' if exists else 'Username is available'
+        'available': is_available,
+        'message': 'Username is available' if is_available else 'Username is already taken'
     })
 
 
 @login_required
-@require_http_methods(['GET'])
 def check_email_availability(request):
-    """Check if email is available (AJAX)"""
-    email = request.GET.get('email', '').strip().lower()
+    """Check if email is available"""
+    email = request.GET.get('email', '')
+    user_id = request.GET.get('user_id')  # For edit forms
 
     if not email:
-        return JsonResponse({'available': False, 'message': 'Email is required'})
+        return JsonResponse({
+            'available': False,
+            'message': 'Email is required'
+        })
 
-    # Basic email validation
-    import re
-    if not re.match(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', email):
-        return JsonResponse({'available': False, 'message': 'Invalid email format'})
+    queryset = User.objects.filter(email=email)
+    if user_id:
+        queryset = queryset.exclude(id=user_id)
 
-    exists = User.objects.filter(email__iexact=email).exists()
+    is_available = not queryset.exists()
 
     return JsonResponse({
-        'available': not exists,
-        'message': 'Email is already registered' if exists else 'Email is available'
+        'available': is_available,
+        'message': 'Email is available' if is_available else 'Email is already in use'
     })

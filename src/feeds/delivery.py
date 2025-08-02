@@ -1,4 +1,4 @@
-# feeds/delivery.py
+# src/feeds/delivery.py
 import os
 import smtplib
 import ftplib

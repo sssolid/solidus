@@ -1,4 +1,4 @@
-# audit/signals.py
+# src/audit/signals.py
 from django.db.models.signals import pre_save, post_save, pre_delete
 from django.contrib.auth.signals import user_logged_in, user_logged_out
 from django.dispatch import receiver

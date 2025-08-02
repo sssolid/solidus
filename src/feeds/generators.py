@@ -1,11 +1,11 @@
-# feeds/generators.py
+# src/feeds/generators.py
 import json
 from xml.etree import ElementTree as ET
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 from django.db.models import Prefetch
-from src.products import Product, ProductFitment, CustomerPricing
-from src.assets.models import Asset
+from products.models import Product, ProductFitment, CustomerPricing
+from assets.models import Asset
 import logging
 
 logger = logging.getLogger('solidus.feeds')

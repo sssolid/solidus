@@ -1,9 +1,9 @@
-# feeds/management/commands/generate_feeds.py
+# src/feeds/management/commands/generate_feeds.py
 from django.core.management.base import BaseCommand
 from django.utils import timezone
-from src.feeds.models import DataFeed, FeedGeneration
-from src.feeds.generators import FeedGeneratorFactory
-from src.core.notifications import NotificationService
+from feeds.models import DataFeed, FeedGeneration
+from feeds.generators import FeedGeneratorFactory
+from core.notifications import NotificationService
 import logging
 
 logger = logging.getLogger('solidus.feeds')
@@ -189,7 +189,7 @@ class Command(BaseCommand):
             generation.save()
 
             # Get delivery handler
-            from src.feeds.delivery import DeliveryHandlerFactory
+            from feeds.delivery import DeliveryHandlerFactory
             handler = DeliveryHandlerFactory.get_handler(generation.feed)
 
             # Deliver the feed

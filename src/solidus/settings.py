@@ -1,4 +1,4 @@
-# solidus/settings.py
+# src/solidus/settings.py
 import os
 from pathlib import Path
 

@@ -97,7 +97,7 @@ services:
     image: nginx:alpine
     container_name: solidus_nginx
     volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./config/nginx.conf:/etc/nginx/nginx.conf:ro
       - static_data:/app/static:ro
       - media_data:/app/media:ro
     ports:

@@ -1,4 +1,4 @@
-# solidus/db_router.py
+# src/solidus/db_router.py
 class SolidusDBRouter:
     """
     Database router to allow potential future scaling with read replicas

@@ -1,4 +1,4 @@
-# audit/urls.py
+# src/audit/urls.py
 from django.urls import path
 from . import views
 

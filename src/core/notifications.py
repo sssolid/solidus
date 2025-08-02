@@ -1,4 +1,4 @@
-# core/notifications.py
+# src/core/notifications.py
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 from django.db import models
@@ -96,7 +96,7 @@ class NotificationService:
     @staticmethod
     def notify_product_update(product, users=None):
         """Notify about product updates"""
-        from src.accounts.models import User
+        from accounts.models import User
 
         # If no specific users, notify all employees and subscribed customers
         if users is None:
@@ -144,7 +144,7 @@ class NotificationService:
     @staticmethod
     def notify_new_asset(asset, users=None):
         """Notify about new assets"""
-        from src.accounts.models import User
+        from accounts.models import User
 
         if users is None:
             # Notify employees and customers with access to the asset's categories
