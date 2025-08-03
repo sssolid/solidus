@@ -1,0 +1,299 @@
+<!-- templates/assets/edit.html -->
+{% extends "base.html" %}
+{% load widget_tweaks %}
+
+{% block title %}Edit {{ asset.title }} - Solidus{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="md:flex md:items-center md:justify-between">
+        <div class="min-w-0 flex-1">
+            <nav class="flex" aria-label="Breadcrumb">
+                <ol class="flex items-center space-x-4">
+                    <li>
+                        <a href="{% url 'assets:list' %}" class="text-gray-400 hover:text-gray-500">
+                            <i class="fas fa-images"></i>
+                            <span class="sr-only">Assets</span>
+                        </a>
+                    </li>
+                    <li>
+                        <div class="flex items-center">
+                            <i class="fas fa-chevron-right text-gray-400 mr-4"></i>
+                            <a href="{% url 'assets:detail' pk=asset.pk %}" class="text-gray-400 hover:text-gray-500">
+                                {{ asset.title|truncatechars:30 }}
+                            </a>
+                        </div>
+                    </li>
+                    <li>
+                        <div class="flex items-center">
+                            <i class="fas fa-chevron-right text-gray-400 mr-4"></i>
+                            <span class="text-sm font-medium text-gray-500">Edit</span>
+                        </div>
+                    </li>
+                </ol>
+            </nav>
+            <h2 class="mt-2 text-2xl font-bold leading-7 text-gray-900 sm:truncate sm:text-3xl sm:tracking-tight">
+                Edit Asset
+            </h2>
+            <p class="mt-1 text-sm text-gray-500">
+                Update asset information and metadata.
+            </p>
+        </div>
+        <div class="mt-4 flex md:ml-4 md:mt-0 space-x-3">
+            <a href="{% url 'assets:detail' pk=asset.pk %}"
+               class="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                <i class="fas fa-eye mr-2"></i>
+                View Asset
+            </a>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Asset Preview -->
+        <div class="lg:col-span-1">
+            <div class="bg-white shadow-sm ring-1 ring-gray-900/5 rounded-xl p-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Current Asset</h3>
+
+                <!-- Asset Preview -->
+                <div class="aspect-square bg-gray-100 rounded-lg overflow-hidden mb-4">
+                    {% if asset.is_image %}
+                        <img src="{{ asset.thumbnail_url }}"
+                             alt="{{ asset.title }}"
+                             class="w-full h-full object-cover">
+                    {% elif asset.is_video %}
+                        <video class="w-full h-full object-cover" controls>
+                            <source src="{{ asset.file.url }}" type="{{ asset.mime_type }}">
+                        </video>
+                    {% else %}
+                        <div class="w-full h-full flex items-center justify-center">
+                            <div class="text-center">
+                                <i class="fas fa-file text-4xl text-gray-400 mb-2"></i>
+                                <p class="text-sm text-gray-500">{{ asset.get_file_extension|upper }}</p>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- File Info -->
+                <div class="space-y-2 text-sm">
+                    <div class="flex justify-between">
+                        <span class="text-gray-500">File Size:</span>
+                        <span class="text-gray-900">{{ asset.file_size|filesizeformat }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-500">Type:</span>
+                        <span class="text-gray-900">{{ asset.mime_type }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-500">Downloads:</span>
+                        <span class="text-gray-900">{{ asset.download_count }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-500">Created:</span>
+                        <span class="text-gray-900">{{ asset.created_at|date:"M d, Y" }}</span>
+                    </div>
+                </div>
+
+                <!-- Replace File -->
+                <div class="mt-6 pt-6 border-t border-gray-200">
+                    <h4 class="text-sm font-medium text-gray-900 mb-3">Replace File</h4>
+                    <form method="post" enctype="multipart/form-data"
+                          hx-post="{% url 'assets:replace_file' pk=asset.pk %}"
+                          hx-target="#file-replace-result">
+                        {% csrf_token %}
+                        <input type="file" name="new_file"
+                               class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                        <button type="submit"
+                                class="mt-3 w-full inline-flex justify-center items-center rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500">
+                            <i class="fas fa-exchange-alt mr-2"></i>
+                            Replace File
+                        </button>
+                    </form>
+                    <div id="file-replace-result" class="mt-3"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Edit Form -->
+        <div class="lg:col-span-2">
+            <form method="post"
+                  hx-post="{% url 'assets:edit' pk=asset.pk %}"
+                  hx-target="#form-container">
+                {% csrf_token %}
+
+                <div id="form-container" class="bg-white shadow-sm ring-1 ring-gray-900/5 rounded-xl">
+                    <div class="px-4 py-6 sm:p-8">
+                        <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                            <!-- Title -->
+                            <div class="sm:col-span-2">
+                                <label for="{{ form.title.id_for_label }}" class="block text-sm font-medium leading-6 text-gray-900">
+                                    Title <span class="text-red-500">*</span>
+                                </label>
+                                <div class="mt-2">
+                                    {{ form.title|add_class:"block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6" }}
+                                </div>
+                                {% if form.title.errors %}
+                                <p class="mt-2 text-sm text-red-600">{{ form.title.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+
+                            <!-- Description -->
+                            <div class="sm:col-span-2">
+                                <label for="{{ form.description.id_for_label }}" class="block text-sm font-medium leading-6 text-gray-900">
+                                    Description
+                                </label>
+                                <div class="mt-2">
+                                    {{ form.description|add_class:"block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6" }}
+                                </div>
+                                {% if form.description.errors %}
+                                <p class="mt-2 text-sm text-red-600">{{ form.description.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+
+                            <!-- Category -->
+                            <div>
+                                <label for="{{ form.category.id_for_label }}" class="block text-sm font-medium leading-6 text-gray-900">
+                                    Category <span class="text-red-500">*</span>
+                                </label>
+                                <div class="mt-2">
+                                    {{ form.category|add_class:"block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6" }}
+                                </div>
+                                {% if form.category.errors %}
+                                <p class="mt-2 text-sm text-red-600">{{ form.category.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+
+                            <!-- Asset Type -->
+                            <div>
+                                <label for="{{ form.asset_type.id_for_label }}" class="block text-sm font-medium leading-6 text-gray-900">
+                                    Asset Type
+                                </label>
+                                <div class="mt-2">
+                                    {{ form.asset_type|add_class:"block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6" }}
+                                </div>
+                                {% if form.asset_type.errors %}
+                                <p class="mt-2 text-sm text-red-600">{{ form.asset_type.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+
+                            <!-- Tags -->
+                            <div class="sm:col-span-2">
+                                <label for="{{ form.tags.id_for_label }}" class="block text-sm font-medium leading-6 text-gray-900">
+                                    Tags
+                                </label>
+                                <div class="mt-2">
+                                    {{ form.tags|add_class:"block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6" }}
+                                </div>
+                                <p class="mt-2 text-sm text-gray-500">Separate tags with commas</p>
+                                {% if form.tags.errors %}
+                                <p class="mt-2 text-sm text-red-600">{{ form.tags.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+
+                            <!-- Status -->
+                            <div>
+                                <label for="{{ form.status.id_for_label }}" class="block text-sm font-medium leading-6 text-gray-900">
+                                    Status
+                                </label>
+                                <div class="mt-2">
+                                    {{ form.status|add_class:"block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6" }}
+                                </div>
+                                {% if form.status.errors %}
+                                <p class="mt-2 text-sm text-red-600">{{ form.status.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+
+                            <!-- Alt Text -->
+                            <div>
+                                <label for="{{ form.alt_text.id_for_label }}" class="block text-sm font-medium leading-6 text-gray-900">
+                                    Alt Text
+                                </label>
+                                <div class="mt-2">
+                                    {{ form.alt_text|add_class:"block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6" }}
+                                </div>
+                                <p class="mt-2 text-sm text-gray-500">For accessibility and SEO</p>
+                                {% if form.alt_text.errors %}
+                                <p class="mt-2 text-sm text-red-600">{{ form.alt_text.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Access Control -->
+                        <div class="mt-8 pt-8 border-t border-gray-200">
+                            <h3 class="text-lg font-medium leading-6 text-gray-900 mb-4">Access Control</h3>
+
+                            <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                                <!-- Requires Permission -->
+                                <div class="flex items-start">
+                                    <div class="flex h-6 items-center">
+                                        {{ form.requires_permission|add_class:"h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-600" }}
+                                    </div>
+                                    <div class="ml-3 text-sm leading-6">
+                                        <label for="{{ form.requires_permission.id_for_label }}" class="font-medium text-gray-900">
+                                            Requires Permission
+                                        </label>
+                                        <p class="text-gray-500">Users must request access to download this asset</p>
+                                    </div>
+                                </div>
+
+                                <!-- Allowed Roles -->
+                                <div>
+                                    <label class="block text-sm font-medium leading-6 text-gray-900 mb-2">
+                                        Allowed Roles
+                                    </label>
+                                    {{ form.allowed_roles }}
+                                    {% if form.allowed_roles.errors %}
+                                    <p class="mt-2 text-sm text-red-600">{{ form.allowed_roles.errors.0 }}</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- EXIF Metadata (if available) -->
+                        {% if asset.exif_data %}
+                        <div class="mt-8 pt-8 border-t border-gray-200">
+                            <h3 class="text-lg font-medium leading-6 text-gray-900 mb-4">EXIF Metadata</h3>
+                            <div class="bg-gray-50 rounded-lg p-4">
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                                    {% for key, value in asset.exif_data.items %}
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-500">{{ key|title }}:</span>
+                                        <span class="text-gray-900">{{ value }}</span>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Form Actions -->
+                    <div class="flex items-center justify-between gap-x-6 border-t border-gray-900/10 px-4 py-4 sm:px-8">
+                        <div class="flex items-center space-x-4">
+                            <a href="{% url 'assets:detail' pk=asset.pk %}"
+                               class="text-sm font-semibold leading-6 text-gray-900 hover:text-gray-700">
+                                Cancel
+                            </a>
+                            {% if perms.assets.delete_asset %}
+                            <button type="button"
+                                    hx-delete="{% url 'assets:delete' pk=asset.pk %}"
+                                    hx-confirm="Are you sure you want to delete this asset? This action cannot be undone."
+                                    class="text-sm font-semibold leading-6 text-red-600 hover:text-red-700">
+                                <i class="fas fa-trash mr-1"></i>
+                                Delete Asset
+                            </button>
+                            {% endif %}
+                        </div>
+                        <button type="submit"
+                                class="rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600">
+                            <i class="fas fa-save mr-2"></i>
+                            Save Changes
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

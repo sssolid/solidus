@@ -1,0 +1,324 @@
+<!-- templates/assets/collection_detail.html -->
+{% extends "base.html" %}
+{% load widget_tweaks %}
+
+{% block title %}{{ collection.name }} - Asset Collections - Solidus{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="md:flex md:items-start md:justify-between">
+        <div class="min-w-0 flex-1">
+            <nav class="flex" aria-label="Breadcrumb">
+                <ol class="flex items-center space-x-4">
+                    <li>
+                        <a href="{% url 'assets:list' %}" class="text-gray-400 hover:text-gray-500">
+                            <i class="fas fa-images"></i>
+                            <span class="sr-only">Assets</span>
+                        </a>
+                    </li>
+                    <li>
+                        <div class="flex items-center">
+                            <i class="fas fa-chevron-right text-gray-400 mr-4"></i>
+                            <a href="{% url 'assets:collections' %}" class="text-gray-400 hover:text-gray-500">
+                                Collections
+                            </a>
+                        </div>
+                    </li>
+                    <li>
+                        <div class="flex items-center">
+                            <i class="fas fa-chevron-right text-gray-400 mr-4"></i>
+                            <span class="text-sm font-medium text-gray-500">{{ collection.name|truncatechars:30 }}</span>
+                        </div>
+                    </li>
+                </ol>
+            </nav>
+
+            <div class="mt-4 flex items-center space-x-3">
+                <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:truncate sm:text-3xl sm:tracking-tight">
+                    {{ collection.name }}
+                </h2>
+                {% if collection.is_public %}
+                <span class="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
+                    <i class="fas fa-globe mr-1"></i>
+                    Public
+                </span>
+                {% else %}
+                <span class="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-800">
+                    <i class="fas fa-lock mr-1"></i>
+                    Private
+                </span>
+                {% endif %}
+            </div>
+
+            {% if collection.description %}
+            <p class="mt-2 text-sm text-gray-500">
+                {{ collection.description }}
+            </p>
+            {% endif %}
+
+            <div class="mt-3 flex items-center text-sm text-gray-500 space-x-4">
+                <span>
+                    <i class="fas fa-user mr-1"></i>
+                    Created by {{ collection.created_by.get_full_name|default:collection.created_by.username }}
+                </span>
+                <span>
+                    <i class="fas fa-calendar mr-1"></i>
+                    {{ collection.created_at|date:"M d, Y" }}
+                </span>
+                <span>
+                    <i class="fas fa-images mr-1"></i>
+                    {{ collection.assets.count }} asset{{ collection.assets.count|pluralize }}
+                </span>
+            </div>
+        </div>
+
+        <div class="mt-4 flex md:ml-4 md:mt-0 space-x-3">
+            {% if collection.created_by == user or user.is_employee %}
+            <a href="{% url 'assets:collection_edit' slug=collection.slug %}"
+               class="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                <i class="fas fa-edit mr-2"></i>
+                Edit Collection
+            </a>
+            {% endif %}
+            <button type="button"
+                    hx-post="{% url 'assets:collection_share' slug=collection.slug %}"
+                    hx-target="#share-modal"
+                    class="inline-flex items-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500">
+                <i class="fas fa-share mr-2"></i>
+                Share Collection
+            </button>
+            <div class="relative" x-data="{ open: false }">
+                <button @click="open = !open"
+                        class="inline-flex items-center rounded-md bg-gray-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-gray-500">
+                    <i class="fas fa-download mr-2"></i>
+                    Download
+                    <i class="fas fa-chevron-down ml-2"></i>
+                </button>
+
+                <div x-show="open"
+                     @click.away="open = false"
+                     x-transition
+                     class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 z-10">
+                    <div class="py-1">
+                        <a href="{% url 'assets:collection_download' slug=collection.slug format='zip' %}"
+                           class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                            <i class="fas fa-file-archive mr-2"></i>Download as ZIP
+                        </a>
+                        <a href="{% url 'assets:collection_download' slug=collection.slug format='pdf' %}"
+                           class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                            <i class="fas fa-file-pdf mr-2"></i>Generate PDF Catalog
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Collection Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div class="bg-white p-4 rounded-lg shadow-sm border">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <i class="fas fa-images text-blue-500 text-xl"></i>
+                </div>
+                <div class="ml-3">
+                    <p class="text-sm font-medium text-gray-500">Total Assets</p>
+                    <p class="text-xl font-semibold text-gray-900">{{ collection.assets.count }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white p-4 rounded-lg shadow-sm border">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <i class="fas fa-photo-video text-green-500 text-xl"></i>
+                </div>
+                <div class="ml-3">
+                    <p class="text-sm font-medium text-gray-500">Images</p>
+                    <p class="text-xl font-semibold text-gray-900">{{ collection.image_count }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white p-4 rounded-lg shadow-sm border">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <i class="fas fa-file-alt text-purple-500 text-xl"></i>
+                </div>
+                <div class="ml-3">
+                    <p class="text-sm font-medium text-gray-500">Documents</p>
+                    <p class="text-xl font-semibold text-gray-900">{{ collection.document_count }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white p-4 rounded-lg shadow-sm border">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <i class="fas fa-hard-drive text-orange-500 text-xl"></i>
+                </div>
+                <div class="ml-3">
+                    <p class="text-sm font-medium text-gray-500">Total Size</p>
+                    <p class="text-xl font-semibold text-gray-900">{{ collection.total_size|filesizeformat }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters and View Options -->
+    <div class="bg-white p-4 rounded-lg shadow-sm border">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-4">
+                <!-- Search -->
+                <div class="relative">
+                    <input type="text"
+                           placeholder="Search assets..."
+                           hx-get="{% url 'assets:collection_detail' slug=collection.slug %}"
+                           hx-target="#assets-grid"
+                           hx-trigger="keyup changed delay:300ms, search"
+                           name="search"
+                           value="{{ search }}"
+                           class="block w-64 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 pl-10">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fas fa-search text-gray-400"></i>
+                    </div>
+                </div>
+
+                <!-- Type Filter -->
+                <select name="asset_type"
+                        hx-get="{% url 'assets:collection_detail' slug=collection.slug %}"
+                        hx-target="#assets-grid"
+                        hx-trigger="change"
+                        class="rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    <option value="">All Types</option>
+                    <option value="image" {% if type_filter == 'image' %}selected{% endif %}>Images</option>
+                    <option value="document" {% if type_filter == 'document' %}selected{% endif %}>Documents</option>
+                    <option value="video" {% if type_filter == 'video' %}selected{% endif %}>Videos</option>
+                    <option value="other" {% if type_filter == 'other' %}selected{% endif %}>Other</option>
+                </select>
+            </div>
+
+            <div class="flex items-center space-x-3">
+                <!-- View Toggle -->
+                <div class="flex items-center bg-gray-100 rounded-lg p-1">
+                    <button type="button"
+                            onclick="setView('grid')"
+                            id="grid-view-btn"
+                            class="p-2 rounded-md text-sm font-medium transition-all duration-200 bg-white text-gray-900 shadow-sm">
+                        <i class="fas fa-th"></i>
+                    </button>
+                    <button type="button"
+                            onclick="setView('list')"
+                            id="list-view-btn"
+                            class="p-2 rounded-md text-sm font-medium transition-all duration-200 text-gray-500 hover:text-gray-900">
+                        <i class="fas fa-list"></i>
+                    </button>
+                </div>
+
+                <!-- Add Assets -->
+                {% if collection.created_by == user or user.is_employee %}
+                <button type="button"
+                        hx-get="{% url 'assets:collection_add_assets' slug=collection.slug %}"
+                        hx-target="#add-assets-modal"
+                        class="inline-flex items-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500">
+                    <i class="fas fa-plus mr-2"></i>
+                    Add Assets
+                </button>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Assets Grid/List -->
+    <div id="assets-grid">
+        {% if collection.assets.exists %}
+        <div id="assets-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {% for asset in assets %}
+            {% include 'partials/asset_card.html' with asset=asset show_collection_actions=True collection=collection %}
+            {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        {% if is_paginated %}
+        {% include 'partials/pagination.html' with page_obj=page_obj %}
+        {% endif %}
+        {% else %}
+        <div class="text-center py-12">
+            <i class="fas fa-images text-gray-400 text-6xl mb-4"></i>
+            <h3 class="text-lg font-medium text-gray-900 mb-2">No assets in this collection</h3>
+            <p class="text-gray-500 mb-4">Add some assets to get started.</p>
+            {% if collection.created_by == user or user.is_employee %}
+            <button type="button"
+                    hx-get="{% url 'assets:collection_add_assets' slug=collection.slug %}"
+                    hx-target="#add-assets-modal"
+                    class="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500">
+                <i class="fas fa-plus mr-2"></i>
+                Add Assets
+            </button>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Shared Users -->
+    {% if collection.allowed_users.exists %}
+    <div class="bg-white rounded-lg shadow-sm border p-6">
+        <h3 class="text-lg font-medium text-gray-900 mb-4">Shared With</h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {% for shared_user in collection.allowed_users.all %}
+            <div class="flex items-center space-x-3">
+                <img class="h-10 w-10 rounded-full"
+                     src="https://ui-avatars.com/api/?name={{ shared_user.get_full_name|default:shared_user.username }}&size=40"
+                     alt="{{ shared_user.get_full_name|default:shared_user.username }}">
+                <div class="flex-1">
+                    <p class="text-sm font-medium text-gray-900">
+                        {{ shared_user.get_full_name|default:shared_user.username }}
+                    </p>
+                    <p class="text-xs text-gray-500">{{ shared_user.email }}</p>
+                </div>
+                {% if collection.created_by == user %}
+                <button type="button"
+                        hx-delete="{% url 'assets:collection_remove_user' slug=collection.slug user_id=shared_user.id %}"
+                        hx-confirm="Remove {{ shared_user.get_full_name|default:shared_user.username }} from this collection?"
+                        class="text-red-500 hover:text-red-700">
+                    <i class="fas fa-times"></i>
+                </button>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Modals -->
+<div id="share-modal"></div>
+<div id="add-assets-modal"></div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function setView(viewType) {
+    const container = document.getElementById('assets-container');
+    const gridBtn = document.getElementById('grid-view-btn');
+    const listBtn = document.getElementById('list-view-btn');
+
+    if (viewType === 'grid') {
+        container.className = 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6';
+        gridBtn.className = 'p-2 rounded-md text-sm font-medium transition-all duration-200 bg-white text-gray-900 shadow-sm';
+        listBtn.className = 'p-2 rounded-md text-sm font-medium transition-all duration-200 text-gray-500 hover:text-gray-900';
+    } else {
+        container.className = 'space-y-4';
+        listBtn.className = 'p-2 rounded-md text-sm font-medium transition-all duration-200 bg-white text-gray-900 shadow-sm';
+        gridBtn.className = 'p-2 rounded-md text-sm font-medium transition-all duration-200 text-gray-500 hover:text-gray-900';
+    }
+
+    // Store preference
+    localStorage.setItem('collection-view-preference', viewType);
+}
+
+// Load saved view preference
+document.addEventListener('DOMContentLoaded', function() {
+    const savedView = localStorage.getItem('collection-view-preference') || 'grid';
+    setView(savedView);
+});
+</script>
+{% endblock %}

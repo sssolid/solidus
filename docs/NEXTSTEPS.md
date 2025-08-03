@@ -1,19 +1,5 @@
 Missing template files that need to be generated:
 
-templates/assets/
-├── list.html              # Asset management list
-├── create.html             # Single asset creation  
-├── edit.html               # Asset editing form
-├── collections.html        # Asset collections
-└── collection_detail.html  # Collection contents
-
-templates/feeds/
-├── detail.html             # Feed configuration detail
-├── edit.html               # Feed editing
-├── list.html               # Feed management list
-├── generations.html        # Generation history
-└── generation_detail.html  # Generation status/logs
-
 templates/accounts/
 ├── user_detail.html        # User profile view
 ├── user_create.html        # User creation form

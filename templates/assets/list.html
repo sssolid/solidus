@@ -1,0 +1,192 @@
+<!-- templates/assets/list.html -->
+{% extends "base.html" %}
+{% load widget_tweaks %}
+
+{% block title %}Asset Management - Solidus{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="md:flex md:items-center md:justify-between">
+        <div class="min-w-0 flex-1">
+            <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:truncate sm:text-3xl sm:tracking-tight">
+                Asset Management
+            </h2>
+            <p class="mt-1 text-sm text-gray-500">
+                Manage digital assets, organize into collections, and control access permissions.
+            </p>
+        </div>
+        <div class="mt-4 flex md:ml-4 md:mt-0 space-x-3">
+            <a href="{% url 'assets:create' %}"
+               class="inline-flex items-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500">
+                <i class="fas fa-plus mr-2"></i>
+                Upload Asset
+            </a>
+            <a href="{% url 'assets:collections' %}"
+               class="inline-flex items-center rounded-md bg-gray-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-gray-500">
+                <i class="fas fa-folder mr-2"></i>
+                Collections
+            </a>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="bg-white p-4 rounded-lg shadow-sm border">
+        <form method="GET" class="grid grid-cols-1 md:grid-cols-4 gap-4"
+              hx-get="{% url 'assets:list' %}"
+              hx-target="#asset-list"
+              hx-trigger="change, search">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Search</label>
+                <input type="text" name="search" value="{{ search }}"
+                       placeholder="Search assets..."
+                       class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                <select name="category" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    <option value="">All Categories</option>
+                    {% for category in categories %}
+                    <option value="{{ category.slug }}" {% if category_filter == category.slug %}selected{% endif %}>
+                        {{ category.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Type</label>
+                <select name="asset_type" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    <option value="">All Types</option>
+                    <option value="image" {% if type_filter == 'image' %}selected{% endif %}>Images</option>
+                    <option value="document" {% if type_filter == 'document' %}selected{% endif %}>Documents</option>
+                    <option value="video" {% if type_filter == 'video' %}selected{% endif %}>Videos</option>
+                    <option value="other" {% if type_filter == 'other' %}selected{% endif %}>Other</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                <select name="status" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    <option value="">All Status</option>
+                    <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Active</option>
+                    <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>Pending</option>
+                    <option value="archived" {% if status_filter == 'archived' %}selected{% endif %}>Archived</option>
+                </select>
+            </div>
+        </form>
+    </div>
+
+    <!-- Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div class="bg-white p-4 rounded-lg shadow-sm border">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <i class="fas fa-images text-blue-500 text-2xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-500">Total Assets</p>
+                    <p class="text-2xl font-semibold text-gray-900">{{ stats.total_assets }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white p-4 rounded-lg shadow-sm border">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <i class="fas fa-folder text-green-500 text-2xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-500">Collections</p>
+                    <p class="text-2xl font-semibold text-gray-900">{{ stats.total_collections }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white p-4 rounded-lg shadow-sm border">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <i class="fas fa-download text-purple-500 text-2xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-500">Downloads</p>
+                    <p class="text-2xl font-semibold text-gray-900">{{ stats.total_downloads }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white p-4 rounded-lg shadow-sm border">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <i class="fas fa-hard-drive text-orange-500 text-2xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-500">Storage Used</p>
+                    <p class="text-2xl font-semibold text-gray-900">{{ stats.storage_used|filesizeformat }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Asset List -->
+    <div id="asset-list">
+        {% if assets %}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {% for asset in assets %}
+            {% include 'partials/asset_card.html' with asset=asset %}
+            {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        {% if is_paginated %}
+        {% include 'partials/pagination.html' with page_obj=page_obj %}
+        {% endif %}
+        {% else %}
+        <div class="text-center py-12">
+            <i class="fas fa-images text-gray-400 text-6xl mb-4"></i>
+            <h3 class="text-lg font-medium text-gray-900 mb-2">No assets found</h3>
+            <p class="text-gray-500 mb-4">Get started by uploading your first asset.</p>
+            <a href="{% url 'assets:create' %}"
+               class="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500">
+                <i class="fas fa-plus mr-2"></i>
+                Upload Asset
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Bulk Actions Modal -->
+<div id="bulk-actions-modal" class="hidden">
+    <!-- Modal will be loaded via HTMX -->
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Initialize bulk selection
+document.addEventListener('DOMContentLoaded', function() {
+    const selectAll = document.getElementById('select-all');
+    const assetCheckboxes = document.querySelectorAll('.asset-checkbox');
+    const bulkActionsBar = document.getElementById('bulk-actions-bar');
+
+    if (selectAll) {
+        selectAll.addEventListener('change', function() {
+            assetCheckboxes.forEach(checkbox => {
+                checkbox.checked = this.checked;
+            });
+            toggleBulkActions();
+        });
+    }
+
+    assetCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', toggleBulkActions);
+    });
+
+    function toggleBulkActions() {
+        const selectedCount = document.querySelectorAll('.asset-checkbox:checked').length;
+        if (selectedCount > 0) {
+            bulkActionsBar.classList.remove('hidden');
+            document.getElementById('selected-count').textContent = selectedCount;
+        } else {
+            bulkActionsBar.classList.add('hidden');
+        }
+    }
+});
+</script>
+{% endblock %}

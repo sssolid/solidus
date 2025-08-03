@@ -1,0 +1,327 @@
+<!-- templates/feeds/list.html -->
+{% extends "base.html" %}
+{% load widget_tweaks %}
+
+{% block title %}Data Feeds - Solidus{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="md:flex md:items-center md:justify-between">
+        <div class="min-w-0 flex-1">
+            <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:truncate sm:text-3xl sm:tracking-tight">
+                Data Feeds
+            </h2>
+            <p class="mt-1 text-sm text-gray-500">
+                Create and manage product data feeds for customers and external systems.
+            </p>
+        </div>
+        <div class="mt-4 flex md:ml-4 md:mt-0 space-x-3">
+            <a href="{% url 'feeds:generation_list' %}"
+               class="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                <i class="fas fa-history mr-2"></i>
+                Generation History
+            </a>
+            <a href="{% url 'feeds:create' %}"
+               class="inline-flex items-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500">
+                <i class="fas fa-plus mr-2"></i>
+                Create Feed
+            </a>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="bg-white p-4 rounded-lg shadow-sm border">
+        <form method="GET" class="grid grid-cols-1 md:grid-cols-4 gap-4"
+              hx-get="{% url 'feeds:list' %}"
+              hx-target="#feeds-list"
+              hx-trigger="change, search">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Search</label>
+                <input type="text" name="search" value="{{ search }}"
+                       placeholder="Search feeds..."
+                       class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Customer</label>
+                <select name="customer" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    <option value="">All Customers</option>
+                    {% for customer in customers %}
+                    <option value="{{ customer.id }}" {% if customer_filter == customer.id|stringformat:"s" %}selected{% endif %}>
+                        {{ customer.get_full_name|default:customer.username }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Format</label>
+                <select name="format" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    <option value="">All Formats</option>
+                    <option value="csv" {% if format_filter == 'csv' %}selected{% endif %}>CSV</option>
+                    <option value="xml" {% if format_filter == 'xml' %}selected{% endif %}>XML</option>
+                    <option value="json" {% if format_filter == 'json' %}selected{% endif %}>JSON</option>
+                    <option value="excel" {% if format_filter == 'excel' %}selected{% endif %}>Excel</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                <select name="status" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    <option value="">All Status</option>
+                    <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Active</option>
+                    <option value="paused" {% if status_filter == 'paused' %}selected{% endif %}>Paused</option>
+                    <option value="draft" {% if status_filter == 'draft' %}selected{% endif %}>Draft</option>
+                </select>
+            </div>
+        </form>
+    </div>
+
+    <!-- Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div class="bg-white p-4 rounded-lg shadow-sm border">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <i class="fas fa-rss text-blue-500 text-2xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-500">Total Feeds</p>
+                    <p class="text-2xl font-semibold text-gray-900">{{ stats.total_feeds }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white p-4 rounded-lg shadow-sm border">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <i class="fas fa-play text-green-500 text-2xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-500">Active Feeds</p>
+                    <p class="text-2xl font-semibold text-gray-900">{{ stats.active_feeds }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white p-4 rounded-lg shadow-sm border">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <i class="fas fa-download text-purple-500 text-2xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-500">This Month</p>
+                    <p class="text-2xl font-semibold text-gray-900">{{ stats.monthly_generations }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white p-4 rounded-lg shadow-sm border">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <i class="fas fa-users text-orange-500 text-2xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-500">Customers</p>
+                    <p class="text-2xl font-semibold text-gray-900">{{ stats.total_customers }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Feeds List -->
+    <div id="feeds-list">
+        {% if feeds %}
+        <div class="bg-white shadow-sm ring-1 ring-gray-900/5 rounded-xl overflow-hidden">
+            <table class="min-w-full divide-y divide-gray-300">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Feed
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Customer
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Format
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Schedule
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Last Generated
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Status
+                        </th>
+                        <th scope="col" class="relative px-6 py-3">
+                            <span class="sr-only">Actions</span>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for feed in feeds %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0">
+                                    <i class="fas fa-rss text-gray-400"></i>
+                                </div>
+                                <div class="ml-4">
+                                    <div class="text-sm font-medium text-gray-900">
+                                        <a href="{% url 'feeds:detail' pk=feed.pk %}" class="hover:text-blue-600">
+                                            {{ feed.name }}
+                                        </a>
+                                    </div>
+                                    {% if feed.description %}
+                                    <div class="text-sm text-gray-500">
+                                        {{ feed.description|truncatechars:50 }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm text-gray-900">
+                                {{ feed.customer.get_full_name|default:feed.customer.username }}
+                            </div>
+                            <div class="text-sm text-gray-500">
+                                {{ feed.customer.company_name|default:feed.customer.email }}
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium
+                                {% if feed.output_format == 'csv' %}bg-blue-100 text-blue-800
+                                {% elif feed.output_format == 'xml' %}bg-green-100 text-green-800
+                                {% elif feed.output_format == 'json' %}bg-purple-100 text-purple-800
+                                {% elif feed.output_format == 'excel' %}bg-orange-100 text-orange-800
+                                {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                {{ feed.get_output_format_display|upper }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {% if feed.schedule_enabled %}
+                                <div class="flex items-center">
+                                    <i class="fas fa-clock mr-1"></i>
+                                    {{ feed.get_schedule_frequency_display }}
+                                </div>
+                            {% else %}
+                                <span class="text-gray-400">Manual</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {% if feed.last_generated %}
+                                <div>{{ feed.last_generated|date:"M d, Y H:i" }}</div>
+                                {% if feed.last_generation_status == 'completed' %}
+                                <div class="text-xs text-green-600">Success</div>
+                                {% elif feed.last_generation_status == 'failed' %}
+                                <div class="text-xs text-red-600">Failed</div>
+                                {% elif feed.last_generation_status == 'running' %}
+                                <div class="text-xs text-blue-600">Running</div>
+                                {% endif %}
+                            {% else %}
+                                <span class="text-gray-400">Never</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            {% if feed.is_active %}
+                            <span class="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
+                                <div class="mr-1.5 h-2 w-2 bg-green-400 rounded-full"></div>
+                                Active
+                            </span>
+                            {% else %}
+                            <span class="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-800">
+                                <div class="mr-1.5 h-2 w-2 bg-gray-400 rounded-full"></div>
+                                {{ feed.get_status_display }}
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <div class="flex items-center justify-end space-x-2">
+                                <!-- Generate Now -->
+                                <button type="button"
+                                        hx-post="{% url 'feeds:generate' pk=feed.pk %}"
+                                        hx-confirm="Generate feed now?"
+                                        class="text-blue-600 hover:text-blue-900"
+                                        title="Generate Now">
+                                    <i class="fas fa-play"></i>
+                                </button>
+
+                                <!-- View Details -->
+                                <a href="{% url 'feeds:detail' pk=feed.pk %}"
+                                   class="text-gray-600 hover:text-gray-900"
+                                   title="View Details">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+
+                                <!-- Edit -->
+                                <a href="{% url 'feeds:edit' pk=feed.pk %}"
+                                   class="text-gray-600 hover:text-gray-900"
+                                   title="Edit Feed">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+
+                                <!-- Actions Menu -->
+                                <div class="relative" x-data="{ open: false }">
+                                    <button @click="open = !open"
+                                            class="text-gray-600 hover:text-gray-900"
+                                            title="More Actions">
+                                        <i class="fas fa-ellipsis-v"></i>
+                                    </button>
+
+                                    <div x-show="open"
+                                         @click.away="open = false"
+                                         x-transition
+                                         class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 z-10">
+                                        <div class="py-1">
+                                            <button type="button"
+                                                    hx-post="{% url 'feeds:toggle_status' pk=feed.pk %}"
+                                                    class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                                <i class="fas fa-{% if feed.is_active %}pause{% else %}play{% endif %} mr-2"></i>
+                                                {% if feed.is_active %}Pause Feed{% else %}Activate Feed{% endif %}
+                                            </button>
+                                            <a href="{% url 'feeds:delivery_config' pk=feed.pk %}"
+                                               class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                                <i class="fas fa-cog mr-2"></i>Delivery Settings
+                                            </a>
+                                            <button type="button"
+                                                    hx-post="{% url 'feeds:test_delivery' pk=feed.pk %}"
+                                                    class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                                <i class="fas fa-paper-plane mr-2"></i>Test Delivery
+                                            </button>
+                                            <div class="border-t border-gray-100"></div>
+                                            <button type="button"
+                                                    hx-delete="{% url 'feeds:delete' pk=feed.pk %}"
+                                                    hx-confirm="Are you sure you want to delete this feed?"
+                                                    class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100">
+                                                <i class="fas fa-trash mr-2"></i>Delete Feed
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if is_paginated %}
+        {% include 'partials/pagination.html' with page_obj=page_obj %}
+        {% endif %}
+        {% else %}
+        <div class="text-center py-12">
+            <i class="fas fa-rss text-gray-400 text-6xl mb-4"></i>
+            <h3 class="text-lg font-medium text-gray-900 mb-2">No feeds found</h3>
+            <p class="text-gray-500 mb-4">Create your first data feed to get started.</p>
+            <a href="{% url 'feeds:create' %}"
+               class="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500">
+                <i class="fas fa-plus mr-2"></i>
+                Create Feed
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Real-time updates for feed status -->
+<div hx-ext="ws" ws-connect="/ws/updates/feeds/">
+    <div hx-trigger="ws:feed-update from:body" hx-get="{% url 'feeds:list' %}" hx-target="#feeds-list"></div>
+</div>
+{% endblock %}
