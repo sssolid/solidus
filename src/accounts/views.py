@@ -217,7 +217,7 @@ class UserListView(EmployeeRequiredMixin, ListView):
     """List all users"""
 
     model = User
-    template_name = "accounts/user_list.html"
+    template_name = "accounts/list.html"
     context_object_name = "users"
     paginate_by = 50
 
@@ -269,7 +269,7 @@ class UserCreateView(EmployeeRequiredMixin, CreateView):
 
     model = User
     form_class = UserCreationForm
-    template_name = "accounts/user_create.html"
+    template_name = "accounts/create.html"
 
     def form_valid(self, form):
         response = super().form_valid(form)
@@ -286,7 +286,7 @@ class UserDetailView(EmployeeRequiredMixin, DetailView):
     """User detail view"""
 
     model = User
-    template_name = "accounts/user_detail.html"
+    template_name = "accounts/detail.html"
     context_object_name = "profile_user"
 
     def get_context_data(self, **kwargs):
@@ -324,7 +324,7 @@ class UserEditView(EmployeeRequiredMixin, UpdateView):
 
     model = User
     form_class = UserEditForm
-    template_name = "accounts/user_edit.html"
+    template_name = "accounts/edit.html"
 
     def form_valid(self, form):
         response = super().form_valid(form)

@@ -208,30 +208,37 @@ superuser:
 .PHONY: test
 test:
 	@echo "🧪 Running tests..."
-	$(DOCKER_COMPOSE) exec web uv run pytest
+	uv run pytest
+#	$(DOCKER_COMPOSE) exec web uv run pytest
 
 .PHONY: test-coverage
 test-coverage:
 	@echo "📊 Running tests with coverage..."
-	$(DOCKER_COMPOSE) exec web uv run pytest --cov=. --cov-report=html
+	uv run pytest --cov=. --cov-report=html
+#	$(DOCKER_COMPOSE) exec web uv run pytest --cov=. --cov-report=html
 	@echo "📝 Coverage report: htmlcov/index.html"
 
 .PHONY: lint
 lint:
 	@echo "🔍 Running linters..."
-	$(DOCKER_COMPOSE) exec web uv run ruff check src/
-	$(DOCKER_COMPOSE) exec web uv run black src/ --check
+	uv run ruff check src/
+	uv run black src/ --check
+#	$(DOCKER_COMPOSE) exec web uv run ruff check src/
+#	$(DOCKER_COMPOSE) exec web uv run black src/ --check
 
 .PHONY: format
 format:
 	@echo "✨ Formatting code..."
-	$(DOCKER_COMPOSE) exec web uv run black src/
-	$(DOCKER_COMPOSE) exec web uv run ruff check src/ --fix
+	uv run black src/
+	uv run ruff check src/ --fix
+#	$(DOCKER_COMPOSE) exec web uv run black src/
+#	$(DOCKER_COMPOSE) exec web uv run ruff check src/ --fix
 
 .PHONY: type-check
 type-check:
 	@echo "🔍 Running type checks..."
-	$(DOCKER_COMPOSE) exec web uv run mypy src/
+	uv run mypy src/
+#	$(DOCKER_COMPOSE) exec web uv run mypy src/
 
 # Asset processing
 .PHONY: process-assets

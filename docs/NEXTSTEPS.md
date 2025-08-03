@@ -1,24 +1,19 @@
-Missing template files that need to be generated:
+# 1. Create missing class-based views in core/views.py
+- **Add**: `UpdateSystemSettingView` class
+- **Add**: `SearchSuggestionsView` class  
+- **Add**: `SystemStatsView` class
 
-templates/partials/
-├── notification_dropdown.html  # HTMX notifications
-├── pagination.html             # Reusable pagination  
-├── product_card.html           # Product grid item
-├── asset_card.html             # Asset grid item
-└── breadcrumbs.html            # Navigation breadcrumbs
+# 2. Create missing authentication functions in api/views.py
+- **Add**: `refresh_token` function
 
+# 3. Implement TODOs in api/views.py
+- **Add**: `ProductUpdateWebhook` class
+- **Add**: `InventoryUpdateWebhook` class
 
-Verify WebSocket routing is properly connected
-Check that all URL includes are working
+# 4. Check for undefined template context variables
+- **Review**: Dashboard template conditional blocks for role-specific variables
+- **Fix**: Any template references to variables not passed in view context
 
-Some views might reference template names that don't match what exists. Check for:
-python# In views.py files, ensure template_name matches actual template files
-template_name = 'assets/list.html'  # Make sure this file exists
-
-Some templates I created reference context variables that might not be passed from views:
-python# In views, ensure all needed context is passed:
-context = {
-    'brands': Brand.objects.all(),  # For filters
-    'categories': Category.objects.all(),  # For filters  
-    'stats': self.get_stats(),  # For dashboard
-}
+# 5. Ensure consistent naming
+- **Verify**: All URL name references match actual view names
+- **Check**: Import statements are complete and correct

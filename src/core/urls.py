@@ -23,12 +23,12 @@ urlpatterns = [
     path("notifications/", views.NotificationListView.as_view(), name="notifications"),
     path(
         "notifications/<int:pk>/mark-read/",
-        views.MarkNotificationReadView.as_view(),
+        views.mark_notification_read,
         name="mark_notification_read",
     ),
     path(
         "notifications/mark-all-read/",
-        views.MarkAllNotificationsReadView.as_view(),
+        views.mark_all_notifications_read,
         name="mark_all_notifications_read",
     ),
     # System settings (admin only)
@@ -39,7 +39,7 @@ urlpatterns = [
         name="update_setting",
     ),
     # Background tasks
-    path("tasks/", views.TaskListView.as_view(), name="tasks"),
+    path("tasks/", views.TaskQueueListView.as_view(), name="tasks"),
     path("tasks/<str:task_id>/", views.TaskDetailView.as_view(), name="task_detail"),
     # Health check endpoints
     path("health/", HealthCheckView.as_view(), name="health_check"),
