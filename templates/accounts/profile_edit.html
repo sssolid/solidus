@@ -1,0 +1,319 @@
+{% extends "base.html" %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block title %}Edit Profile{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6">
+    <!-- Breadcrumbs -->
+    <nav class="mb-6">
+        <ol class="flex items-center space-x-2 text-sm text-gray-500">
+            <li><a href="{% url 'dashboard' %}" class="hover:text-blue-600">Dashboard</a></li>
+            <li>/</li>
+            <li><a href="{% url 'accounts:profile' %}" class="hover:text-blue-600">My Profile</a></li>
+            <li>/</li>
+            <li>Edit Profile</li>
+        </ol>
+    </nav>
+
+    <div class="max-w-2xl mx-auto">
+        <div class="bg-white rounded-lg shadow-sm border">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h1 class="text-xl font-semibold text-gray-900">Edit Your Profile</h1>
+                <p class="mt-1 text-sm text-gray-600">Update your personal information and preferences.</p>
+            </div>
+
+            <form hx-post="{% url 'accounts:profile_edit' %}"
+                  hx-swap="outerHTML"
+                  hx-target="closest form"
+                  enctype="multipart/form-data"
+                  class="px-6 py-6 space-y-6">
+                {% csrf_token %}
+
+                <!-- Form Success Message -->
+                {% if messages %}
+                    {% for message in messages %}
+                    <div class="rounded-md {% if message.tags == 'success' %}bg-green-50 border border-green-200{% else %}bg-red-50 border border-red-200{% endif %} p-4">
+                        <div class="flex">
+                            <div class="flex-shrink-0">
+                                {% if message.tags == 'success' %}
+                                <svg class="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                                </svg>
+                                {% else %}
+                                <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                                </svg>
+                                {% endif %}
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-sm {% if message.tags == 'success' %}text-green-800{% else %}text-red-800{% endif %}">
+                                    {{ message }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% endif %}
+
+                <!-- Form Errors -->
+                {% if form.non_field_errors %}
+                <div class="rounded-md bg-red-50 p-4">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                            </svg>
+                        </div>
+                        <div class="ml-3">
+                            <h3 class="text-sm font-medium text-red-800">Please correct the following errors:</h3>
+                            <div class="mt-2 text-sm text-red-700">
+                                {{ form.non_field_errors }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Profile Photo -->
+                <div class="space-y-4">
+                    <h3 class="text-lg font-medium text-gray-900">Profile Photo</h3>
+                    <div class="flex items-center space-x-6">
+                        <div class="flex-shrink-0">
+                            {% if request.user.avatar %}
+                                <img id="avatar-preview" src="{{ request.user.avatar.url }}" alt="Profile photo"
+                                     class="w-20 h-20 rounded-full object-cover">
+                            {% else %}
+                                <div id="avatar-preview" class="w-20 h-20 rounded-full bg-gray-300 flex items-center justify-center">
+                                    <span class="text-gray-600 text-xl font-semibold">
+                                        {{ request.user.get_full_name|default:request.user.username|first|upper }}
+                                    </span>
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="flex-1">
+                            {{ form.avatar|add_class:"block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" }}
+                            {% if form.avatar.errors %}
+                                <p class="mt-1 text-sm text-red-600">{{ form.avatar.errors.0 }}</p>
+                            {% endif %}
+                            <p class="mt-1 text-sm text-gray-500">JPG, PNG up to 2MB. Optional.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Personal Information -->
+                <div class="space-y-4 pt-6 border-t border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900">Personal Information</h3>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="{{ form.first_name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                                First Name
+                            </label>
+                            {{ form.first_name|add_class:"w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" }}
+                            {% if form.first_name.errors %}
+                                <p class="mt-1 text-sm text-red-600">{{ form.first_name.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+
+                        <div>
+                            <label for="{{ form.last_name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                                Last Name
+                            </label>
+                            {{ form.last_name|add_class:"w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" }}
+                            {% if form.last_name.errors %}
+                                <p class="mt-1 text-sm text-red-600">{{ form.last_name.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="{{ form.email.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                            Email Address <span class="text-red-500">*</span>
+                        </label>
+                        {{ form.email|add_class:"w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" }}
+                        {% if form.email.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.email.errors.0 }}</p>
+                        {% endif %}
+                        <p class="mt-1 text-sm text-gray-500">We'll send important account updates to this email.</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="{{ form.phone.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                                Phone Number
+                            </label>
+                            {{ form.phone|add_class:"w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" }}
+                            {% if form.phone.errors %}
+                                <p class="mt-1 text-sm text-red-600">{{ form.phone.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+
+                        <div>
+                            <label for="{{ form.company.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                                Company
+                            </label>
+                            {{ form.company|add_class:"w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" }}
+                            {% if form.company.errors %}
+                                <p class="mt-1 text-sm text-red-600">{{ form.company.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="{{ form.website.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                            Website
+                        </label>
+                        {{ form.website|add_class:"w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" }}
+                        {% if form.website.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.website.errors.0 }}</p>
+                        {% endif %}
+                        <p class="mt-1 text-sm text-gray-500">Include http:// or https://</p>
+                    </div>
+
+                    <div>
+                        <label for="{{ form.bio.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                            Bio
+                        </label>
+                        {{ form.bio|add_class:"w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" }}
+                        {% if form.bio.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.bio.errors.0 }}</p>
+                        {% endif %}
+                        <p class="mt-1 text-sm text-gray-500">Brief description about yourself. Max 500 characters.</p>
+                    </div>
+                </div>
+
+                <!-- Communication Preferences -->
+                <div class="space-y-4 pt-6 border-t border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900">Communication Preferences</h3>
+                    <p class="text-sm text-gray-600">Choose how you'd like to receive notifications and updates.</p>
+
+                    <div class="space-y-3">
+                        <div class="flex items-start">
+                            <div class="flex items-center h-5">
+                                {{ form.email_notifications|add_class:"h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" }}
+                            </div>
+                            <div class="ml-3 text-sm">
+                                <label for="{{ form.email_notifications.id_for_label }}" class="font-medium text-gray-700">Email Notifications</label>
+                                <p class="text-gray-500">Receive email updates about your account activity and important announcements.</p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-start">
+                            <div class="flex items-center h-5">
+                                {{ form.sms_notifications|add_class:"h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" }}
+                            </div>
+                            <div class="ml-3 text-sm">
+                                <label for="{{ form.sms_notifications.id_for_label }}" class="font-medium text-gray-700">SMS Notifications</label>
+                                <p class="text-gray-500">Receive text messages for urgent account updates. Standard messaging rates apply.</p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-start">
+                            <div class="flex items-center h-5">
+                                {{ form.marketing_emails|add_class:"h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" }}
+                            </div>
+                            <div class="ml-3 text-sm">
+                                <label for="{{ form.marketing_emails.id_for_label }}" class="font-medium text-gray-700">Marketing Emails</label>
+                                <p class="text-gray-500">Receive newsletters, product updates, and promotional offers.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Time Zone and Locale -->
+                <div class="space-y-4 pt-6 border-t border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900">Preferences</h3>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="{{ form.timezone.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                                Time Zone
+                            </label>
+                            {{ form.timezone|add_class:"w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" }}
+                            {% if form.timezone.errors %}
+                                <p class="mt-1 text-sm text-red-600">{{ form.timezone.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+
+                        <div>
+                            <label for="{{ form.language.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                                Language
+                            </label>
+                            {{ form.language|add_class:"w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" }}
+                            {% if form.language.errors %}
+                                <p class="mt-1 text-sm text-red-600">{{ form.language.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Security Actions -->
+                <div class="pt-6 border-t border-gray-200">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="text-lg font-medium text-gray-900">Password & Security</h3>
+                            <p class="text-sm text-gray-600">Manage your password and security settings.</p>
+                        </div>
+                        <a href="{% url 'accounts:password_change' %}"
+                           class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                            Change Password
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Form Actions -->
+                <div class="flex items-center justify-end space-x-3 pt-6 border-t border-gray-200">
+                    <a href="{% url 'accounts:profile' %}"
+                       class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        Cancel
+                    </a>
+                    <button type="submit"
+                            class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        <span class="htmx-indicator hidden">
+                            <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                        </span>
+                        Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// Preview avatar upload
+document.addEventListener('change', function(e) {
+    if (e.target.type === 'file' && e.target.name === 'avatar') {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const preview = document.getElementById('avatar-preview');
+                preview.innerHTML = `<img src="${e.target.result}" alt="Profile photo" class="w-20 h-20 rounded-full object-cover">`;
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+});
+
+// Handle successful form submission
+document.body.addEventListener('htmx:afterRequest', function(event) {
+    if (event.detail.successful && event.detail.xhr.status === 200) {
+        // Show success message or redirect
+        const successMessage = document.createElement('div');
+        successMessage.className = 'fixed top-4 right-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded z-50';
+        successMessage.textContent = 'Profile updated successfully!';
+        document.body.appendChild(successMessage);
+
+        setTimeout(() => {
+            successMessage.remove();
+        }, 3000);
+    }
+});
+</script>
+{% endblock %}

@@ -1,20 +1,5 @@
 Missing template files that need to be generated:
 
-templates/accounts/
-├── user_detail.html        # User profile view
-├── user_create.html        # User creation form
-├── user_edit.html          # User editing
-├── customer_detail.html    # Customer profile
-├── profile_edit.html       # Profile editing
-├── settings.html           # User preferences
-└── password_change.html    # Password change
-
-templates/audit/
-├── log_list.html           # Audit log viewer
-├── log_detail.html         # Detailed audit entry
-├── model_history.html      # Object history
-└── reports.html            # Audit reports
-
 templates/partials/
 ├── notification_dropdown.html  # HTMX notifications
 ├── pagination.html             # Reusable pagination  
