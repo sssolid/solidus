@@ -1,0 +1,146 @@
+<!-- templates/core/setting_update.html -->
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Update Setting: {{ setting.key }}{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <!-- Header -->
+    <div class="mb-8">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900">Update System Setting</h1>
+                <p class="mt-1 text-sm text-gray-600">
+                    Modify the system setting configuration.
+                </p>
+            </div>
+            <a href="{% url 'core:system_settings' %}"
+               class="btn btn-secondary">
+                <i class="fas fa-arrow-left mr-2"></i>Back to Settings
+            </a>
+        </div>
+    </div>
+
+    <!-- Setting Form -->
+    <div class="bg-white shadow rounded-lg">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-medium text-gray-900">{{ setting.key }}</h3>
+            {% if setting.description %}
+                <p class="mt-1 text-sm text-gray-600">{{ setting.description }}</p>
+            {% endif %}
+        </div>
+
+        <form method="post"
+              hx-post="{% url 'core:update_setting' key=setting.key %}"
+              hx-target="#messages"
+              hx-swap="innerHTML"
+              class="p-6">
+            {% csrf_token %}
+
+            <div class="space-y-6">
+                <!-- Current Value -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Current Value
+                    </label>
+                    <div class="p-3 bg-gray-50 rounded-md border">
+                        <code class="text-sm">{{ setting.value|default:"(empty)" }}</code>
+                    </div>
+                </div>
+
+                <!-- New Value -->
+                <div>
+                    <label for="id_value" class="block text-sm font-medium text-gray-700 mb-2">
+                        New Value
+                    </label>
+                    {% if setting.setting_type == 'boolean' %}
+                        <select name="value" id="id_value"
+                                class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            <option value="true" {% if setting.value == "true" %}selected{% endif %}>True</option>
+                            <option value="false" {% if setting.value == "false" %}selected{% endif %}>False</option>
+                        </select>
+                    {% elif setting.setting_type == 'integer' %}
+                        <input type="number" name="value" id="id_value"
+                               value="{{ setting.value }}"
+                               class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    {% elif setting.setting_type == 'json' %}
+                        <textarea name="value" id="id_value" rows="8"
+                                  class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 font-mono text-sm">{{ setting.value }}</textarea>
+                        <p class="mt-1 text-xs text-gray-500">Enter valid JSON format</p>
+                    {% else %}
+                        <input type="text" name="value" id="id_value"
+                               value="{{ setting.value }}"
+                               class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    {% endif %}
+                </div>
+
+                <!-- Description -->
+                <div>
+                    <label for="id_description" class="block text-sm font-medium text-gray-700 mb-2">
+                        Description
+                    </label>
+                    <textarea name="description" id="id_description" rows="3"
+                              class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                              placeholder="Optional description of this setting...">{{ setting.description }}</textarea>
+                </div>
+
+                <!-- Setting Info -->
+                <div class="bg-blue-50 border border-blue-200 rounded-md p-4">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-info-circle text-blue-400"></i>
+                        </div>
+                        <div class="ml-3">
+                            <h3 class="text-sm font-medium text-blue-800">Setting Information</h3>
+                            <div class="mt-2 text-sm text-blue-700">
+                                <ul class="list-disc list-inside space-y-1">
+                                    <li><strong>Key:</strong> {{ setting.key }}</li>
+                                    <li><strong>Type:</strong> {{ setting.get_setting_type_display }}</li>
+                                    <li><strong>Created:</strong> {{ setting.created_at|date:"M d, Y H:i" }}</li>
+                                    <li><strong>Last Modified:</strong> {{ setting.updated_at|date:"M d, Y H:i" }}</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Form Actions -->
+            <div class="flex justify-end space-x-3 pt-6 border-t border-gray-200 mt-6">
+                <a href="{% url 'core:system_settings' %}"
+                   class="btn btn-secondary">Cancel</a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save mr-2"></i>Update Setting
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Messages Container -->
+    <div id="messages" class="mt-4"></div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // JSON validation for JSON type settings
+    const valueInput = document.getElementById('id_value');
+    const settingType = '{{ setting.setting_type }}';
+
+    if (settingType === 'json' && valueInput) {
+        valueInput.addEventListener('blur', function() {
+            try {
+                if (this.value.trim()) {
+                    JSON.parse(this.value);
+                    this.classList.remove('border-red-300');
+                    this.classList.add('border-green-300');
+                }
+            } catch (e) {
+                this.classList.remove('border-green-300');
+                this.classList.add('border-red-300');
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

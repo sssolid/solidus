@@ -2,13 +2,14 @@
 import hashlib
 import os
 
+from taggit.managers import TaggableManager
+
 from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
 from django.contrib.postgres.indexes import GinIndex
 from django.core.files.storage import default_storage
 from django.db import models
 from django.utils import timezone
-from taggit.managers import TaggableManager
 
 
 class AssetCategory(models.Model):

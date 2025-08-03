@@ -1,7 +1,8 @@
 # src/assets/forms.py
+from taggit.forms import TagWidget
+
 from django import forms
 from django.core.exceptions import ValidationError
-from taggit.forms import TagWidget
 
 from products.models import Product
 

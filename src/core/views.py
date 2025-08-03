@@ -6,14 +6,15 @@ from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.db.models import Q
 from django.http import JsonResponse
 from django.shortcuts import redirect, render
+from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.views.decorators.http import require_POST
-from django.views.generic import DetailView, ListView, TemplateView
+from django.views.generic import DetailView, ListView, TemplateView, UpdateView
 
 from accounts.models import User
 from assets.models import Asset
 from feeds.models import DataFeed, FeedGeneration
-from products.models import Product
+from products.models import CustomerPricing, Product
 
 from .models import Notification, SystemSetting, TaskQueue
 
@@ -52,34 +53,41 @@ class DashboardView(LoginRequiredMixin, TemplateView):
             )
         else:
             # Customer dashboard
+            customer_products = Product.objects.filter(
+                customer_prices__customer=user, is_active=True
+            ).distinct()
+
+            customer_feeds = DataFeed.objects.filter(customer=user, is_active=True)
+
+            customer_assets = Asset.objects.filter(is_active=True)
+
+            # Filter assets by customer permissions
+            if (
+                hasattr(user, "allowed_asset_categories")
+                and user.allowed_asset_categories
+            ):
+                customer_assets = customer_assets.filter(
+                    categories__slug__in=user.allowed_asset_categories
+                ).distinct()
+            else:
+                customer_assets = customer_assets.filter(is_public=True)
+
             context.update(
                 {
-                    "active_feeds": DataFeed.objects.filter(
-                        customer=user, is_active=True
+                    "customer_products": customer_products[:5],
+                    "total_customer_products": customer_products.count(),
+                    "customer_feeds": customer_feeds,
+                    "total_customer_feeds": customer_feeds.count(),
+                    "customer_assets": customer_assets[:5],
+                    "total_customer_assets": customer_assets.count(),
+                    "recent_downloads": FeedGeneration.objects.filter(
+                        feed__customer=user, status="completed"
+                    ).order_by("-completed_at")[:5],
+                    "custom_pricing_count": CustomerPricing.objects.filter(
+                        customer=user
                     ).count(),
-                    "recent_generations": FeedGeneration.objects.filter(
-                        feed__customer=user
-                    ).order_by("-started_at")[:5],
-                    "available_products": Product.objects.filter(
-                        is_active=True, customer_prices__customer=user
-                    )
-                    .distinct()
-                    .count(),
-                    "my_feeds": DataFeed.objects.filter(customer=user)[:5],
                 }
             )
-
-        # Common data
-        context.update(
-            {
-                "notifications": Notification.objects.filter(
-                    user=user, is_read=False
-                ).order_by("-created_at")[:5],
-                "notification_count": Notification.objects.filter(
-                    user=user, is_read=False
-                ).count(),
-            }
-        )
 
         return context
 
@@ -257,6 +265,158 @@ class TaskDetailView(AdminRequiredMixin, DetailView):
     slug_url_kwarg = "task_id"
 
 
+class UpdateSystemSettingView(AdminRequiredMixin, UpdateView):
+    """Update individual system setting"""
+
+    model = SystemSetting
+    fields = ["value", "description"]
+    template_name = "core/setting_update.html"
+    slug_field = "key"
+    slug_url_kwarg = "key"
+
+    def get_success_url(self):
+        messages.success(
+            self.request, f"Setting '{self.object.key}' updated successfully."
+        )
+        return reverse_lazy("core:system_settings")
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["setting"] = self.object
+        return context
+
+
+class SearchSuggestionsView(LoginRequiredMixin, TemplateView):
+    """AJAX search suggestions"""
+
+    def get(self, request, *args, **kwargs):
+        query = request.GET.get("q", "").strip()
+
+        if len(query) < 2:
+            return JsonResponse({"suggestions": []})
+
+        suggestions = []
+
+        # Product suggestions
+        products = Product.objects.filter(
+            Q(name__icontains=query) | Q(sku__icontains=query), is_active=True
+        )[:5]
+
+        if request.user.is_customer:
+            products = products.filter(
+                customer_prices__customer=request.user
+            ).distinct()
+
+        for product in products:
+            suggestions.append(
+                {
+                    "type": "product",
+                    "label": f"{product.sku} - {product.name}",
+                    "url": reverse("products:detail", kwargs={"pk": product.pk}),
+                    "icon": "fas fa-box",
+                }
+            )
+
+        # Asset suggestions
+        assets = Asset.objects.filter(
+            Q(title__icontains=query) | Q(description__icontains=query), is_active=True
+        )[:3]
+
+        if request.user.is_customer:
+            if (
+                hasattr(request.user, "allowed_asset_categories")
+                and request.user.allowed_asset_categories
+            ):
+                assets = assets.filter(
+                    categories__slug__in=request.user.allowed_asset_categories
+                ).distinct()
+            else:
+                assets = assets.filter(is_public=True)
+
+        for asset in assets:
+            suggestions.append(
+                {
+                    "type": "asset",
+                    "label": asset.title,
+                    "url": reverse("assets:detail", kwargs={"pk": asset.pk}),
+                    "icon": "fas fa-file",
+                }
+            )
+
+        # User suggestions (employees only)
+        if request.user.is_employee:
+            users = User.objects.filter(
+                Q(username__icontains=query)
+                | Q(email__icontains=query)
+                | Q(first_name__icontains=query)
+                | Q(last_name__icontains=query)
+            )[:3]
+
+            for user in users:
+                suggestions.append(
+                    {
+                        "type": "user",
+                        "label": f"{user.get_full_name() or user.username} ({user.email})",
+                        "url": reverse("accounts:user_detail", kwargs={"pk": user.pk}),
+                        "icon": "fas fa-user",
+                    }
+                )
+
+        return JsonResponse({"suggestions": suggestions})
+
+
+class SystemStatsView(AdminRequiredMixin, TemplateView):
+    """AJAX system statistics"""
+
+    def get(self, request, *args, **kwargs):
+        # Basic stats
+        stats = {
+            "products": {
+                "total": Product.objects.count(),
+                "active": Product.objects.filter(is_active=True).count(),
+                "featured": Product.objects.filter(is_featured=True).count(),
+            },
+            "assets": {
+                "total": Asset.objects.count(),
+                "active": Asset.objects.filter(is_active=True).count(),
+                "public": Asset.objects.filter(is_public=True).count(),
+            },
+            "users": {
+                "total": User.objects.count(),
+                "active": User.objects.filter(is_active=True).count(),
+                "customers": User.objects.filter(role="customer").count(),
+                "employees": User.objects.filter(role="employee").count(),
+            },
+            "feeds": {
+                "total": DataFeed.objects.count(),
+                "active": DataFeed.objects.filter(is_active=True).count(),
+            },
+            "tasks": {
+                "pending": TaskQueue.objects.filter(status="pending").count(),
+                "running": TaskQueue.objects.filter(status="running").count(),
+                "completed": TaskQueue.objects.filter(status="completed").count(),
+                "failed": TaskQueue.objects.filter(status="failed").count(),
+            },
+        }
+
+        # Recent activity
+        recent_activity = {
+            "new_products_today": Product.objects.filter(
+                created_at__date=timezone.now().date()
+            ).count(),
+            "new_assets_today": Asset.objects.filter(
+                created_at__date=timezone.now().date()
+            ).count(),
+            "new_users_today": User.objects.filter(
+                date_joined__date=timezone.now().date()
+            ).count(),
+        }
+
+        stats["recent"] = recent_activity
+
+        return JsonResponse(stats)
+
+
 class SystemSettingsView(AdminRequiredMixin, TemplateView):
     """System settings management"""
 
@@ -322,12 +482,19 @@ def health_check(request):
 # Error handlers
 def error_404(request, exception):
     """Custom 404 error handler"""
-    return render(request, "errors/404.html", status=404)
+    return render(
+        request,
+        "errors/404.html",
+        {"exception": exception, "request_path": request.path},
+        status=404,
+    )
 
 
 def error_500(request):
     """Custom 500 error handler"""
-    return render(request, "errors/500.html", status=500)
+    return render(
+        request, "errors/500.html", {"request_path": request.path}, status=500
+    )
 
 
 # Utility functions for notifications

@@ -6,10 +6,11 @@ import os
 import subprocess
 from pathlib import Path
 
+from PIL import Image
+
 from django.conf import settings
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
-from PIL import Image
 
 logger = logging.getLogger("solidus.assets")
 

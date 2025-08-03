@@ -1,8 +1,9 @@
 # src/core/management/commands/generate_thumbnails.py
 import os
 
-from django.core.management.base import BaseCommand
 from PIL import Image
+
+from django.core.management.base import BaseCommand
 
 from assets.models import Asset
 

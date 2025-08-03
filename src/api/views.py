@@ -1,22 +1,28 @@
 # src/api/views.py
+import logging
 
-# Serializers (would typically be in separate serializers.py file)
-from django.contrib.auth import authenticate, login, logout
-from django.core.paginator import Paginator
-from django.db.models import Q
-from django.shortcuts import get_object_or_404
-from django.utils import timezone
 from rest_framework import generics, permissions, serializers, status, viewsets
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+# Serializers (would typically be in separate serializers.py file)
+from django.contrib.auth import authenticate, login, logout
+from django.core.paginator import Paginator
+from django.db import transaction
+from django.db.models import Q
+from django.shortcuts import get_object_or_404
+from django.utils import timezone
+
 from accounts.models import User
 from assets.models import Asset, AssetDownload
+from audit.models import AuditLog
 from core.models import Notification
 from feeds.models import DataFeed, FeedGeneration
 from products.models import CustomerPricing, Product, ProductFitment
+
+logger = logging.getLogger(__name__)
 
 
 class ProductSerializer(serializers.ModelSerializer):
@@ -857,14 +863,138 @@ class ProductUpdateWebhook(APIView):
         if not request.user.is_employee:
             return Response({"error": "Permission denied"}, status=403)
 
-        # Process webhook data
-        _data = request.data
+        try:
+            data = request.data
+            webhook_type = data.get("type", "product_update")
 
-        # This would implement actual webhook processing logic
-        # For now, just log the webhook
-        # TODO: implement actual webhook processing logic
+            # Validate required fields
+            required_fields = ["product_id", "action"]
+            if not all(field in data for field in required_fields):
+                return Response(
+                    {"error": "Missing required fields: product_id, action"}, status=400
+                )
 
-        return Response({"message": "Webhook processed successfully"})
+            product_id = data.get("product_id")
+            action = data.get("action")  # 'create', 'update', 'delete'
+
+            with transaction.atomic():
+                if action == "create":
+                    # Create new product
+                    product_data = data.get("product_data", {})
+                    product = Product.objects.create(
+                        sku=product_data.get("sku"),
+                        name=product_data.get("name"),
+                        description=product_data.get("description", ""),
+                        msrp=product_data.get("msrp"),
+                        is_active=product_data.get("is_active", True),
+                        created_by=request.user,
+                    )
+
+                    # Log the webhook action
+                    AuditLog.objects.create(
+                        user=request.user,
+                        action="webhook_product_create",
+                        model_name="Product",
+                        object_id=product.id,
+                        changes={"webhook_data": data},
+                    )
+
+                    return Response(
+                        {
+                            "message": "Product created successfully",
+                            "product_id": product.id,
+                        }
+                    )
+
+                elif action == "update":
+                    # Update existing product
+                    try:
+                        product = Product.objects.get(id=product_id)
+                        old_data = {
+                            "sku": product.sku,
+                            "name": product.name,
+                            "description": product.description,
+                            "msrp": product.msrp,
+                            "is_active": product.is_active,
+                        }
+
+                        product_data = data.get("product_data", {})
+                        if "sku" in product_data:
+                            product.sku = product_data["sku"]
+                        if "name" in product_data:
+                            product.name = product_data["name"]
+                        if "description" in product_data:
+                            product.description = product_data["description"]
+                        if "msrp" in product_data:
+                            product.msrp = product_data["msrp"]
+                        if "is_active" in product_data:
+                            product.is_active = product_data["is_active"]
+
+                        product.save()
+
+                        # Log the webhook action
+                        AuditLog.objects.create(
+                            user=request.user,
+                            action="webhook_product_update",
+                            model_name="Product",
+                            object_id=product.id,
+                            changes={
+                                "old_data": old_data,
+                                "new_data": product_data,
+                                "webhook_data": data,
+                            },
+                        )
+
+                        return Response(
+                            {
+                                "message": "Product updated successfully",
+                                "product_id": product.id,
+                            }
+                        )
+
+                    except Product.DoesNotExist:
+                        return Response(
+                            {"error": f"Product with ID {product_id} not found"},
+                            status=404,
+                        )
+
+                elif action == "delete":
+                    # Soft delete product
+                    try:
+                        product = Product.objects.get(id=product_id)
+                        product.is_active = False
+                        product.save()
+
+                        # Log the webhook action
+                        AuditLog.objects.create(
+                            user=request.user,
+                            action="webhook_product_delete",
+                            model_name="Product",
+                            object_id=product.id,
+                            changes={"webhook_data": data},
+                        )
+
+                        return Response(
+                            {
+                                "message": "Product deactivated successfully",
+                                "product_id": product.id,
+                            }
+                        )
+
+                    except Product.DoesNotExist:
+                        return Response(
+                            {"error": f"Product with ID {product_id} not found"},
+                            status=404,
+                        )
+
+                else:
+                    return Response({"error": f"Unknown action: {action}"}, status=400)
+
+        except Exception as e:
+            logger.error(f"Webhook processing error: {str(e)}")
+            return Response(
+                {"error": "Internal server error", "details": str(e)}, status=500
+            )
 
 
 class InventoryUpdateWebhook(APIView):
@@ -877,11 +1007,79 @@ class InventoryUpdateWebhook(APIView):
         if not request.user.is_employee:
             return Response({"error": "Permission denied"}, status=403)
 
-        # Process webhook data
-        _data = request.data
+        try:
+            data = request.data
+            webhook_type = data.get("type", "inventory_update")
 
-        # This would implement actual webhook processing logic
-        # For now, just log the webhook
-        # TODO: implement actual webhook processing logic
+            # Validate required fields
+            required_fields = ["product_id", "quantity"]
+            if not all(field in data for field in required_fields):
+                return Response(
+                    {"error": "Missing required fields: product_id, quantity"},
+                    status=400,
+                )
 
-        return Response({"message": "Webhook processed successfully"})
+            product_id = data.get("product_id")
+            quantity = data.get("quantity")
+            location = data.get("location", "default")
+
+            with transaction.atomic():
+                try:
+                    product = Product.objects.get(id=product_id)
+
+                    # Update inventory fields if they exist on the product model
+                    old_quantity = getattr(product, "quantity_on_hand", 0)
+
+                    if hasattr(product, "quantity_on_hand"):
+                        product.quantity_on_hand = quantity
+                    if hasattr(product, "inventory_location"):
+                        product.inventory_location = location
+                    if hasattr(product, "last_inventory_update"):
+                        product.last_inventory_update = timezone.now()
+
+                    product.save()
+
+                    # Log the webhook action
+                    AuditLog.objects.create(
+                        user=request.user,
+                        action="webhook_inventory_update",
+                        model_name="Product",
+                        object_id=product.id,
+                        changes={
+                            "old_quantity": old_quantity,
+                            "new_quantity": quantity,
+                            "location": location,
+                            "webhook_data": data,
+                        },
+                    )
+
+                    # Create notification for low inventory if needed
+                    if quantity < 10:  # Low inventory threshold
+                        from core.models import Notification
+
+                        Notification.objects.create(
+                            user=request.user,
+                            title="Low inventory alert",
+                            message=f"Product {product.sku} ({product.name}) has low inventory: {quantity} units",
+                            notification_type="inventory_alert",
+                        )
+
+                    return Response(
+                        {
+                            "message": "Inventory updated successfully",
+                            "product_id": product.id,
+                            "old_quantity": old_quantity,
+                            "new_quantity": quantity,
+                        }
+                    )
+
+                except Product.DoesNotExist:
+                    return Response(
+                        {"error": f"Product with ID {product_id} not found"}, status=404
+                    )
+
+        except Exception as e:
+            logger.error(f"Inventory webhook processing error: {str(e)}")
+            return Response(
+                {"error": "Internal server error", "details": str(e)}, status=500
+            )
