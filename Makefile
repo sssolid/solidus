@@ -3,8 +3,9 @@
 
 # Variables
 DOCKER_COMPOSE = docker-compose
-DJANGO_MANAGE = $(DOCKER_COMPOSE) exec web /opt/venv/bin/python manage.py
-DJANGO_SHELL = $(DOCKER_COMPOSE) exec web /opt/venv/bin/python manage.py shell_plus
+# Use uv run to automatically activate the virtual environment
+DJANGO_MANAGE = $(DOCKER_COMPOSE) exec web uv run python manage.py
+DJANGO_SHELL = $(DOCKER_COMPOSE) exec web uv run python manage.py shell_plus
 
 # Help command
 .PHONY: help
@@ -56,7 +57,7 @@ help:
 	@echo "  make health           - Health check"
 	@echo "  make pgadmin          - Start pgAdmin"
 
-# UV-based dependency management
+# UV-based dependency management (local)
 .PHONY: install
 install:
 	@echo "📦 Installing dependencies with UV..."
@@ -130,7 +131,7 @@ logs-web:
 logs-worker:
 	$(DOCKER_COMPOSE) logs -f worker
 
-# Django commands
+# Django commands (simplified - no need to specify venv path)
 .PHONY: shell
 shell:
 	@echo "🐍 Starting Django shell..."
@@ -207,31 +208,30 @@ superuser:
 .PHONY: test
 test:
 	@echo "🧪 Running tests..."
-	$(DOCKER_COMPOSE) exec web pytest
+	$(DOCKER_COMPOSE) exec web uv run pytest
 
 .PHONY: test-coverage
 test-coverage:
 	@echo "📊 Running tests with coverage..."
-	$(DOCKER_COMPOSE) exec web pytest --cov=. --cov-report=html
+	$(DOCKER_COMPOSE) exec web uv run pytest --cov=. --cov-report=html
 	@echo "📝 Coverage report: htmlcov/index.html"
 
 .PHONY: lint
 lint:
 	@echo "🔍 Running linters..."
-	$(DOCKER_COMPOSE) exec web black . --check
-	$(DOCKER_COMPOSE) exec web isort . --check-only
-	$(DOCKER_COMPOSE) exec web flake8
+	$(DOCKER_COMPOSE) exec web uv run ruff check src/
+	$(DOCKER_COMPOSE) exec web uv run black src/ --check
 
 .PHONY: format
 format:
 	@echo "✨ Formatting code..."
-	$(DOCKER_COMPOSE) exec web black .
-	$(DOCKER_COMPOSE) exec web isort .
+	$(DOCKER_COMPOSE) exec web uv run black src/
+	$(DOCKER_COMPOSE) exec web uv run ruff check src/ --fix
 
 .PHONY: type-check
 type-check:
 	@echo "🔍 Running type checks..."
-	$(DOCKER_COMPOSE) exec web mypy src/
+	$(DOCKER_COMPOSE) exec web uv run mypy src/
 
 # Asset processing
 .PHONY: process-assets
@@ -291,20 +291,6 @@ clean-data:
 		$(DOCKER_COMPOSE) down -v; \
 		echo "✅ Data volumes deleted!"; \
 	fi
-
-# Production deployment helpers
-.PHONY: prod-build
-prod-build:
-	@echo "🏗️  Building for production..."
-	docker-compose -f docker-compose.prod.yml build
-
-.PHONY: prod-deploy
-prod-deploy:
-	@echo "🚀 Deploying to production..."
-	docker-compose -f docker-compose.prod.yml up -d --build
-	docker-compose -f docker-compose.prod.yml exec web python manage.py migrate
-	docker-compose -f docker-compose.prod.yml exec web python manage.py collectstatic --noinput
-	@echo "✅ Production deployment complete!"
 
 # This is the magic that prevents "No rule to make target 'web'" errors
 %:

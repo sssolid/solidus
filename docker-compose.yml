@@ -45,10 +45,9 @@ services:
         UID: ${UID:-1000}
         GID: ${GID:-1000}
     container_name: solidus_web
-    environment:
-      - PYTHONPATH=/app/src
+    # REMOVED the PYTHONPATH environment variable - it's now in Dockerfile
     entrypoint: [ "bash", "/app/docker-entrypoint.sh" ]
-    command: [ "daphne", "-b", "0.0.0.0", "-p", "8000", "solidus.asgi:application" ]
+    command: [ "uv", "run", "daphne", "-b", "0.0.0.0", "-p", "8000", "solidus.asgi:application" ]
     volumes:
       - .:/app
       - media_data:/app/media
@@ -70,13 +69,12 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: solidus_worker
-    environment:
-      - PYTHONPATH=/app/src
+    # REMOVED the PYTHONPATH environment variable - it's now in Dockerfile
     command: >
       sh -c "
         while true; do
-          python manage.py process_assets --batch-size 5;
-          python manage.py generate_feeds;
+          uv run python manage.py process_assets --batch-size 5;
+          uv run python manage.py generate_feeds;
           sleep 60;
         done
       "

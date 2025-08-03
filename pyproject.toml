@@ -1,7 +1,3 @@
-[build-system]
-requires = ["setuptools>=61.0"]
-build-backend = "setuptools.build_meta"
-
 [project]
 name = "solidus"
 version = "0.1.0"
@@ -36,10 +32,6 @@ dependencies = [
   "sentry-sdk==1.39.1",
   "psutil>=7.0.0",
 ]
-
-[tool.setuptools]
-packages = ["solidus"]
-package-dir = {"" = "src"}
 
 [project.optional-dependencies]
 docs = ["mkdocs>=1.5.3", "mkdocs-material>=9.5.0"]
@@ -76,18 +68,13 @@ sections = ["FUTURE", "STDLIB", "THIRDPARTY", "DJANGO", "FIRSTPARTY", "LOCALFOLD
 [tool.ruff]
 line-length = 88
 target-version = "py312"
-# No "formatter" field here—tools parse only supported keys.
 
 [tool.ruff.lint]
-# E = pycodestyle, F = PyFlakes, I = isort, UP = pyupgrade
 select = ["E", "F", "I", "UP"]
-# Automatically apply safe fixes
 fixable = ["ALL"]
-# Ignore line length
 ignore = ["E501"]
 
 [tool.ruff.format]
-# Use double-quotes and consistent docstring formatting
 quote-style = "double"
 docstring-code-format = true
 
