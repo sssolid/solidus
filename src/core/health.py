@@ -218,9 +218,9 @@ class HealthCheckView(View):
     def _check_application_metrics(self):
         """Check application-specific metrics"""
         try:
-            from src.assets.models import Asset
-            from src.feeds.models import DataFeed
-            from src.products.models import Product
+            from assets.models import Asset
+            from feeds.models import DataFeed
+            from products.models import Product
 
             # Basic counts
             metrics = {

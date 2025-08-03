@@ -3,8 +3,8 @@
 
 # Variables
 DOCKER_COMPOSE = docker-compose
-DJANGO_MANAGE = $(DOCKER_COMPOSE) exec web python manage.py
-DJANGO_SHELL = $(DOCKER_COMPOSE) exec web python manage.py shell_plus
+DJANGO_MANAGE = $(DOCKER_COMPOSE) exec web /opt/venv/bin/python manage.py
+DJANGO_SHELL = $(DOCKER_COMPOSE) exec web /opt/venv/bin/python manage.py shell_plus
 
 # Help command
 .PHONY: help
@@ -19,6 +19,7 @@ help:
 	@echo ""
 	@echo "🐳 Docker Commands:"
 	@echo "  make build            - Build Docker images"
+	@echo "  make rebuild          - Build images with no cache"
 	@echo "  make up               - Start all services"
 	@echo "  make down             - Stop all services"
 	@echo "  make restart          - Restart all services"
@@ -91,8 +92,13 @@ add-dev:
 # Docker commands
 .PHONY: build
 build:
-	@echo "🏗️  Building Docker images..."
-	$(DOCKER_COMPOSE) build
+	@echo "🏗️  Building Docker images for: $(filter-out $@,$(MAKECMDGOALS))"
+	$(DOCKER_COMPOSE) build $(filter-out $@,$(MAKECMDGOALS))
+
+.PHONY: rebuild
+rebuild:
+	@echo "🏗️  Rebuilding Docker images for: $(filter-out $@,$(MAKECMDGOALS))"
+	$(DOCKER_COMPOSE) build --no-cache $(filter-out $@,$(MAKECMDGOALS))
 
 .PHONY: up
 up:
@@ -299,3 +305,7 @@ prod-deploy:
 	docker-compose -f docker-compose.prod.yml exec web python manage.py migrate
 	docker-compose -f docker-compose.prod.yml exec web python manage.py collectstatic --noinput
 	@echo "✅ Production deployment complete!"
+
+# This is the magic that prevents "No rule to make target 'web'" errors
+%:
+	@:

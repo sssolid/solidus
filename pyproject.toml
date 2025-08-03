@@ -34,15 +34,16 @@ dependencies = [
   "whitenoise==6.6.0",
   "gunicorn==21.2.0",
   "sentry-sdk==1.39.1",
-  "psutil>=7.0.0"
+  "psutil>=7.0.0",
 ]
+
+[tool.setuptools]
+packages = ["solidus"]
+package-dir = {"" = "src"}
 
 [project.optional-dependencies]
 docs = ["mkdocs>=1.5.3", "mkdocs-material>=9.5.0"]
 test = ["pytest>=7.4.4", "pytest-django>=4.7.0", "pytest-cov>=4.1.0"]
-
-[tool.setuptools.packages.find]
-where = ["src"]
 
 [dependency-groups]
 lint = [

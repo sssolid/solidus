@@ -20,7 +20,7 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "solidus.settings")
 django_asgi_app = get_asgi_application()
 
 # Import routing after Django setup
-from src.core.routing import websocket_urlpatterns  # noqa: E402
+from core.routing import websocket_urlpatterns  # noqa: E402
 
 application = ProtocolTypeRouter(
     {

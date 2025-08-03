@@ -71,10 +71,10 @@ class Command(BaseCommand):
 
     def reset_data(self):
         """Reset existing data"""
-        from src.assets.models import Asset, AssetCategory
-        from src.audit.models import AuditLog
-        from src.feeds.models import DataFeed
-        from src.products.models import Brand, Category, Product
+        from assets.models import Asset, AssetCategory
+        from audit.models import AuditLog
+        from feeds.models import DataFeed
+        from products.models import Brand, Category, Product
 
         # Delete in order to respect foreign keys
         AuditLog.objects.all().delete()
@@ -92,7 +92,7 @@ class Command(BaseCommand):
 
     def create_users(self, count):
         """Create users with different roles"""
-        from src.accounts.models import CustomerProfile
+        from accounts.models import CustomerProfile
 
         # Create admin user if it doesn't exist
         if not User.objects.filter(username="admin").exists():
@@ -168,7 +168,7 @@ class Command(BaseCommand):
 
     def create_brands_and_categories(self):
         """Create brands and categories"""
-        from src.products.models import Brand, Category
+        from products.models import Brand, Category
 
         # Create brands
         brand_names = [
@@ -226,7 +226,7 @@ class Command(BaseCommand):
 
     def create_products(self, count):
         """Create products with realistic data"""
-        from src.products.models import Brand, Category, Product
+        from products.models import Brand, Category, Product
 
         brands = list(Brand.objects.all())
         categories = list(Category.objects.all())
@@ -296,7 +296,7 @@ class Command(BaseCommand):
 
     def create_assets(self, count):
         """Create sample assets"""
-        from src.assets.models import Asset, AssetCategory
+        from assets.models import Asset, AssetCategory
 
         # Create asset categories
         asset_categories = [
@@ -352,7 +352,7 @@ class Command(BaseCommand):
 
     def create_feeds(self):
         """Create sample data feeds"""
-        from src.feeds.models import DataFeed, FeedGeneration
+        from feeds.models import DataFeed, FeedGeneration
 
         customers = User.objects.filter(customerprofile__isnull=False)[:5]
 
@@ -397,7 +397,7 @@ class Command(BaseCommand):
 
     def create_audit_logs(self):
         """Create sample audit logs"""
-        from src.audit.models import AuditLog
+        from audit.models import AuditLog
 
         users = list(User.objects.all())
         actions = ["CREATE", "UPDATE", "DELETE", "VIEW"]

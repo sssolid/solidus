@@ -9,14 +9,14 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     # App URLs
     path("", RedirectView.as_view(url="/dashboard/", permanent=False), name="home"),
-    path("dashboard/", include("src.core.urls", namespace="core")),
-    path("accounts/", include("src.accounts.urls", namespace="accounts")),
-    path("products/", include("src.products.urls", namespace="products")),
-    path("assets/", include("src.assets.urls", namespace="assets")),
-    path("feeds/", include("src.feeds.urls", namespace="feeds")),
-    path("audit/", include("src.audit.urls", namespace="audit")),
+    path("dashboard/", include("core.urls", namespace="core")),
+    path("accounts/", include("accounts.urls", namespace="accounts")),
+    path("products/", include("products.urls", namespace="products")),
+    path("assets/", include("assets.urls", namespace="assets")),
+    path("feeds/", include("feeds.urls", namespace="feeds")),
+    path("audit/", include("audit.urls", namespace="audit")),
     # API endpoints
-    path("api/v1/", include("src.api.urls", namespace="api")),
+    path("api/v1/", include("api.urls", namespace="api")),
 ]
 
 # Serve media files in development

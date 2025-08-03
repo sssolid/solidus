@@ -13,7 +13,8 @@ help:
 	@echo "🚀 Solidus Production Commands"
 	@echo ""
 	@echo "🏗️  Build & Deploy:"
-	@echo "  make build            - Build production images"
+	@echo "  make build            - Build Docker images"
+	@echo "  make rebuild          - Build images with no cache"
 	@echo "  make deploy           - Deploy to production"
 	@echo "  make rollback         - Rollback to previous version"
 	@echo "  make update           - Update running services"
@@ -281,3 +282,7 @@ ci-deploy: validate-env build
 	$(MAKE) collectstatic
 	$(MAKE) health
 	@echo "✅ CI/CD Deployment complete!"
+
+# This is the magic that prevents "No rule to make target 'web'" errors
+%:
+	@:
