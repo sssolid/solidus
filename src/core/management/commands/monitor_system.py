@@ -2,7 +2,6 @@
 import time
 
 import psutil
-
 from django.core.cache import cache
 from django.core.management.base import BaseCommand
 from django.db import connections

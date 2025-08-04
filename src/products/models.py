@@ -1,11 +1,10 @@
 # src/products/models.py
-from taggit.managers import TaggableManager
-
 from django.contrib.postgres.fields import ArrayField
 from django.contrib.postgres.indexes import GinIndex
 from django.core.cache import cache
 from django.db import models
 from django.db.models import JSONField
+from taggit.managers import TaggableManager
 
 
 class Brand(models.Model):

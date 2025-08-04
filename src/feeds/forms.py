@@ -15,19 +15,19 @@ class DataFeedForm(forms.ModelForm):
         model = DataFeed
         fields = [
             "name",
-            "description",
+            # "description",
             "feed_type",
             "format",
             "customer",
             "categories",
             "brands",
             "product_tags",
-            "include_inactive",
+            # "include_inactive",
             "include_images",
-            "include_fitment",
-            "include_pricing",
-            "field_mapping",
-            "custom_fields",
+            # "include_fitment",
+            # "include_pricing",
+            # "field_mapping",
+            # "custom_fields",
             "is_active",
         ]
         widgets = {
@@ -118,11 +118,11 @@ class SubscriptionForm(forms.ModelForm):
     class Meta:
         model = FeedSubscription
         fields = [
-            "feed",
+            # "feed",
             "customer",
-            "schedule_type",
-            "schedule_config",
-            "notification_email",
+            # "schedule_type",
+            # "schedule_config",
+            # "notification_email",
             "is_active",
         ]
         widgets = {
@@ -176,7 +176,12 @@ class DeliveryConfigForm(forms.ModelForm):
 
     class Meta:
         model = DataFeed
-        fields = ["feed", "delivery_method", "config", "is_active"]
+        fields = [
+            # "feed",
+            "delivery_method",
+            # "config",
+            "is_active",
+        ]
         widgets = {
             "feed": forms.Select(attrs={"class": "form-select"}),
             "delivery_method": forms.Select(attrs={"class": "form-select"}),

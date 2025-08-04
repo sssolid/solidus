@@ -82,7 +82,7 @@ COPY pyproject.toml uv.lock ./
 COPY . .
 
 # Set up directories and permissions
-RUN mkdir -p /app/media /app/staticfiles /app/logs && \
+RUN mkdir -p /app/media /app/static /app/logs && \
     chown -R solidus:solidus /app && \
     chmod -R 755 /app
 

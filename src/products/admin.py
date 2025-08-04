@@ -157,8 +157,9 @@ class ProductAdmin(admin.ModelAdmin):
                     "created_at",
                     "updated_at",
                     "created_by",
-                    "fitment_count",
-                    "display_primary_image",
+                    # TODO: fitment_count and display_primary_image do not exist
+                    # "fitment_count",
+                    # "display_primary_image",
                 ),
                 "classes": ("collapse",),
             },

@@ -1,12 +1,6 @@
 # src/api/views.py
 import logging
 
-from rest_framework import generics, permissions, serializers, status, viewsets
-from rest_framework.decorators import action, api_view, permission_classes
-from rest_framework.parsers import FormParser, MultiPartParser
-from rest_framework.response import Response
-from rest_framework.views import APIView
-
 # Serializers (would typically be in separate serializers.py file)
 from django.contrib.auth import authenticate, login, logout
 from django.core.paginator import Paginator
@@ -14,6 +8,11 @@ from django.db import transaction
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
+from rest_framework import generics, permissions, serializers, status, viewsets
+from rest_framework.decorators import action, api_view, permission_classes
+from rest_framework.parsers import FormParser, MultiPartParser
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from accounts.models import User
 from assets.models import Asset, AssetDownload
@@ -865,7 +864,7 @@ class ProductUpdateWebhook(APIView):
 
         try:
             data = request.data
-            webhook_type = data.get("type", "product_update")
+            _webhook_type = data.get("type", "product_update")
 
             # Validate required fields
             required_fields = ["product_id", "action"]
@@ -1009,7 +1008,7 @@ class InventoryUpdateWebhook(APIView):
 
         try:
             data = request.data
-            webhook_type = data.get("type", "inventory_update")
+            _webhook_type = data.get("type", "inventory_update")
 
             # Validate required fields
             required_fields = ["product_id", "quantity"]

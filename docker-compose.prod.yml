@@ -78,7 +78,7 @@ services:
       "
     volumes:
       - media_data:/app/media
-      - static_data:/app/staticfiles
+      - static_data:/app/static
       - ./logs:/app/logs
     expose:
       - "8000"

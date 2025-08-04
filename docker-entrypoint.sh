@@ -77,7 +77,7 @@ mkdir -p media/uploads media/processed media/thumbnails
 
 # Set proper permissions
 echo "🔒 Setting permissions..."
-chown -R solidus:solidus media/ staticfiles/ logs/ || true
+chown -R solidus:solidus media/ static/ logs/ || true
 
 # Start the application
 echo "🎉 Starting application..."

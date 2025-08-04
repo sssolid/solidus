@@ -38,7 +38,7 @@ COPY . .
 # CRITICAL: Set PYTHONPATH to include src directory where Django code lives
 ENV PYTHONPATH="/app/src:$PYTHONPATH"
 
-RUN mkdir -p /app/media /app/staticfiles /app/logs && \
+RUN mkdir -p /app/media /app/static /app/logs && \
     chown -R solidus:solidus /app
 
 RUN chmod +x /app/docker-entrypoint.sh

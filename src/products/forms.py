@@ -1,8 +1,7 @@
 # src/products/forms.py
-from taggit.forms import TagWidget
-
 from django import forms
 from django.core.exceptions import ValidationError
+from taggit.forms import TagWidget
 
 from .models import Brand, Category, Product, ProductFitment
 
@@ -15,14 +14,14 @@ class ProductForm(forms.ModelForm):
         fields = [
             "sku",
             "name",
-            "description",
+            # "description",
             "brand",
             "categories",
             "weight",
-            "dimensions",
-            "material",
-            "color",
-            "finish",
+            # "dimensions",
+            # "material",
+            # "color",
+            # "finish",
             "part_numbers",
             "oem_numbers",
             "msrp",
@@ -157,7 +156,7 @@ class ProductFitmentForm(forms.ModelForm):
             "model",
             "submodel",
             "engine",
-            "trim",
+            # "trim",
             "notes",
         ]
         widgets = {
@@ -217,7 +216,14 @@ class BrandForm(forms.ModelForm):
 
     class Meta:
         model = Brand
-        fields = ["name", "slug", "description", "logo", "website", "is_active"]
+        fields = [
+            "name",
+            # "slug",
+            # "description",
+            "logo",
+            "website",
+            "is_active",
+        ]
         widgets = {
             "name": forms.TextInput(
                 attrs={"class": "form-input", "placeholder": "Brand Name"}

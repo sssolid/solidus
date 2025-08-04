@@ -1,8 +1,7 @@
 # src/assets/forms.py
-from taggit.forms import TagWidget
-
 from django import forms
 from django.core.exceptions import ValidationError
+from taggit.forms import TagWidget
 
 from products.models import Product
 
@@ -18,13 +17,13 @@ class AssetForm(forms.ModelForm):
             "title",
             "description",
             "asset_type",
-            "file",
+            # "file",
             "categories",
             "is_active",
             "is_public",
-            "copyright_info",
-            "alt_text",
-            "caption",
+            # "copyright_info",
+            # "alt_text",
+            # "caption",
             "tags",
         ]
         widgets = {
@@ -86,18 +85,40 @@ class AssetForm(forms.ModelForm):
         return file
 
 
+class MultipleFileInput(forms.ClearableFileInput):
+    """
+    Enable multiple=<input type="file" multiple> *without* triggering ValueError.
+    """
+
+    allow_multiple_selected = True
+
+
+class MultipleFileField(forms.FileField):
+    """
+    Accept multiple files: validate all, return a list of files.
+    """
+
+    widget = MultipleFileInput
+
+    def clean(self, data, initial=None):
+        single_clean = super().clean
+        if isinstance(data, list | tuple):
+            return [single_clean(f, initial) for f in data]
+        return [single_clean(data, initial)]
+
+
 class AssetUploadForm(forms.Form):
     """Form for bulk asset uploads"""
 
-    files = forms.FileField(
-        widget=forms.ClearableFileInput(
+    files = MultipleFileField(
+        required=True,
+        widget=MultipleFileInput(
             attrs={
-                "multiple": True,
                 "class": "form-input",
                 "accept": "image/*,video/*,.pdf,.doc,.docx,.zip,.rar",
             }
         ),
-        help_text="Select multiple files to upload",
+        help_text="Select one or more files to upload",
     )
 
     category = forms.ModelChoiceField(
