@@ -4,11 +4,13 @@ Management command to create development data for testing and development
 """
 
 import random
+import uuid
 from datetime import timedelta
 from decimal import Decimal
 
 from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand
+from django.db import IntegrityError
 from django.utils import timezone
 
 User = get_user_model()
@@ -193,6 +195,7 @@ class Command(BaseCommand):
         for name in brand_names:
             brand, created = Brand.objects.get_or_create(
                 name=name,
+                code=name.upper().replace("/", "").replace(" ", "")[:20],
                 defaults={
                     # "description": f"{name} automotive parts and components",
                     "website": f'https://www.{name.lower().replace("/", "").replace(" ", "")}.com',
@@ -216,7 +219,9 @@ class Command(BaseCommand):
 
         for name, description in categories_data:
             category, created = Category.objects.get_or_create(
-                name=name, defaults={"description": description, "is_active": True}
+                name=name,
+                slug=name.lower().replace(" ", "-"),
+                defaults={"description": description, "is_active": True}
             )
 
         self.stdout.write(
@@ -257,23 +262,29 @@ class Command(BaseCommand):
             msrp = round(retail_price * random.uniform(1.2, 1.8), 2)
             cost = round(retail_price * random.uniform(0.4, 0.7), 2)
 
-            product = Product.objects.create(
+            if Product.objects.filter(sku=part_number).exists():
+                continue
+
+            product, created = Product.objects.get_or_create(
                 name=f"{brand.name} {template[0]}",
-                description=template[1],
+                # description=template[1],
                 sku=part_number,
-                upc=f"{random.randint(100000000000, 999999999999)}",
+                # upc=f"{random.randint(100000000000, 999999999999)}",
                 brand=brand,
-                retail_price=Decimal(str(retail_price)),
+                # retail_price=Decimal(str(retail_price)),
                 msrp=Decimal(str(msrp)),
-                cost=Decimal(str(cost)),
+                # cost=Decimal(str(cost)),
                 weight=Decimal(str(random.uniform(0.5, 25.0))),
-                dimensions=f'{random.randint(5, 20)}" x {random.randint(3, 15)}" x {random.randint(2, 10)}"',
-                stock_quantity=random.randint(0, 100),
-                low_stock_threshold=random.randint(5, 20),
-                location=f"A{random.randint(1, 20)}-{random.randint(1, 10)}",
+                # dimensions=f'{random.randint(5, 20)}" x {random.randint(3, 15)}" x {random.randint(2, 10)}"',
+                # stock_quantity=random.randint(0, 100),
+                # low_stock_threshold=random.randint(5, 20),
+                # location=f"A{random.randint(1, 20)}-{random.randint(1, 10)}",
                 is_active=random.choice([True, True, True, False]),  # 75% active
                 is_featured=random.choice([True, False, False, False]),  # 25% featured
             )
+
+            if not created:
+                continue
 
             # Add to category
             product.categories.add(category)
@@ -331,14 +342,16 @@ class Command(BaseCommand):
             asset = Asset.objects.create(
                 title=f"Sample Asset {i + 1}",
                 description=f"Sample {category.name.lower()} asset for testing purposes",
-                file_type=file_type,
+                # file_type=file_type,
                 file_size=random.randint(50000, 5000000),  # 50KB to 5MB
                 original_filename=filename_template.format(i + 1),
-                category=category,
-                uploaded_by=user,
+                file_hash=uuid.uuid4().hex,
+                # category=category,
+                # uploaded_by=user,
                 is_public=random.choice([True, False]),
-                employee_only=random.choice([True, False]),
+                # employee_only=random.choice([True, False]),
                 created_at=timezone.now() - timedelta(days=random.randint(1, 365)),
+                created_by=User.objects.filter(is_staff=True).first(),
             )
 
             # Add some tags
@@ -355,41 +368,49 @@ class Command(BaseCommand):
         """Create sample data feeds"""
         from feeds.models import DataFeed, FeedGeneration
 
-        customers = User.objects.filter(customerprofile__isnull=False)[:5]
+        customers = User.objects.filter(customer_profile__isnull=False)[:5]
 
         for customer in customers:
             # Create 1-3 feeds per customer
             for i in range(random.randint(1, 3)):
-                feed = DataFeed.objects.create(
-                    name=f"{customer.customer_profile.user.company_name} Product Feed {i + 1}",
-                    description=f"Product feed for {customer.customer_profile.user.company_name}",
-                    customer=customer,
-                    format=random.choice(["json", "xml", "csv"]),
-                    frequency=random.choice(["daily", "weekly", "monthly"]),
-                    fields=["sku", "name", "brand", "price", "stock"],
-                    filters={"is_active": True},
-                    delivery_config={
-                        "method": "download",
-                        "filename": f"products_{customer.username}.{{}}",
-                    },
-                    is_active=True,
-                    created_by=User.objects.filter(is_staff=True).first(),
-                )
+                try:
+                    feed, created = DataFeed.objects.get_or_create(
+                        name=f"{customer.customer_profile.user.company_name} Product Feed {i + 1}",
+                        slug=f"feed-generation-{i}",
+                        # description=f"Product feed for {customer.customer_profile.user.company_name}",
+                        customer=customer,
+                        format=random.choice(["json", "xml", "csv"]),
+                        frequency=random.choice(["daily", "weekly", "monthly"]),
+                        # fields=["sku", "number", "brand", "price", "stock"],
+                        # filters={"is_active": True},
+                        delivery_config={
+                            "method": "download",
+                            "filename": f"products_{customer.username}.{{}}",
+                        },
+                        is_active=True,
+                        # created_by=User.objects.filter(is_staff=True).first(),
+                    )
+                except IntegrityError:
+                    continue
+
+                if not created:
+                    continue
 
                 # Create some feed generations
                 for j in range(random.randint(1, 5)):
                     generation_date = timezone.now() - timedelta(
                         days=random.randint(1, 30)
                     )
-                    FeedGeneration.objects.create(
+                    FeedGeneration.objects.get_or_create(
                         feed=feed,
+                        # slug=f"feed-generation-{i}-{j}",
                         status=random.choice(["completed", "completed", "failed"]),
-                        record_count=random.randint(50, 500),
+                        # record_count=random.randint(50, 500),
                         file_size=random.randint(10000, 500000),
                         started_at=generation_date,
                         completed_at=generation_date
                         + timedelta(minutes=random.randint(1, 10)),
-                        created_by=feed.customer.username,
+                        # created_by=feed.customer.username,
                     )
 
         self.stdout.write(
@@ -408,7 +429,7 @@ class Command(BaseCommand):
             AuditLog.objects.create(
                 user=random.choice(users),
                 action=random.choice(actions),
-                model_name=random.choice(models),
+                # model_name=random.choice(models),
                 object_id=random.randint(1, 100),
                 object_repr=f"Sample Object {i + 1}",
                 changes={"field": "old_value", "new_field": "new_value"},

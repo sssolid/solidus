@@ -159,7 +159,7 @@
                     {% for product in asset.products.all|slice:":2" %}
                         <a href="{% url 'products:detail' product.pk %}"
                            class="text-xs text-blue-600 hover:text-blue-800 bg-blue-50 px-2 py-1 rounded">
-                            {{ product.name|truncatewords:3 }}
+                            {{ product.number|truncatewords:3 }}
                         </a>
                     {% endfor %}
                     {% if asset.products.count > 2 %}

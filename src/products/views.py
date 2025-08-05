@@ -211,6 +211,7 @@ class ProductEditView(EmployeeRequiredMixin, UpdateView):
 
     model = Product
     form_class = ProductForm
+    # TODO: Implement products/edit.html
     template_name = "products/edit.html"
 
     def form_valid(self, form):
@@ -233,9 +234,9 @@ def product_delete(request, pk):
         return redirect("products:list")
 
     product = get_object_or_404(Product, pk=pk)
-    product_name = product.name
+    product_number = product.number
     product.delete()
-    messages.success(request, f'Product "{product_name}" deleted successfully.')
+    messages.success(request, f'Product "{product_number}" deleted successfully.')
     return redirect("products:list")
 
 
@@ -244,6 +245,7 @@ class ProductAssetsView(EmployeeRequiredMixin, DetailView):
     """Manage product assets"""
 
     model = Product
+    # TODO: Implement products/assets.html
     template_name = "products/assets.html"
     context_object_name = "product"
 
@@ -552,7 +554,7 @@ def product_search(request):
             {
                 "id": product.id,
                 "sku": product.sku,
-                "name": product.name,
+                "number": product.number,
                 "brand": product.brand.name if product.brand else "",
                 "url": reverse("products:detail", kwargs={"pk": product.pk}),
             }
@@ -582,7 +584,7 @@ def fitment_lookup(request):
         fitment_list.append(
             {
                 "product_id": fitment.product.id,
-                "product_name": fitment.product.name,
+                "product_number": fitment.product.number,
                 "product_sku": fitment.product.sku,
                 "year_range": f"{fitment.year_start}-{fitment.year_end}",
                 "make": fitment.make,

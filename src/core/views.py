@@ -159,6 +159,7 @@ def mark_all_notifications_read(request):
 class GlobalSearchView(LoginRequiredMixin, TemplateView):
     """Global search across all content"""
 
+    # TODO: Implement core/search.html
     template_name = "core/search.html"
 
     def get_context_data(self, **kwargs):
@@ -169,8 +170,9 @@ class GlobalSearchView(LoginRequiredMixin, TemplateView):
             # Search products
             products = Product.objects.filter(
                 Q(name__icontains=query)
-                | Q(sku__icontains=query)
-                | Q(description__icontains=query),
+                | Q(sku__icontains=query),
+                # TODO: Implement Product description
+                # | Q(description__icontains=query),
                 is_active=True,
             )
 
@@ -203,7 +205,9 @@ class GlobalSearchView(LoginRequiredMixin, TemplateView):
 
             # Search feeds (if employee or own feeds if customer)
             feeds = DataFeed.objects.filter(
-                Q(name__icontains=query) | Q(description__icontains=query)
+                Q(name__icontains=query)
+                # TODO: Implement DataFeed.description
+                # | Q(description__icontains=query)
             )
 
             if self.request.user.is_customer:
@@ -311,7 +315,7 @@ class SearchSuggestionsView(LoginRequiredMixin, TemplateView):
             suggestions.append(
                 {
                     "type": "product",
-                    "label": f"{product.sku} - {product.name}",
+                    "label": f"{product.sku} - {product.number}",
                     "url": reverse("products:detail", kwargs={"pk": product.pk}),
                     "icon": "fas fa-box",
                 }
@@ -420,6 +424,7 @@ class SystemStatsView(AdminRequiredMixin, TemplateView):
 class SystemSettingsView(AdminRequiredMixin, TemplateView):
     """System settings management"""
 
+    # TODO: Implement core/system_settings.html
     template_name = "core/system_settings.html"
 
     def get_context_data(self, **kwargs):
@@ -569,7 +574,7 @@ def notify_user_product_update(user, product):
         create_notification(
             user=user,
             title="Product Updated",
-            message=f'Product "{product.name}" has been updated.',
+            message=f'Product "{product.number}" has been updated.',
             notification_type="product_update",
             action_url=f"/products/{product.id}/",
             action_label="View Product",
@@ -597,7 +602,7 @@ def notify_user_price_change(user, customer_pricing):
         create_notification(
             user=user,
             title="Price Update",
-            message=f'Pricing for "{customer_pricing.product.name}" has been updated.',
+            message=f'Pricing for "{customer_pricing.product.number}" has been updated.',
             notification_type="price_change",
             action_url=f"/products/{customer_pricing.product.id}/",
             action_label="View Product",

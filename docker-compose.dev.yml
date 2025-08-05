@@ -58,7 +58,7 @@ services:
       - .:/app:cached                    # Full project sync
       - /app/.venv                       # Exclude venv (use container's)
       - /app/node_modules                # Exclude node_modules if present
-      - media_data:/app/media            # Persistent media
+      - ./media:/app/media               # Persistent media
       - static_data:/app/static          # Persistent static files
       # Exclude Python cache for better performance
       - /app/src/**/__pycache__
@@ -143,12 +143,22 @@ services:
     volumes:
       - .:/app:cached
       - /app/.venv
-      - media_data:/app/media
+      - ./media:/app/media
     environment:
       - DEBUG=True
       - DJANGO_SETTINGS_MODULE=solidus.settings
+      # Database connection (Docker service names)
       - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      # Redis connection
       - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      # Email
+      - EMAIL_HOST=mailhog
+      - EMAIL_PORT=1025
     depends_on:
       - postgres
       - redis
@@ -183,7 +193,6 @@ services:
 volumes:
   postgres_data:
   redis_data:
-  media_data:
   static_data:
 
 networks:

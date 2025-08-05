@@ -112,7 +112,7 @@ class NotificationService:
                 NotificationService.send_notification(
                     user=user,
                     notification_type="product_update",
-                    title=f"Product Updated: {product.name}",
+                    title=f"Product Updated: {product.number}",
                     message=f"The product {product.sku} has been updated.",
                     content_object=product,
                     action_url=f"/products/{product.id}/",
@@ -127,7 +127,7 @@ class NotificationService:
                 NotificationService.send_notification(
                     user=user,
                     notification_type="price_change",
-                    title=f"Price Change: {product.name}",
+                    title=f"Price Change: {product.number}",
                     message=f"Price changed from ${old_price} to ${new_price}",
                     content_object=product,
                     metadata={

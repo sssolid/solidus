@@ -142,7 +142,7 @@
                                         <div class="flex items-center space-x-3">
                                             {% if product_link.product.primary_image %}
                                                 <img src="{{ product_link.product.primary_image.thumbnail_url }}"
-                                                     alt="{{ product_link.product.name }}"
+                                                     alt="{{ product_link.product.number }}"
                                                      class="w-12 h-12 object-cover rounded">
                                             {% else %}
                                                 <div class="w-12 h-12 bg-gray-200 rounded flex items-center justify-center">
@@ -153,7 +153,7 @@
                                                 <h4 class="font-medium text-gray-900 truncate">
                                                     <a href="{% url 'products:detail' product_link.product.pk %}"
                                                        class="hover:text-blue-600">
-                                                        {{ product_link.product.name }}
+                                                        {{ product_link.product.number }}
                                                     </a>
                                                 </h4>
                                                 <p class="text-sm text-gray-500">{{ product_link.product.sku }}</p>
@@ -274,7 +274,7 @@
                     </div>
                     <div class="flex justify-between">
                         <span class="text-gray-600">Uploaded by:</span>
-                        <span class="font-medium">{{ asset.uploaded_by.get_full_name|default:asset.uploaded_by.username }}</span>
+                        <span class="font-medium">{{ asset.created_by.get_full_name|default:asset.created_by.username }}</span>
                     </div>
                     <div class="flex justify-between">
                         <span class="text-gray-600">Upload Date:</span>
@@ -414,33 +414,36 @@ function uploadNewVersion() {
 
 function restoreVersion(versionId) {
     if (confirm('Are you sure you want to restore this version? This will replace the current version.')) {
-        fetch(`{% url 'assets:restore_version' asset.pk %}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-            },
-            body: JSON.stringify({
-                version_id: versionId
-            })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                location.reload();
-            } else {
-                alert('Failed to restore version: ' + data.error);
-            }
-        });
+        {#TODO: Implement restore_version#}
+        return;
+        {#fetch(`{% url 'assets:restore_version' asset.pk %}`, {#}
+        {#    method: 'POST',#}
+        {#    headers: {#}
+        {#        'Content-Type': 'application/json',#}
+        {#        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value#}
+        {#    },#}
+        {#    body: JSON.stringify({#}
+        {#        version_id: versionId#}
+        {#    })#}
+        {#})#}
+        {#.then(response => response.json())#}
+        {#.then(data => {#}
+        {#    if (data.success) {#}
+        {#        location.reload();#}
+        {#    } else {#}
+        {#        alert('Failed to restore version: ' + data.error);#}
+        {#    }#}
+        {#});#}
     }
 }
 
 // Track asset view
-fetch('{% url "assets:track_view" asset.pk %}', {
-    method: 'POST',
-    headers: {
-        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-    }
-});
+{#TODO: Implement tracking#}
+{#fetch('{% url "assets:track_view" asset.pk %}', {#}
+{#    method: 'POST',#}
+{#    headers: {#}
+{#        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value#}
+{#    }#}
+{#});#}
 </script>
 {% endblock %}

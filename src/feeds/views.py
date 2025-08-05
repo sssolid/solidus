@@ -556,9 +556,9 @@ def feed_preview(request):
                 "feed_name": feed.name,
                 "format": feed.format,
                 "sample_rows": [
-                    {"sku": "ABC-123", "name": "Sample Product 1", "price": "19.99"},
-                    {"sku": "DEF-456", "name": "Sample Product 2", "price": "29.99"},
-                    {"sku": "GHI-789", "name": "Sample Product 3", "price": "39.99"},
+                    {"sku": "ABC-123", "number": "Sample Product 1", "price": "19.99"},
+                    {"sku": "DEF-456", "number": "Sample Product 2", "price": "29.99"},
+                    {"sku": "GHI-789", "number": "Sample Product 3", "price": "39.99"},
                 ],
             }
 
@@ -583,7 +583,7 @@ def field_mapping_helper(request):
     if feed_type == "product_catalog":
         mappings = {
             "sku": "Product SKU",
-            "name": "Product Name",
+            "number": "Product Number",
             "description": "Description",
             "brand": "Brand",
             "price": "Price",

@@ -3,7 +3,7 @@
 {% load static %}
 {% load widget_tweaks %}
 
-{% block title %}{{ product.name }} | {{ product.brand.name }}{% endblock %}
+{% block title %}{{ product.number }} | {{ product.brand.name }}{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -61,7 +61,7 @@
                 <li><a href="{% url 'products:catalog' %}?category={{ product.categories.first.id }}" class="hover:text-blue-600">{{ product.categories.first.name }}</a></li>
                 <li><i class="fas fa-chevron-right text-xs"></i></li>
             {% endif %}
-            <li class="text-gray-900">{{ product.name }}</li>
+            <li class="text-gray-900">{{ product.number }}</li>
         </ol>
     </nav>
 
@@ -87,7 +87,7 @@
                         {% with first_image=product.asset_links.first.asset %}
                             <img id="main-image"
                                  src="{{ first_image.file.url }}"
-                                 alt="{{ product.name }}"
+                                 alt="{{ product.number }}"
                                  class="main-image">
                         {% endwith %}
                     </div>
@@ -106,7 +106,7 @@
                 <div class="mb-2">
                     <span class="text-sm text-gray-500 uppercase tracking-wide">{{ product.brand.name }}</span>
                 </div>
-                <h1 class="text-3xl font-bold text-gray-900 mb-4">{{ product.name }}</h1>
+                <h1 class="text-3xl font-bold text-gray-900 mb-4">{{ product.number }}</h1>
 
                 <!-- Status Badges -->
                 <div class="flex space-x-2 mb-4">
@@ -432,7 +432,7 @@
     function sharePage() {
         if (navigator.share) {
             navigator.share({
-                title: '{{ product.name }} | {{ product.brand.name }}',
+                title: '{{ product.number }} | {{ product.brand.name }}',
                 text: '{{ product.description|truncatewords:20 }}',
                 url: window.location.href
             });

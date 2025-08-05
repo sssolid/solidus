@@ -330,7 +330,7 @@ class FeedFieldMappingForm(forms.Form):
         """Add product-specific field mappings"""
         product_fields = [
             ("sku", "Product SKU"),
-            ("name", "Product Name"),
+            ("number", "Product Number"),
             ("description", "Description"),
             ("brand", "Brand"),
             ("price", "Price"),

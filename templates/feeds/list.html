@@ -268,12 +268,13 @@
                                          x-transition
                                          class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 z-10">
                                         <div class="py-1">
-                                            <button type="button"
-                                                    hx-post="{% url 'feeds:toggle_status' pk=feed.pk %}"
-                                                    class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                                <i class="fas fa-{% if feed.is_active %}pause{% else %}play{% endif %} mr-2"></i>
-                                                {% if feed.is_active %}Pause Feed{% else %}Activate Feed{% endif %}
-                                            </button>
+{#                                            # TODO: Implement feeds:toggle_status#}
+{#                                            <button type="button"#}
+{#                                                    hx-post="{% url 'feeds:toggle_status' pk=feed.pk %}"#}
+{#                                                    class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">#}
+{#                                                <i class="fas fa-{% if feed.is_active %}pause{% else %}play{% endif %} mr-2"></i>#}
+{#                                                {% if feed.is_active %}Pause Feed{% else %}Activate Feed{% endif %}#}
+{#                                            </button>#}
                                             <a href="{% url 'feeds:delivery_config' pk=feed.pk %}"
                                                class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                                                 <i class="fas fa-cog mr-2"></i>Delivery Settings

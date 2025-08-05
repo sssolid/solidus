@@ -79,23 +79,158 @@ class Category(models.Model):
         return descendants
 
 
+class Description(models.Model):
+    DESCRIPTION_TYPES = (
+        ("MKT", "Marketing"),
+        ("LJO", "Long Jeep Only"),
+        ("LNJ", "Long Non Jeep"),
+        ("LAM", "Long All Models"),
+        ("EXT", "Extended"),
+        ("ENJ", "Extended Non Jeep"),
+        ("EXU", "Extended Unlimited"),
+    )
+
+    """Product descriptions"""
+    product = models.ForeignKey("Product", on_delete=models.CASCADE, related_name="descriptions")
+    type = models.CharField(max_length=1, choices=DESCRIPTION_TYPES)
+    description = models.TextField(blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "product_descriptions"
+        ordering = ["type"]
+        verbose_name_plural = "Product Descriptions"
+        indexes = [
+            models.Index(fields=["slug"]),
+            models.Index(fields=["parent"]),
+        ]
+
+    def __str__(self):
+        return f"{self.product.number} - {self.type}"
+
+
+class Country(models.Model):
+    """Countries for shipping"""
+    name = models.CharField(max_length=100)
+    native_name = models.CharField(max_length=100, blank=True)
+    code_2 = models.CharField(max_length=2, unique=True, help_text="ISO 3166-1 alpha-2")
+    code_3 = models.CharField(max_length=3, unique=True, help_text="ISO 3166-1 alpha-3")
+    code_numeric = models.CharField(max_length=3, unique=True, help_text="ISO 3166-1 numeric")
+
+    # Phone/currency
+    calling_code = models.CharField(max_length=5, blank=True)
+    currency_code = models.CharField(max_length=3, blank=True)
+    currency_name = models.CharField(max_length=50, blank=True)
+    currency_symbol = models.CharField(max_length=5, blank=True)
+
+    # Geography
+    region = models.CharField(max_length=50, blank=True)
+    subregion = models.CharField(max_length=50, blank=True)
+    capital = models.CharField(max_length=100, blank=True)
+    tld = models.CharField(max_length=10, blank=True, help_text="Top level domain")
+    latitude = models.DecimalField(max_digits=10, decimal_places=6, null=True, blank=True)
+    longitude = models.DecimalField(max_digits=10, decimal_places=6, null=True, blank=True)
+
+    # Status
+    is_active = models.BooleanField(default=True)
+    is_shipping_available = models.BooleanField(default=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "countries"
+        ordering = ["name"]
+        verbose_name_plural = "Countries"
+        indexes = [
+            models.Index(fields=["code_2"]),
+            models.Index(fields=["code_3"]),
+            models.Index(fields=["is_active", "is_shipping_available"]),
+        ]
+
+    def __str__(self):
+        return f"{self.name} ({self.code_2})"
+
+
+class ProductOrigin(models.Model):
+    """Product origin countries"""
+    product = models.OneToOneField("Product", on_delete=models.CASCADE)
+    country_of_origin = models.ForeignKey(Country, on_delete=models.PROTECT, related_name="origin_countries")
+    assembled_in = models.CharField(max_length=100, blank=True)
+
+    class Meta:
+        db_table = "product_origin"
+        ordering = ["country_of_origin"]
+        verbose_name_plural = "Product Origins"
+        indexes = [
+            models.Index(fields=["slug"]),
+            models.Index(fields=["parent"]),
+        ]
+
+    def __str__(self):
+        return f"{self.product.number} - {self.country_of_origin}"
+
+
+class ProductSEO(models.Model):
+    """SEO fields for products"""
+    product = models.OneToOneField("Product", on_delete=models.CASCADE, related_name="seo")
+    meta_title = models.CharField(max_length=150, blank=True)
+    meta_description = models.TextField(blank=True)
+
+
+class ProductInterchanges(models.Model):
+    """Product interchange data"""
+    product = models.ForeignKey("Product", on_delete=models.CASCADE, related_name="interchanges")
+    number = models.CharField(max_length=50, unique=True, db_index=True)
+
+
+class ProductOEMNumbers(models.Model):
+    """Product OEM numbers"""
+    product = models.ForeignKey("Product", on_delete=models.CASCADE, related_name="oem_numbers")
+    number = models.CharField(max_length=50, unique=True, db_index=True)
+
+
+class ProductIncludes(models.Model):
+    """Product includes"""
+    product = models.ForeignKey("Product", on_delete=models.CASCADE, related_name="includes")
+    component = models.CharField(max_length=50, unique=True, db_index=True)
+    quantity = models.PositiveIntegerField(default=1)
+
+
+class ProductFeatures(models.Model):
+    """Product features"""
+    product = models.ForeignKey("Product", on_delete=models.CASCADE, related_name="features")
+    feature = models.CharField(max_length=256, unique=True, db_index=True)
+
+
 class Product(models.Model):
     """Main product model with automotive fitment support"""
 
     # Basic info
     sku = models.CharField(max_length=50, unique=True, db_index=True)
-    name = models.CharField(max_length=255)
+    number = models.CharField(max_length=50, unique=True, db_index=True)
     brand = models.ForeignKey(Brand, on_delete=models.PROTECT, related_name="products")
+    title = models.CharField(max_length=100)
     categories = models.ManyToManyField(Category, related_name="products")
+    upc = models.CharField(max_length=14, blank=True)
 
     # Descriptions
-    short_description = models.TextField(blank=True)
+    short_description = models.CharField(max_length=20, blank=True)
     long_description = models.TextField(blank=True)
-    features = ArrayField(models.CharField(max_length=255), default=list, blank=True)
+    abbreviated_description = models.CharField(max_length=12, blank=True)
+    invoice_description = models.CharField(max_length=20, blank=True)
+    slang_description = models.CharField(max_length=20, blank=True)
+    marketing_description = models.TextField(blank=True)
+    keywords = models.CharField(max_length=255, blank=True)
+    features = models.ManyToManyField(ProductFeatures, related_name="products")
 
     # Automotive specific
-    part_numbers = ArrayField(models.CharField(max_length=50), default=list, blank=True)
-    oem_numbers = ArrayField(models.CharField(max_length=50), default=list, blank=True)
+    part_numbers = models.ManyToManyField(ProductInterchanges, related_name="products")
+    oem_numbers = models.ManyToManyField(ProductOEMNumbers, related_name="products")
+    tariff_code = models.CharField(max_length=12, blank=True)
+    unspsc_code = models.CharField(max_length=12, blank=True)
 
     # Specifications stored as JSON for flexibility
     specifications = JSONField(default=dict, blank=True)
@@ -105,12 +240,33 @@ class Product(models.Model):
     width = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     height = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     weight = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    dimensional_weight = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    shipping_weight = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+
+    # Packaging
+    quantity_required = models.PositiveIntegerField(default=1)
+    quantity_in_package = models.PositiveIntegerField(default=1)
+    includes = models.ManyToManyField(ProductIncludes, related_name="products")
+
+    # Warranty
+    warranty_months = models.PositiveIntegerField(null=True, blank=True)
+    warranty_description = models.TextField(blank=True)
+    warranty_terms = models.TextField(blank=True)
+    warranty_return_policy = models.TextField(blank=True)
+    warranty_link = models.URLField(blank=True)
 
     # Pricing
+    jobber = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    export = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     msrp = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     map_price = models.DecimalField(
         max_digits=10, decimal_places=2, null=True, blank=True
     )
+    additional_shipping = models.BooleanField(default=False)
+    sold_as = models.CharField(max_length=10, blank=True)
+    hardware = models.CharField(max_length=10, blank=True)
+    universal = models.BooleanField(default=False)
+    hazardous = models.BooleanField(default=False)
 
     # Status
     is_active = models.BooleanField(default=True)
@@ -119,8 +275,7 @@ class Product(models.Model):
     discontinue_date = models.DateField(null=True, blank=True)
 
     # SEO
-    meta_title = models.CharField(max_length=150, blank=True)
-    meta_description = models.TextField(blank=True)
+    seo = models.ForeignKey(ProductSEO, on_delete=models.CASCADE, related_name="products")
 
     # Tags
     tags = TaggableManager(blank=True)
@@ -153,7 +308,7 @@ class Product(models.Model):
         """Get the primary product image"""
         return (
             self.assets.filter(asset_type="image", is_primary=True)
-            .select_related("file")
+            .select_related("asset")
             .first()
         )
 
@@ -161,7 +316,7 @@ class Product(models.Model):
         """Get all product images"""
         return (
             self.assets.filter(asset_type="image")
-            .select_related("file")
+            .select_related("asset")
             .order_by("-is_primary", "sort_order")
         )
 

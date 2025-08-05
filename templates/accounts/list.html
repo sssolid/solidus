@@ -241,7 +241,7 @@
                                     <!-- Quick Actions -->
                                     <div class="flex space-x-1">
                                         {% if user.is_active %}
-                                            <button hx-post="{% url 'accounts:user_toggle_status' user.pk %}"
+                                            <button hx-post="{% url 'accounts:toggle_user_status' user.pk %}"
                                                     hx-target="closest .user-card"
                                                     hx-swap="outerHTML"
                                                     class="p-2 text-orange-600 hover:text-orange-700 hover:bg-orange-50 rounded transition"
@@ -249,7 +249,7 @@
                                                 <i class="fas fa-user-slash"></i>
                                             </button>
                                         {% else %}
-                                            <button hx-post="{% url 'accounts:user_toggle_status' user.pk %}"
+                                            <button hx-post="{% url 'accounts:toggle_user_status' user.pk %}"
                                                     hx-target="closest .user-card"
                                                     hx-swap="outerHTML"
                                                     class="p-2 text-green-600 hover:text-green-700 hover:bg-green-50 rounded transition"
@@ -298,15 +298,17 @@
                                                        class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                                                         Manage Pricing
                                                     </a>
-                                                    <a href="{% url 'feeds:customer_feeds' user.pk %}"
-                                                       class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                                        View Feeds
-                                                    </a>
+{#                                                    # TODO: Implement feeds:customer_feeds#}
+{#                                                    <a href="{% url 'feeds:customer_feeds' user.pk %}"#}
+{#                                                       class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">#}
+{#                                                        View Feeds#}
+{#                                                    </a>#}
                                                 {% endif %}
-                                                <a href="{% url 'audit:user_activity' user.pk %}"
-                                                   class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                                    Activity Log
-                                                </a>
+{#                                            # TODO: Implement audit:user_activity#}
+{#                                                <a href="{% url 'audit:user_activity' user.pk %}"#}
+{#                                                   class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">#}
+{#                                                    Activity Log#}
+{#                                                </a>#}
                                                 <div class="border-t border-gray-100"></div>
                                                 <button onclick="sendPasswordReset({{ user.pk }})"
                                                         class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
@@ -459,7 +461,9 @@ function bulkAction(action) {
 
     if (confirm(message)) {
         // Make AJAX request to perform bulk action
-        fetch('{% url "accounts:bulk_action" %}', {
+        {## TODO: Implement accounts:bulk_action#}
+        {#fetch('{% url "accounts:bulk_action" %}', {#}
+        fetch('', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

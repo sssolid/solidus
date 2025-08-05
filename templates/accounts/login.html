@@ -7,127 +7,141 @@
     <title>Login - Solidus</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <!-- Favicon -->
+    <link rel="icon" href="/media/favicon/favicon-light.ico" type="image/x-icon">
+    <link rel="icon" type="image/png" sizes="32x32" href="/media/web/icon-32x32-light.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/media/web/icon-16x16-light.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/media/web/apple-touch-icon-light.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/media/web/android-chrome-192x192-light.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="/media/web/android-chrome-512x512-light.png">
 </head>
 <body class="h-full">
-    <div class="min-h-full flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-        <div class="sm:mx-auto sm:w-full sm:max-w-md">
-            <div class="flex justify-center">
-                <div class="bg-blue-600 rounded-full p-3">
-                    <i class="fas fa-box-open text-white text-3xl"></i>
-                </div>
-            </div>
-            <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
-                Sign in to Solidus
-            </h2>
-            <p class="mt-2 text-center text-sm text-gray-600">
-                Automotive Parts Management System
-            </p>
+<div class="min-h-full flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+    <div class="sm:mx-auto sm:w-full sm:max-w-md">
+        <!-- Logo centered -->
+        <div class="flex justify-center">
+            <img src="/media/web/logo-light.png" alt="Solidus Logo" class="block dark:hidden h-12 w-auto">
+            <img src="/media/web/logo-dark.png" alt="Solidus Logo" class="hidden dark:block h-12 w-auto">
         </div>
 
-        <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-            <div class="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
-                {% if messages %}
-                    {% for message in messages %}
+        <!-- Subtext -->
+        <p class="mt-2 text-center text-sm text-gray-600">
+            Automotive Parts Management System
+        </p>
+
+        <!-- Heading -->
+        <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
+            Sign in
+        </h2>
+    </div>
+
+
+    <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+        <div class="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+            {% if messages %}
+                {% for message in messages %}
                     <div class="mb-4 rounded-md p-4 {% if message.tags == 'error' %}bg-red-50 text-red-800{% elif message.tags == 'success' %}bg-green-50 text-green-800{% else %}bg-blue-50 text-blue-800{% endif %}">
                         <p class="text-sm">{{ message }}</p>
                     </div>
+                {% endfor %}
+            {% endif %}
+
+            {% if form.non_field_errors %}
+                <div class="mb-4 rounded-md bg-red-50 p-4">
+                    {% for error in form.non_field_errors %}
+                        <p class="text-sm text-red-800">{{ error }}</p>
                     {% endfor %}
-                {% endif %}
+                </div>
+            {% endif %}
 
-                {% if form.non_field_errors %}
-                    <div class="mb-4 rounded-md bg-red-50 p-4">
-                        {% for error in form.non_field_errors %}
-                            <p class="text-sm text-red-800">{{ error }}</p>
-                        {% endfor %}
+            <form class="space-y-6" method="POST">
+                {% csrf_token %}
+
+                <div>
+                    <label for="{{ form.username.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                        Username
+                    </label>
+                    <div class="mt-1">
+                        <input id="{{ form.username.id_for_label }}"
+                               name="{{ form.username.name }}"
+                               type="text"
+                               autocomplete="username"
+                               required
+                               class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm {% if form.username.errors %}border-red-300{% endif %}"
+                               value="{{ form.username.value|default:'' }}">
                     </div>
-                {% endif %}
+                    {% if form.username.errors %}
+                        <p class="mt-2 text-sm text-red-600">{{ form.username.errors.0 }}</p>
+                    {% endif %}
+                </div>
 
-                <form class="space-y-6" method="POST">
-                    {% csrf_token %}
+                <div>
+                    <label for="{{ form.password.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                        Password
+                    </label>
+                    <div class="mt-1">
+                        <input id="{{ form.password.id_for_label }}"
+                               name="{{ form.password.name }}"
+                               type="password"
+                               autocomplete="current-password"
+                               required
+                               class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm {% if form.password.errors %}border-red-300{% endif %}">
+                    </div>
+                    {% if form.password.errors %}
+                        <p class="mt-2 text-sm text-red-600">{{ form.password.errors.0 }}</p>
+                    {% endif %}
+                </div>
 
-                    <div>
-                        <label for="{{ form.username.id_for_label }}" class="block text-sm font-medium text-gray-700">
-                            Username
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <input id="remember_me"
+                               name="remember_me"
+                               type="checkbox"
+                               class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                        <label for="remember_me" class="ml-2 block text-sm text-gray-900">
+                            Remember me
                         </label>
-                        <div class="mt-1">
-                            <input id="{{ form.username.id_for_label }}"
-                                   name="{{ form.username.name }}"
-                                   type="text"
-                                   autocomplete="username"
-                                   required
-                                   class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm {% if form.username.errors %}border-red-300{% endif %}"
-                                   value="{{ form.username.value|default:'' }}">
-                        </div>
-                        {% if form.username.errors %}
-                            <p class="mt-2 text-sm text-red-600">{{ form.username.errors.0 }}</p>
-                        {% endif %}
                     </div>
 
-                    <div>
-                        <label for="{{ form.password.id_for_label }}" class="block text-sm font-medium text-gray-700">
-                            Password
-                        </label>
-                        <div class="mt-1">
-                            <input id="{{ form.password.id_for_label }}"
-                                   name="{{ form.password.name }}"
-                                   type="password"
-                                   autocomplete="current-password"
-                                   required
-                                   class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm {% if form.password.errors %}border-red-300{% endif %}">
-                        </div>
-                        {% if form.password.errors %}
-                            <p class="mt-2 text-sm text-red-600">{{ form.password.errors.0 }}</p>
-                        {% endif %}
+                    <div class="text-sm">
+                        <a href="{% url 'accounts:password_reset' %}"
+                           class="font-medium text-blue-600 hover:text-blue-500">
+                            Forgot your password?
+                        </a>
                     </div>
+                </div>
 
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center">
-                            <input id="remember_me"
-                                   name="remember_me"
-                                   type="checkbox"
-                                   class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
-                            <label for="remember_me" class="ml-2 block text-sm text-gray-900">
-                                Remember me
-                            </label>
-                        </div>
+                <div>
+                    <button type="submit"
+                            class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        Sign in
+                    </button>
+                </div>
+            </form>
 
-                        <div class="text-sm">
-                            <a href="{% url 'accounts:password_reset' %}" class="font-medium text-blue-600 hover:text-blue-500">
-                                Forgot your password?
-                            </a>
-                        </div>
+            <div class="mt-6">
+                <div class="relative">
+                    <div class="absolute inset-0 flex items-center">
+                        <div class="w-full border-t border-gray-300"></div>
                     </div>
-
-                    <div>
-                        <button type="submit"
-                                class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                            Sign in
-                        </button>
+                    <div class="relative flex justify-center text-sm">
+                        <span class="px-2 bg-white text-gray-500">Need help?</span>
                     </div>
-                </form>
+                </div>
 
-                <div class="mt-6">
-                    <div class="relative">
-                        <div class="absolute inset-0 flex items-center">
-                            <div class="w-full border-t border-gray-300"></div>
-                        </div>
-                        <div class="relative flex justify-center text-sm">
-                            <span class="px-2 bg-white text-gray-500">Need help?</span>
-                        </div>
-                    </div>
-
-                    <div class="mt-6 text-center">
-                        <p class="text-sm text-gray-600">
-                            Contact your administrator for account access
-                        </p>
-                    </div>
+                <div class="mt-6 text-center">
+                    <p class="text-sm text-gray-600">
+                        Contact your administrator for account access
+                    </p>
                 </div>
             </div>
         </div>
     </div>
+</div>
 
-    <!-- Demo credentials notice (remove in production) -->
-    {% if debug %}
+<!-- Demo credentials notice (remove in production) -->
+{% if debug %}
     <div class="fixed bottom-4 right-4 bg-yellow-50 border border-yellow-200 rounded-lg p-4 max-w-sm">
         <h4 class="text-sm font-semibold text-yellow-800 mb-2">Demo Credentials</h4>
         <p class="text-xs text-yellow-700">
@@ -135,6 +149,6 @@
             Password: <code class="bg-yellow-100 px-1 rounded">admin123</code>
         </p>
     </div>
-    {% endif %}
+{% endif %}
 </body>
 </html>

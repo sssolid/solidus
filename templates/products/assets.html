@@ -1,0 +1,44 @@
+<!-- templates/products/assets.html -->
+{% extends 'base.html' %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block title %}{{ product.number }} | {{ product.brand.name }}{% endblock %}
+
+{% block content %}
+    <div class="container mx-auto px-4 py-8">
+        <!-- Breadcrumb -->
+        <nav class="mb-8 text-sm">
+            <ol class="flex items-center space-x-2 text-gray-500">
+                <li><a href="{% url 'products:catalog' %}" class="hover:text-blue-600">Products</a></li>
+                <li><i class="fas fa-chevron-right text-xs"></i></li>
+                {% if product.categories.first %}
+                    <li><a href="{% url 'products:catalog' %}?category={{ product.categories.first.id }}"
+                           class="hover:text-blue-600">{{ product.categories.first.name }}</a></li>
+                    <li><i class="fas fa-chevron-right text-xs"></i></li>
+                {% endif %}
+                <li><a href="{% url 'products:detail' product.pk %}" class="hover:text-blue-600">{{ product.number }}</a>
+                </li>
+                <li>
+                    <div class="flex items-center">
+                        <i class="fas fa-chevron-right text-gray-400 mr-4"></i>
+                        <span class="text-sm font-medium text-gray-500">Assets</span>
+                    </div>
+                </li>
+            </ol>
+        </nav>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-12">
+            <!-- Product Information -->
+            <div>
+                <!-- Header -->
+                <div class="mb-6">
+                    <div class="mb-2">
+                        <span class="text-sm text-gray-500 uppercase tracking-wide">{{ product.brand.name }}</span>
+                    </div>
+                    <h1 class="text-3xl font-bold text-gray-900 mb-4">{{ product.number }}</h1>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

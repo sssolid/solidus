@@ -178,7 +178,7 @@ class CSVFeedGenerator(BaseFeedGenerator):
         if self.feed.feed_type == "product_catalog":
             return [
                 "sku",
-                "name",
+                "number",
                 "brand",
                 "categories",
                 "short_description",

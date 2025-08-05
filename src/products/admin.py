@@ -79,7 +79,7 @@ class CustomerPricingInline(admin.TabularInline):
 class ProductAdmin(admin.ModelAdmin):
     list_display = [
         "sku",
-        "name",
+        "number",
         "brand",
         "display_categories",
         "msrp",
@@ -95,7 +95,7 @@ class ProductAdmin(admin.ModelAdmin):
         "created_at",
         "launch_date",
     ]
-    search_fields = ["sku", "name", "short_description", "part_numbers", "oem_numbers"]
+    search_fields = ["sku", "number", "short_description", "part_numbers", "oem_numbers"]
     readonly_fields = [
         "created_at",
         "updated_at",
@@ -112,7 +112,7 @@ class ProductAdmin(admin.ModelAdmin):
             {
                 "fields": (
                     "sku",
-                    "name",
+                    "number",
                     "brand",
                     "categories",
                     "short_description",

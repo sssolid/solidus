@@ -33,7 +33,7 @@ class ProductSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "sku",
-            "name",
+            "number",
             "description",
             "brand_name",
             "categories",
@@ -882,7 +882,7 @@ class ProductUpdateWebhook(APIView):
                     product_data = data.get("product_data", {})
                     product = Product.objects.create(
                         sku=product_data.get("sku"),
-                        name=product_data.get("name"),
+                        number=product_data.get("number"),
                         description=product_data.get("description", ""),
                         msrp=product_data.get("msrp"),
                         is_active=product_data.get("is_active", True),
@@ -911,7 +911,7 @@ class ProductUpdateWebhook(APIView):
                         product = Product.objects.get(id=product_id)
                         old_data = {
                             "sku": product.sku,
-                            "name": product.name,
+                            "number": product.number,
                             "description": product.description,
                             "msrp": product.msrp,
                             "is_active": product.is_active,
@@ -920,8 +920,8 @@ class ProductUpdateWebhook(APIView):
                         product_data = data.get("product_data", {})
                         if "sku" in product_data:
                             product.sku = product_data["sku"]
-                        if "name" in product_data:
-                            product.name = product_data["name"]
+                        if "number" in product_data:
+                            product.number = product_data["number"]
                         if "description" in product_data:
                             product.description = product_data["description"]
                         if "msrp" in product_data:
@@ -1059,7 +1059,7 @@ class InventoryUpdateWebhook(APIView):
                         Notification.objects.create(
                             user=request.user,
                             title="Low inventory alert",
-                            message=f"Product {product.sku} ({product.name}) has low inventory: {quantity} units",
+                            message=f"Product {product.sku} ({product.number}) has low inventory: {quantity} units",
                             notification_type="inventory_alert",
                         )
 

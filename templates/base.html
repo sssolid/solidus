@@ -18,47 +18,65 @@
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
+    <!-- Favicon -->
+    <link rel="icon" href="/media/favicon/favicon-light.ico" type="image/x-icon">
+    <link rel="icon" type="image/png" sizes="32x32" href="/media/web/icon-32x32-light.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/media/web/icon-16x16-light.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/media/web/apple-touch-icon-light.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/media/web/android-chrome-192x192-light.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="/media/web/android-chrome-512x512-light.png">
+
     {% block extra_css %}{% endblock %}
 </head>
 <body class="h-full" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
-    <div x-data="{ sidebarOpen: false, notificationOpen: false }" class="h-full">
-        <!-- Mobile sidebar backdrop -->
-        <div x-show="sidebarOpen"
-             x-transition:enter="transition-opacity ease-linear duration-300"
-             x-transition:enter-start="opacity-0"
-             x-transition:enter-end="opacity-100"
-             x-transition:leave="transition-opacity ease-linear duration-300"
-             x-transition:leave-start="opacity-100"
-             x-transition:leave-end="opacity-0"
-             class="fixed inset-0 bg-gray-900 bg-opacity-75 z-40 lg:hidden"
-             @click="sidebarOpen = false"></div>
+<div x-data="{ sidebarOpen: false, notificationOpen: false }" class="h-full">
+    <!-- Mobile sidebar backdrop -->
+    <div x-show="sidebarOpen"
+         x-transition:enter="transition-opacity ease-linear duration-300"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition-opacity ease-linear duration-300"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="fixed inset-0 bg-gray-900 bg-opacity-75 z-40 lg:hidden"
+         @click="sidebarOpen = false"></div>
 
-        <!-- Desktop layout container -->
-        <div class="h-full flex">
-            <!-- Sidebar -->
-            <div :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'"
-                 class="fixed inset-y-0 left-0 z-50 w-64 bg-gray-900 transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:flex lg:flex-col">
-                <div class="flex h-full flex-col">
-                    <!-- Logo -->
-                    <div class="flex h-16 items-center justify-between px-4 bg-gray-800">
-                        <h1 class="text-xl font-bold text-white">Solidus</h1>
-                        <button @click="sidebarOpen = false" class="lg:hidden text-gray-400 hover:text-white">
-                            <i class="fas fa-times"></i>
-                        </button>
+    <!-- Desktop layout container -->
+    <div class="h-full flex">
+        <!-- Sidebar -->
+        <div :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'"
+             class="fixed inset-y-0 left-0 z-50 w-64 bg-gray-900 transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:flex lg:flex-col">
+            <div class="flex h-full flex-col">
+                <!-- Logo -->
+                <div class="flex h-16 items-center justify-between px-4 bg-gray-800">
+                    <div class="flex items-center space-x-2">
+                        <!-- Logo Image -->
+                        <img src="/media/web/icon-32x32-light.png" alt="Solidus Logo" class="h-8 w-8">
+
+                        <!-- Site Title -->
+                        <h1 class="text-l font-bold text-white">Crown Solidus</h1>
                     </div>
 
-                    <!-- Navigation -->
-                    <nav class="flex-1 space-y-1 px-2 py-4">
-                        <a href="{% url 'core:dashboard' %}"
-                           class="{% if request.resolver_match.url_name == 'dashboard' %}bg-gray-800 text-white{% else %}text-gray-300 hover:bg-gray-700 hover:text-white{% endif %} group flex items-center px-2 py-2 text-sm font-medium rounded-md">
-                            <i class="fas fa-home mr-3"></i>
-                            Dashboard
-                        </a>
+                    <!-- Close Button -->
+                    <button @click="sidebarOpen = false" class="lg:hidden text-gray-400 hover:text-white">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
 
-                        {% if user.is_employee %}
+
+                <!-- Navigation -->
+                <nav class="flex-1 space-y-1 px-2 py-4">
+                    <a href="{% url 'core:dashboard' %}"
+                       class="{% if request.resolver_match.url_name == 'dashboard' %}bg-gray-800 text-white{% else %}text-gray-300 hover:bg-gray-700 hover:text-white{% endif %} group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                        <i class="fas fa-home mr-3"></i>
+                        Dashboard
+                    </a>
+
+                    {% if user.is_employee %}
                         <!-- Employee Menu -->
                         <div class="pt-4">
-                            <h3 class="px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Management</h3>
+                            <h3 class="px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                                Management</h3>
                             <div class="mt-2 space-y-1">
                                 <a href="{% url 'products:list' %}"
                                    class="text-gray-300 hover:bg-gray-700 hover:text-white group flex items-center px-2 py-2 text-sm font-medium rounded-md">
@@ -87,7 +105,7 @@
                                 </a>
                             </div>
                         </div>
-                        {% else %}
+                    {% else %}
                         <!-- Customer Menu -->
                         <div class="pt-4">
                             <h3 class="px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Browse</h3>
@@ -109,164 +127,164 @@
                                 </a>
                             </div>
                         </div>
-                        {% endif %}
-                    </nav>
+                    {% endif %}
+                </nav>
 
-                    <!-- User info -->
-                    <div class="flex-shrink-0 bg-gray-800 p-4">
-                        <div class="flex items-center">
-                            <div class="h-10 w-10 rounded-full bg-gray-600 flex items-center justify-center">
-                                <i class="fas fa-user text-gray-200"></i>
-                            </div>
-                            <div class="ml-3">
-                                <p class="text-sm font-medium text-white">{{ user.get_full_name|default:user.username }}</p>
-                                <p class="text-xs font-medium text-gray-400">{{ user.get_role_display }}</p>
-                            </div>
+                <!-- User info -->
+                <div class="flex-shrink-0 bg-gray-800 p-4">
+                    <div class="flex items-center">
+                        <div class="h-10 w-10 rounded-full bg-gray-600 flex items-center justify-center">
+                            <i class="fas fa-user text-gray-200"></i>
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm font-medium text-white">{{ user.get_full_name|default:user.username }}</p>
+                            <p class="text-xs font-medium text-gray-400">{{ user.get_role_display }}</p>
                         </div>
                     </div>
                 </div>
             </div>
+        </div>
 
-            <!-- Main content area -->
-            <div class="flex-1 flex flex-col min-w-0">
-                <!-- Top bar -->
-                <header class="bg-white shadow-sm border-b border-gray-200">
-                    <div class="flex items-center justify-between px-4 sm:px-6 lg:px-8 h-16">
-                        <!-- Mobile menu button -->
-                        <button @click="sidebarOpen = true" class="lg:hidden text-gray-500 hover:text-gray-700">
-                            <i class="fas fa-bars text-xl"></i>
-                        </button>
+        <!-- Main content area -->
+        <div class="flex-1 flex flex-col min-w-0">
+            <!-- Top bar -->
+            <header class="bg-white shadow-sm border-b border-gray-200">
+                <div class="flex items-center justify-between px-4 sm:px-6 lg:px-8 h-16">
+                    <!-- Mobile menu button -->
+                    <button @click="sidebarOpen = true" class="lg:hidden text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-bars text-xl"></i>
+                    </button>
 
-                        <!-- Search bar -->
-                        <div class="flex-1 flex items-center justify-center lg:justify-start px-4">
-                            <form method="get" action="{% url 'core:search' %}" class="w-full max-w-lg">
-                                <div class="relative">
-                                    <input type="text"
-                                           name="q"
-                                           placeholder="Search products, assets..."
-                                           class="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
-                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center">
-                                        <i class="fas fa-search text-gray-400"></i>
-                                    </div>
+                    <!-- Search bar -->
+                    <div class="flex-1 flex items-center justify-center lg:justify-start px-4">
+                        <form method="get" action="{% url 'core:search' %}" class="w-full max-w-lg">
+                            <div class="relative">
+                                <input type="text"
+                                       name="q"
+                                       placeholder="Search products, assets..."
+                                       class="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center">
+                                    <i class="fas fa-search text-gray-400"></i>
                                 </div>
-                            </form>
-                        </div>
+                            </div>
+                        </form>
+                    </div>
 
-                        <!-- Right side: notifications, user menu -->
-                        <div class="flex items-center space-x-4">
-                            <!-- Notifications -->
-                            <div class="relative" x-data="{ notificationOpen: false }">
-                                <button @click="notificationOpen = !notificationOpen"
-                                        class="p-2 text-gray-400 hover:text-gray-500 relative">
-                                    <i class="fas fa-bell text-xl"></i>
-                                    {% if unread_notifications_count > 0 %}
+                    <!-- Right side: notifications, user menu -->
+                    <div class="flex items-center space-x-4">
+                        <!-- Notifications -->
+                        <div class="relative" x-data="{ notificationOpen: false }">
+                            <button @click="notificationOpen = !notificationOpen"
+                                    class="p-2 text-gray-400 hover:text-gray-500 relative">
+                                <i class="fas fa-bell text-xl"></i>
+                                {% if unread_notifications_count > 0 %}
                                     <span class="absolute -top-1 -right-1 h-5 w-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
                                         {{ unread_notifications_count }}
                                     </span>
-                                    {% endif %}
-                                </button>
+                                {% endif %}
+                            </button>
 
-                                <!-- Notification dropdown -->
-                                <div x-show="notificationOpen"
-                                     @click.away="notificationOpen = false"
-                                     x-transition
-                                     class="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
-                                    <div class="p-4">
-                                        <h3 class="text-sm font-medium text-gray-900">Notifications</h3>
-                                        <div class="mt-2 space-y-2">
-                                            <!-- Notifications will be loaded here via HTMX -->
-                                            <div hx-get="{% url 'core:notification_dropdown' %}"
-                                                 hx-trigger="revealed">
-                                                <p class="text-sm text-gray-500">Loading...</p>
-                                            </div>
+                            <!-- Notification dropdown -->
+                            <div x-show="notificationOpen"
+                                 @click.away="notificationOpen = false"
+                                 x-transition
+                                 class="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
+                                <div class="p-4">
+                                    <h3 class="text-sm font-medium text-gray-900">Notifications</h3>
+                                    <div class="mt-2 space-y-2">
+                                        <!-- Notifications will be loaded here via HTMX -->
+                                        <div hx-get="{% url 'core:notification_dropdown' %}"
+                                             hx-trigger="revealed">
+                                            <p class="text-sm text-gray-500">Loading...</p>
                                         </div>
                                     </div>
                                 </div>
                             </div>
+                        </div>
 
-                            <!-- User menu dropdown -->
-                            <div class="relative" x-data="{ userMenuOpen: false }">
-                                <button @click="userMenuOpen = !userMenuOpen"
-                                        class="flex items-center text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                    <div class="h-8 w-8 rounded-full bg-gray-300 flex items-center justify-center">
-                                        <i class="fas fa-user text-gray-600"></i>
-                                    </div>
-                                </button>
+                        <!-- User menu dropdown -->
+                        <div class="relative" x-data="{ userMenuOpen: false }">
+                            <button @click="userMenuOpen = !userMenuOpen"
+                                    class="flex items-center text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <div class="h-8 w-8 rounded-full bg-gray-300 flex items-center justify-center">
+                                    <i class="fas fa-user text-gray-600"></i>
+                                </div>
+                            </button>
 
-                                <!-- User dropdown menu -->
-                                <div x-show="userMenuOpen"
-                                     @click.away="userMenuOpen = false"
-                                     x-transition
-                                     class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
-                                    <div class="py-1">
-                                        <a href="{% url 'accounts:profile' %}"
-                                           class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                            <i class="fas fa-user mr-2"></i>Your Profile
-                                        </a>
-                                        <a href="{% url 'accounts:settings' %}"
-                                           class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                            <i class="fas fa-cog mr-2"></i>Settings
-                                        </a>
-                                        <div class="border-t border-gray-100"></div>
-                                        <form method="post" action="{% url 'accounts:logout' %}">
-                                            {% csrf_token %}
-                                            <button type="submit"
+                            <!-- User dropdown menu -->
+                            <div x-show="userMenuOpen"
+                                 @click.away="userMenuOpen = false"
+                                 x-transition
+                                 class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
+                                <div class="py-1">
+                                    <a href="{% url 'accounts:profile' %}"
+                                       class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                        <i class="fas fa-user mr-2"></i>Your Profile
+                                    </a>
+                                    <a href="{% url 'accounts:settings' %}"
+                                       class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                        <i class="fas fa-cog mr-2"></i>Settings
+                                    </a>
+                                    <div class="border-t border-gray-100"></div>
+                                    <form method="post" action="{% url 'accounts:logout' %}">
+                                        {% csrf_token %}
+                                        <button type="submit"
                                                 class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                                <i class="fas fa-sign-out-alt mr-2"></i> Sign out
-                                            </button>
-                                        </form>
-                                    </div>
+                                            <i class="fas fa-sign-out-alt mr-2"></i> Sign out
+                                        </button>
+                                    </form>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </header>
+                </div>
+            </header>
 
-                <!-- Main content -->
-                <main class="flex-1 overflow-y-auto bg-gray-50">
-                    <div class="py-6">
-                        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                            <!-- Breadcrumbs -->
-                            {% block breadcrumbs %}{% endblock %}
+            <!-- Main content -->
+            <main class="flex-1 overflow-y-auto bg-gray-50">
+                <div class="py-6">
+                    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <!-- Breadcrumbs -->
+                        {% block breadcrumbs %}{% endblock %}
 
-                            <!-- Page content -->
-                            {% block content %}{% endblock %}
-                        </div>
+                        <!-- Page content -->
+                        {% block content %}{% endblock %}
                     </div>
-                </main>
-            </div>
+                </div>
+            </main>
         </div>
     </div>
+</div>
 
-    <!-- Success/Error Messages -->
-    {% if messages %}
+<!-- Success/Error Messages -->
+{% if messages %}
     <div class="fixed top-4 right-4 z-50 space-y-2">
         {% for message in messages %}
-        <div class="alert alert-{{ message.tags }} bg-white border border-gray-200 rounded-lg shadow-lg p-4 max-w-sm"
-             x-data="{ show: true }"
-             x-show="show"
-             x-transition
-             x-init="setTimeout(() => show = false, 5000)">
-            <div class="flex items-center">
-                {% if message.tags == 'success' %}
-                <i class="fas fa-check-circle text-green-500 mr-2"></i>
-                {% elif message.tags == 'error' %}
-                <i class="fas fa-exclamation-circle text-red-500 mr-2"></i>
-                {% elif message.tags == 'warning' %}
-                <i class="fas fa-exclamation-triangle text-yellow-500 mr-2"></i>
-                {% else %}
-                <i class="fas fa-info-circle text-blue-500 mr-2"></i>
-                {% endif %}
-                <p class="text-sm text-gray-700">{{ message }}</p>
-                <button @click="show = false" class="ml-2 text-gray-400 hover:text-gray-600">
-                    <i class="fas fa-times"></i>
-                </button>
+            <div class="alert alert-{{ message.tags }} bg-white border border-gray-200 rounded-lg shadow-lg p-4 max-w-sm"
+                 x-data="{ show: true }"
+                 x-show="show"
+                 x-transition
+                 x-init="setTimeout(() => show = false, 5000)">
+                <div class="flex items-center">
+                    {% if message.tags == 'success' %}
+                        <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                    {% elif message.tags == 'error' %}
+                        <i class="fas fa-exclamation-circle text-red-500 mr-2"></i>
+                    {% elif message.tags == 'warning' %}
+                        <i class="fas fa-exclamation-triangle text-yellow-500 mr-2"></i>
+                    {% else %}
+                        <i class="fas fa-info-circle text-blue-500 mr-2"></i>
+                    {% endif %}
+                    <p class="text-sm text-gray-700">{{ message }}</p>
+                    <button @click="show = false" class="ml-2 text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
             </div>
-        </div>
         {% endfor %}
     </div>
-    {% endif %}
+{% endif %}
 
-    {% block extra_js %}{% endblock %}
+{% block extra_js %}{% endblock %}
 </body>
 </html>

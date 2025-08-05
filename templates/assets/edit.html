@@ -98,8 +98,12 @@
                 <!-- Replace File -->
                 <div class="mt-6 pt-6 border-t border-gray-200">
                     <h4 class="text-sm font-medium text-gray-900 mb-3">Replace File</h4>
+{#                    # TODO: Implement assets:replace_file#}
+{#                    <form method="post" enctype="multipart/form-data"#}
+{#                          hx-post="{% url 'assets:replace_file' pk=asset.pk %}"#}
+{#                          hx-target="#file-replace-result">#}
                     <form method="post" enctype="multipart/form-data"
-                          hx-post="{% url 'assets:replace_file' pk=asset.pk %}"
+                          hx-post=""
                           hx-target="#file-replace-result">
                         {% csrf_token %}
                         <input type="file" name="new_file"

@@ -6,16 +6,12 @@ from django.contrib import admin
 from django.urls import include, path
 from django.views.generic import RedirectView
 from core.simple_health import SimpleHealthCheckView
-from core.favicon import FaviconView
 
 urlpatterns = [
     path("admin/", admin.site.urls),
 
     # Root-level health endpoint for monitoring systems
     path("health/", SimpleHealthCheckView.as_view(), name="health"),
-
-    # Favicon to prevent 404 errors
-    path("favicon.ico", FaviconView.as_view(), name="favicon"),
 
     # Main application URLs
     path("", RedirectView.as_view(url="/dashboard/", permanent=False), name="home"),

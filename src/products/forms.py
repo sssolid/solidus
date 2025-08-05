@@ -13,7 +13,7 @@ class ProductForm(forms.ModelForm):
         model = Product
         fields = [
             "sku",
-            "name",
+            "number",
             # "description",
             "brand",
             "categories",
@@ -38,8 +38,8 @@ class ProductForm(forms.ModelForm):
             "sku": forms.TextInput(
                 attrs={"class": "form-input", "placeholder": "e.g., ABC-12345"}
             ),
-            "name": forms.TextInput(
-                attrs={"class": "form-input", "placeholder": "Product Name"}
+            "number": forms.TextInput(
+                attrs={"class": "form-input", "placeholder": "Product Number"}
             ),
             "description": forms.Textarea(
                 attrs={
