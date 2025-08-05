@@ -31,6 +31,7 @@ urlpatterns = [
         views.mark_all_notifications_read,
         name="mark_all_notifications_read",
     ),
+    path('notifications/dropdown/', views.notification_dropdown, name='notification_dropdown'),
     # System settings (admin only)
     path("settings/", views.SystemSettingsView.as_view(), name="system_settings"),
     path(

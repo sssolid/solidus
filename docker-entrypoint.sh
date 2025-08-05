@@ -1,5 +1,6 @@
 #!/bin/bash
 # docker-entrypoint.sh
+# Fixed version that doesn't auto-run migrations
 
 set -e
 
@@ -34,41 +35,45 @@ while ! nc -z $REDIS_HOST 6379; do
 done
 echo "✅ Redis is ready!"
 
-# Run migrations
-echo "🔄 Running migrations..."
-uv run python manage.py migrate --noinput
+# REMOVED: Auto-migration (now handled by host)
+# This improves development workflow and prevents migration issues
 
-# Create cache table
+# Create cache table (safe to run multiple times)
 echo "🗄️ Creating cache table..."
 uv run python manage.py createcachetable || true
 
-# Collect static files
-echo "📁 Collecting static files..."
-uv run python manage.py collectstatic --noinput
+# Collect static files (only if not in development)
+if [ "$DEBUG" != "True" ]; then
+    echo "📁 Collecting static files..."
+    uv run python manage.py collectstatic --noinput
+fi
 
-# Create default superuser in development
+# Create default superuser in development (only if migrations have been run)
 if [ "$DEBUG" = "True" ] && [ "$CREATE_SUPERUSER" = "True" ]; then
-    echo "👤 Creating default superuser..."
+    echo "👤 Checking for default superuser..."
     uv run python manage.py shell -c "
-from django.contrib.auth import get_user_model
-User = get_user_model()
-if not User.objects.filter(username='admin').exists():
-    User.objects.create_superuser(
-        username='admin',
-        email='admin@solidus.local',
-        password='admin123',
-        role='admin'
-    )
-    print('✅ Superuser created: admin / admin123')
-else:
-    print('ℹ️ Superuser already exists')
+try:
+    from django.contrib.auth import get_user_model
+    User = get_user_model()
+    if not User.objects.filter(username='admin').exists():
+        User.objects.create_superuser(
+            username='admin',
+            email='admin@solidus.local',
+            password='admin123',
+            role='admin'
+        )
+        print('✅ Superuser created: admin / admin123')
+    else:
+        print('ℹ️ Superuser already exists')
+except Exception as e:
+    print(f'⚠️ Could not create superuser (run migrations first): {e}')
 "
 fi
 
-# Load initial data if specified
+# Load initial data if specified (only if migrations have been run)
 if [ "$LOAD_INITIAL_DATA" = "True" ]; then
     echo "📊 Loading initial data..."
-    uv run python manage.py loaddata initial_data || true
+    uv run python manage.py loaddata initial_data || echo "⚠️ Could not load initial data (run migrations first)"
 fi
 
 # Create media directories
@@ -79,6 +84,8 @@ mkdir -p media/uploads media/processed media/thumbnails
 echo "🔒 Setting permissions..."
 chown -R solidus:solidus media/ static/ logs/ || true
 
+echo "🎉 Container ready! Migrations should be run from host using 'make migrate'"
+
 # Start the application
-echo "🎉 Starting application..."
+echo "🚀 Starting application server..."
 exec "$@"

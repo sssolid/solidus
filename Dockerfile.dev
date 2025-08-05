@@ -1,0 +1,65 @@
+# Dockerfile.dev
+# Development-optimized Dockerfile for hot reloading
+
+FROM python:3.12-slim
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    postgresql-client \
+    netcat-openbsd \
+    curl \
+    build-essential \
+    libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install UV for fast Python package management
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+
+# Create user for development (matching host user)
+ARG UID=1000
+ARG GID=1000
+RUN groupadd -g ${GID} solidus && \
+    useradd -u ${UID} -g ${GID} -m -s /bin/bash solidus
+
+# Set working directory
+WORKDIR /app
+
+# Set Python path for Django apps in src/
+ENV PYTHONPATH="/app/src:$PYTHONPATH"
+
+# Development environment variables
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV UV_CACHE_DIR=/tmp/uv-cache
+
+# Copy dependency files
+COPY pyproject.toml uv.lock ./
+
+# Install Python dependencies
+RUN uv sync --dev
+
+# Create necessary directories
+RUN mkdir -p logs media static /tmp/uv-cache
+
+# Change ownership to solidus user
+RUN chown -R solidus:solidus /app /tmp/uv-cache
+
+# Switch to non-root user
+USER solidus
+
+# Copy entrypoint script
+COPY --chown=solidus:solidus docker-entrypoint.dev.sh /app/
+
+# Make entrypoint executable
+USER root
+RUN chmod +x /app/docker-entrypoint.dev.sh
+USER solidus
+
+# Expose port
+EXPOSE 8000
+
+# Use development entrypoint
+ENTRYPOINT ["bash", "/app/docker-entrypoint.dev.sh"]
+
+# Default command (can be overridden)
+CMD ["uv", "run", "python", "manage.py", "runserver", "0.0.0.0:8000"]

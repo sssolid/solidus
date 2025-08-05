@@ -175,7 +175,8 @@ class SystemSettingAdmin(admin.ModelAdmin):
         "value_display",
         "is_public",
         "updated_at",
-        "updated_by",
+        # TODO: updated_by does not exist
+        # "updated_by",
     ]
 
     list_filter = ["setting_type", "is_public", "updated_at"]
@@ -189,7 +190,8 @@ class SystemSettingAdmin(admin.ModelAdmin):
         (
             "System Information",
             {
-                "fields": ("created_at", "updated_at", "updated_by"),
+                # TODO: updated_by does not exist
+                "fields": ("created_at", "updated_at",), # "updated_by"),
                 "classes": ("collapse",),
             },
         ),
@@ -422,7 +424,8 @@ class FileImportAdmin(admin.ModelAdmin):
 
     search_fields = [
         "import_id",
-        "filename",
+        # TODO: filename and created_by__username do not exist
+        # "filename",
         # 'created_by__username'
     ]
 
@@ -439,7 +442,8 @@ class FileImportAdmin(admin.ModelAdmin):
     fieldsets = (
         (
             "Import Information",
-            {"fields": ("import_id", "import_type", "filename", "status")},
+            # TODO: filename does not exist
+            {"fields": ("import_id", "import_type", "status")}, # "filename"},
         ),
         (
             "Progress",

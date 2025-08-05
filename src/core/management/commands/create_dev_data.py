@@ -135,6 +135,7 @@ class Command(BaseCommand):
 
         for i in range(count):
             username = f"customer{i + 1}"
+            company = random.choice(companies)
             if not User.objects.filter(username=username).exists():
                 user = User.objects.create_user(
                     username=username,
@@ -142,21 +143,21 @@ class Command(BaseCommand):
                     password="customer123",
                     first_name=f"Customer{i + 1}",
                     last_name="User",
+                    company_name=company,
+                    phone=f"555-{random.randint(100, 999)}-{random.randint(1000, 9999)}",
                 )
 
                 # Create customer profile
-                company = random.choice(companies)
                 CustomerProfile.objects.create(
                     user=user,
-                    company=company,
-                    phone=f"555-{random.randint(100, 999)}-{random.randint(1000, 9999)}",
-                    address=f"{random.randint(100, 9999)} Main St",
-                    city=random.choice(
-                        ["New York", "Los Angeles", "Chicago", "Houston", "Phoenix"]
-                    ),
-                    state=random.choice(["NY", "CA", "IL", "TX", "AZ"]),
-                    zip_code=f"{random.randint(10000, 99999)}",
-                    account_number=f"ACCT{i + 1:04d}",
+                    billing_address=f"{random.randint(100, 9999)} Main St",
+                    shipping_addresses=f"{random.randint(100, 9999)} Second St",
+                    # city=random.choice(
+                    #     ["New York", "Los Angeles", "Chicago", "Houston", "Phoenix"]
+                    # ),
+                    # state=random.choice(["NY", "CA", "IL", "TX", "AZ"]),
+                    # zip_code=f"{random.randint(10000, 99999)}",
+                    # account_number=f"ACCT{i + 1:04d}",
                     credit_limit=Decimal(random.randint(5000, 50000)),
                 )
 
@@ -193,7 +194,7 @@ class Command(BaseCommand):
             brand, created = Brand.objects.get_or_create(
                 name=name,
                 defaults={
-                    "description": f"{name} automotive parts and components",
+                    # "description": f"{name} automotive parts and components",
                     "website": f'https://www.{name.lower().replace("/", "").replace(" ", "")}.com',
                     "is_active": True,
                 },
@@ -360,8 +361,8 @@ class Command(BaseCommand):
             # Create 1-3 feeds per customer
             for i in range(random.randint(1, 3)):
                 feed = DataFeed.objects.create(
-                    name=f"{customer.customerprofile.company} Product Feed {i + 1}",
-                    description=f"Product feed for {customer.customerprofile.company}",
+                    name=f"{customer.customer_profile.user.company_name} Product Feed {i + 1}",
+                    description=f"Product feed for {customer.customer_profile.user.company_name}",
                     customer=customer,
                     format=random.choice(["json", "xml", "csv"]),
                     frequency=random.choice(["daily", "weekly", "monthly"]),
@@ -388,7 +389,7 @@ class Command(BaseCommand):
                         started_at=generation_date,
                         completed_at=generation_date
                         + timedelta(minutes=random.randint(1, 10)),
-                        created_by=feed.created_by,
+                        created_by=feed.customer.username,
                     )
 
         self.stdout.write(

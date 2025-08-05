@@ -1,16 +1,16 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}{{ user_profile.get_full_name|default:user_profile.username }} - Profile{% endblock %}
+{% block title %}{{ user.get_full_name|default:user.username }} - Profile{% endblock %}
 
 {% block content %}
 <div class="container mx-auto px-4 py-6">
     <!-- Breadcrumbs -->
     <nav class="mb-6">
         <ol class="flex items-center space-x-2 text-sm text-gray-500">
-            <li><a href="{% url 'dashboard' %}" class="hover:text-blue-600">Dashboard</a></li>
+            <li><a href="{% url 'core:dashboard' %}" class="hover:text-blue-600">Dashboard</a></li>
             <li>/</li>
-            <li>{{ user_profile.get_full_name|default:user_profile.username }}</li>
+            <li>{{ user.get_full_name|default:user.username }}</li>
         </ol>
     </nav>
 
@@ -20,29 +20,29 @@
             <div class="bg-white rounded-lg shadow-sm border p-6">
                 <div class="flex items-start justify-between mb-6">
                     <div class="flex items-center space-x-4">
-                        {% if user_profile.avatar %}
-                            <img src="{{ user_profile.avatar.url }}" alt="{{ user_profile.get_full_name|default:user_profile.username }}"
+                        {% if user.avatar %}
+                            <img src="{{ user.avatar.url }}" alt="{{ user.get_full_name|default:user.username }}"
                                  class="w-16 h-16 rounded-full object-cover">
                         {% else %}
                             <div class="w-16 h-16 rounded-full bg-gray-300 flex items-center justify-center">
                                 <span class="text-gray-600 text-xl font-semibold">
-                                    {{ user_profile.get_full_name|default:user_profile.username|first|upper }}
+                                    {{ user.get_full_name|default:user.username|first|upper }}
                                 </span>
                             </div>
                         {% endif %}
                         <div>
                             <h1 class="text-2xl font-bold text-gray-900">
-                                {{ user_profile.get_full_name|default:user_profile.username }}
+                                {{ user.get_full_name|default:user.username }}
                             </h1>
-                            <p class="text-gray-600">{{ user_profile.email }}</p>
+                            <p class="text-gray-600">{{ user.email }}</p>
                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                                         {% if user_profile.is_staff %}bg-blue-100 text-blue-800{% else %}bg-green-100 text-green-800{% endif %}">
-                                {{ user_profile.get_role_display|default:"Customer" }}
+                                         {% if user.is_staff %}bg-blue-100 text-blue-800{% else %}bg-green-100 text-green-800{% endif %}">
+                                {{ user.get_role_display|default:"Customer" }}
                             </span>
                         </div>
                     </div>
-                    {% if request.user == user_profile or request.user.is_staff %}
-                        <a href="{% url 'accounts:edit' user_profile.pk %}"
+                    {% if request.user == user or request.user.is_staff %}
+                        <a href="{% url 'accounts:profile_edit' %}"
                            class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
                             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
@@ -59,18 +59,18 @@
                         <dl class="space-y-3">
                             <div>
                                 <dt class="text-sm font-medium text-gray-500">Email</dt>
-                                <dd class="text-sm text-gray-900">{{ user_profile.email }}</dd>
+                                <dd class="text-sm text-gray-900">{{ user.email }}</dd>
                             </div>
-                            {% if user_profile.phone %}
+                            {% if user.phone %}
                             <div>
                                 <dt class="text-sm font-medium text-gray-500">Phone</dt>
-                                <dd class="text-sm text-gray-900">{{ user_profile.phone }}</dd>
+                                <dd class="text-sm text-gray-900">{{ user.phone }}</dd>
                             </div>
                             {% endif %}
-                            {% if user_profile.company %}
+                            {% if user.company %}
                             <div>
                                 <dt class="text-sm font-medium text-gray-500">Company</dt>
-                                <dd class="text-sm text-gray-900">{{ user_profile.company }}</dd>
+                                <dd class="text-sm text-gray-900">{{ user.company }}</dd>
                             </div>
                             {% endif %}
                         </dl>
@@ -81,13 +81,13 @@
                         <dl class="space-y-3">
                             <div>
                                 <dt class="text-sm font-medium text-gray-500">Member Since</dt>
-                                <dd class="text-sm text-gray-900">{{ user_profile.date_joined|date:"F d, Y" }}</dd>
+                                <dd class="text-sm text-gray-900">{{ user.date_joined|date:"F d, Y" }}</dd>
                             </div>
                             <div>
                                 <dt class="text-sm font-medium text-gray-500">Last Login</dt>
                                 <dd class="text-sm text-gray-900">
-                                    {% if user_profile.last_login %}
-                                        {{ user_profile.last_login|timesince }} ago
+                                    {% if user.last_login %}
+                                        {{ user.last_login|timesince }} ago
                                     {% else %}
                                         Never
                                     {% endif %}
@@ -97,8 +97,8 @@
                                 <dt class="text-sm font-medium text-gray-500">Status</dt>
                                 <dd class="text-sm">
                                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                                                 {% if user_profile.is_active %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
-                                        {% if user_profile.is_active %}Active{% else %}Inactive{% endif %}
+                                                 {% if user.is_active %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
+                                        {% if user.is_active %}Active{% else %}Inactive{% endif %}
                                     </span>
                                 </dd>
                             </div>
@@ -106,10 +106,10 @@
                     </div>
                 </div>
 
-                {% if user_profile.bio %}
+                {% if user.bio %}
                 <div class="mt-6 pt-6 border-t border-gray-200">
                     <h3 class="text-lg font-medium text-gray-900 mb-2">About</h3>
-                    <p class="text-gray-700">{{ user_profile.bio|linebreaks }}</p>
+                    <p class="text-gray-700">{{ user.bio|linebreaks }}</p>
                 </div>
                 {% endif %}
             </div>
@@ -121,7 +121,7 @@
             <div class="bg-white rounded-lg shadow-sm border p-6">
                 <h3 class="text-lg font-medium text-gray-900 mb-4">Activity Summary</h3>
                 <div class="space-y-4">
-                    {% if user_profile.is_staff %}
+                    {% if user.is_staff %}
                         <div class="flex justify-between items-center">
                             <span class="text-sm text-gray-600">Products Created</span>
                             <span class="font-semibold">{{ stats.products_created|default:0 }}</span>
@@ -134,8 +134,8 @@
                     <div class="flex justify-between items-center">
                         <span class="text-sm text-gray-600">Last Activity</span>
                         <span class="text-sm text-gray-500">
-                            {% if user_profile.last_login %}
-                                {{ user_profile.last_login|timesince }} ago
+                            {% if user.last_login %}
+                                {{ user.last_login|timesince }} ago
                             {% else %}
                                 Never
                             {% endif %}
@@ -173,18 +173,19 @@
             <div class="bg-white rounded-lg shadow-sm border p-6">
                 <h3 class="text-lg font-medium text-gray-900 mb-4">Admin Actions</h3>
                 <div class="space-y-2">
-                    <a href="{% url 'audit:user_history' user_profile.pk %}"
-                       class="block w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-md">
-                        View Audit History
-                    </a>
-                    {% if not user_profile.is_active %}
-                    <button hx-post="{% url 'accounts:activate' user_profile.pk %}"
+{#                TODO: implement user_history auditing#}
+{#                    <a href="{% url 'audit:user_history' user.pk %}"#}
+{#                       class="block w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-md">#}
+{#                        View Audit History#}
+{#                    </a>#}
+                    {% if not user.is_active %}
+                    <button hx-post="{% url 'accounts:toggle_user_status' user.pk %}"
                             hx-swap="outerHTML"
                             class="block w-full text-left px-3 py-2 text-sm text-green-700 hover:bg-green-50 rounded-md">
                         Activate Account
                     </button>
                     {% else %}
-                    <button hx-post="{% url 'accounts:deactivate' user_profile.pk %}"
+                    <button hx-post="{% url 'accounts:toggle_user_status' user.pk %}"
                             hx-swap="outerHTML"
                             hx-confirm="Are you sure you want to deactivate this user?"
                             class="block w-full text-left px-3 py-2 text-sm text-red-700 hover:bg-red-50 rounded-md">

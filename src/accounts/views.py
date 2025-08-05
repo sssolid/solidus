@@ -62,7 +62,7 @@ class CustomLoginView(LoginView):
 class CustomLogoutView(LogoutView):
     """Custom logout view"""
 
-    template_name = "accounts/logout.html"
+    # template_name = "accounts/logout.html"
 
     def dispatch(self, request, *args, **kwargs):
         if request.user.is_authenticated:
@@ -86,7 +86,7 @@ class CustomPasswordChangeView(LoginRequiredMixin, PasswordChangeView):
 class ProfileView(LoginRequiredMixin, TemplateView):
     """User profile view"""
 
-    template_name = "accounts/profile.html"
+    template_name = "accounts/detail.html"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

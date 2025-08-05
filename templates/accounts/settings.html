@@ -8,7 +8,7 @@
     <!-- Breadcrumbs -->
     <nav class="mb-6">
         <ol class="flex items-center space-x-2 text-sm text-gray-500">
-            <li><a href="{% url 'dashboard' %}" class="hover:text-blue-600">Dashboard</a></li>
+            <li><a href="{% url 'core:dashboard' %}" class="hover:text-blue-600">Dashboard</a></li>
             <li>/</li>
             <li><a href="{% url 'accounts:profile' %}" class="hover:text-blue-600">My Profile</a></li>
             <li>/</li>
@@ -157,7 +157,11 @@
                         <p class="mt-1 text-sm text-gray-600">Choose how you'd like to receive notifications.</p>
                     </div>
 
-                    <form hx-post="{% url 'accounts:update_notifications' %}"
+{#                    # TODO: create accounts:update_notifications view#}
+{#                    <form hx-post="{% url 'accounts:update_notifications' %}"#}
+{#                          hx-swap="none"#}
+{#                          class="space-y-6">#}
+                    <form hx-post=""
                           hx-swap="none"
                           class="space-y-6">
                         {% csrf_token %}
@@ -237,73 +241,77 @@
                     <div class="space-y-6">
                         <!-- Password -->
                         <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
-                            <div>
-                                <h3 class="text-sm font-medium text-gray-900">Password</h3>
-                                <p class="text-sm text-gray-600">Last changed {{ user.password_changed_at|default:"Never"|timesince }} ago</p>
-                            </div>
+{#                            # TODO: user.password_changed_at does not exist#}
+{#                            <div>#}
+{#                                <h3 class="text-sm font-medium text-gray-900">Password</h3>#}
+{#                                <p class="text-sm text-gray-600">Last changed {{ user.password_changed_at|default:"Never"|timesince }} ago</p>#}
+{#                            </div>#}
                             <a href="{% url 'accounts:password_change' %}"
                                class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
                                 Change Password
                             </a>
                         </div>
 
+{#                        # TODO: implement user two factor authentication#}
                         <!-- Two-Factor Authentication -->
-                        <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
-                            <div>
-                                <h3 class="text-sm font-medium text-gray-900">Two-Factor Authentication</h3>
-                                <p class="text-sm text-gray-600">Add extra security to your account</p>
-                            </div>
-                            {% if user.has_2fa %}
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                    Enabled
-                                </span>
-                            {% else %}
-                                <button hx-get="{% url 'accounts:setup_2fa' %}"
-                                        hx-target="#modal-content"
-                                        hx-swap="innerHTML"
-                                        class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-                                    Enable 2FA
-                                </button>
-                            {% endif %}
-                        </div>
+{#                        <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg">#}
+{#                            <div>#}
+{#                                <h3 class="text-sm font-medium text-gray-900">Two-Factor Authentication</h3>#}
+{#                                <p class="text-sm text-gray-600">Add extra security to your account</p>#}
+{#                            </div>#}
+{#                            {% if user.has_2fa %}#}
+{#                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">#}
+{#                                    Enabled#}
+{#                                </span>#}
+{#                            {% else %}#}
+{#                                <button hx-get="{% url 'accounts:setup_2fa' %}"#}
+{#                                        hx-target="#modal-content"#}
+{#                                        hx-swap="innerHTML"#}
+{#                                        class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">#}
+{#                                    Enable 2FA#}
+{#                                </button>#}
+{#                            {% endif %}#}
+{#                        </div>#}
 
+{#                        # TODO: implement active sessions#}
                         <!-- Active Sessions -->
-                        <div class="p-4 border border-gray-200 rounded-lg">
-                            <div class="flex items-center justify-between mb-4">
-                                <div>
-                                    <h3 class="text-sm font-medium text-gray-900">Active Sessions</h3>
-                                    <p class="text-sm text-gray-600">Manage devices that are signed in to your account</p>
-                                </div>
-                                <button hx-get="{% url 'accounts:active_sessions' %}"
-                                        hx-target="#sessions-list"
-                                        hx-swap="innerHTML"
-                                        class="text-sm text-blue-600 hover:text-blue-800">
-                                    View All
-                                </button>
-                            </div>
-                            <div id="sessions-list" class="space-y-2">
-                                <div class="flex items-center justify-between text-sm">
-                                    <div>
-                                        <p class="font-medium text-gray-900">Current session</p>
-                                        <p class="text-gray-600">{{ request.META.HTTP_USER_AGENT|truncatechars:50 }}</p>
-                                    </div>
-                                    <span class="text-green-600">Active now</span>
-                                </div>
-                            </div>
-                        </div>
+{#                        <div class="p-4 border border-gray-200 rounded-lg">#}
+{#                            <div class="flex items-center justify-between mb-4">#}
+{#                                <div>#}
+{#                                    <h3 class="text-sm font-medium text-gray-900">Active Sessions</h3>#}
+{#                                    <p class="text-sm text-gray-600">Manage devices that are signed in to your account</p>#}
+{#                                </div>#}
+{#                                <button hx-get="{% url 'accounts:active_sessions' %}"#}
+{#                                        hx-target="#sessions-list"#}
+{#                                        hx-swap="innerHTML"#}
+{#                                        class="text-sm text-blue-600 hover:text-blue-800">#}
+{#                                    View All#}
+{#                                </button>#}
+{#                            </div>#}
+{#                            <div id="sessions-list" class="space-y-2">#}
+{#                                <div class="flex items-center justify-between text-sm">#}
+{#                                    <div>#}
+{#                                        <p class="font-medium text-gray-900">Current session</p>#}
+{#                                        <p class="text-gray-600">{{ request.META.HTTP_USER_AGENT|truncatechars:50 }}</p>#}
+{#                                    </div>#}
+{#                                    <span class="text-green-600">Active now</span>#}
+{#                                </div>#}
+{#                            </div>#}
+{#                        </div>#}
 
+{#                        # TODO: implement user data export#}
                         <!-- Download Data -->
-                        <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
-                            <div>
-                                <h3 class="text-sm font-medium text-gray-900">Download Your Data</h3>
-                                <p class="text-sm text-gray-600">Get a copy of your account data</p>
-                            </div>
-                            <button hx-post="{% url 'accounts:export_data' %}"
-                                    hx-confirm="Request data export? You'll receive an email when it's ready."
-                                    class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-                                Request Export
-                            </button>
-                        </div>
+{#                        <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg">#}
+{#                            <div>#}
+{#                                <h3 class="text-sm font-medium text-gray-900">Download Your Data</h3>#}
+{#                                <p class="text-sm text-gray-600">Get a copy of your account data</p>#}
+{#                            </div>#}
+{#                            <button hx-post="{% url 'accounts:export_data' %}"#}
+{#                                    hx-confirm="Request data export? You'll receive an email when it's ready."#}
+{#                                    class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">#}
+{#                                Request Export#}
+{#                            </button>#}
+{#                        </div>#}
                     </div>
                 </div>
 
@@ -314,7 +322,11 @@
                         <p class="mt-1 text-sm text-gray-600">Customize your experience.</p>
                     </div>
 
-                    <form hx-post="{% url 'accounts:update_preferences' %}"
+{#                    # TODO: implement accounts:update_preferences#}
+{#                    <form hx-post="{% url 'accounts:update_preferences' %}"#}
+{#                          hx-swap="none"#}
+{#                          class="space-y-6">#}
+                    <form hx-post=""
                           hx-swap="none"
                           class="space-y-6">
                         {% csrf_token %}

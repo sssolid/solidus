@@ -1,0 +1,191 @@
+# docker-compose.dev.yml
+# Optimized for development with better hot reloading
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: solidus_postgres
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - solidus_network
+
+  redis:
+    image: redis:7-alpine
+    container_name: solidus_redis
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - solidus_network
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev  # Development-specific Dockerfile
+      args:
+        UID: ${UID:-1000}
+        GID: ${GID:-1000}
+    container_name: solidus_web
+    # DEVELOPMENT SERVER with auto-reload
+    command: >
+      sh -c "
+        uv run python manage.py migrate --noinput &&
+        uv run python manage.py collectstatic --noinput &&
+        uv run python manage.py runserver 0.0.0.0:8000
+      "
+    volumes:
+      # OPTIMIZED VOLUME MOUNTS for development
+      - .:/app:cached                    # Full project sync
+      - /app/.venv                       # Exclude venv (use container's)
+      - /app/node_modules                # Exclude node_modules if present
+      - media_data:/app/media            # Persistent media
+      - static_data:/app/static          # Persistent static files
+      # Exclude Python cache for better performance
+      - /app/src/**/__pycache__
+      - /app/**/*.pyc
+    ports:
+      - "8000:8000"
+    environment:
+      # Enable Django development features
+      - DEBUG=True
+      - DJANGO_SETTINGS_MODULE=solidus.settings
+      - PYTHONUNBUFFERED=1               # See output immediately
+      - PYTHONDONTWRITEBYTECODE=1        # Don't write .pyc files
+      - WATCHFILES_FORCE_POLLING=true    # Force file watching
+      # Database connection (Docker service names)
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      # Redis connection
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      # Email
+      - EMAIL_HOST=mailhog
+      - EMAIL_PORT=1025
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - solidus_network
+    # Faster startup for development
+    restart: unless-stopped
+
+  # ALTERNATIVE: WebSocket server for real-time features (optional)
+  websocket:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: solidus_websocket
+    command: >
+      sh -c "
+        uv run daphne -b 0.0.0.0 -p 8001 
+          --reload 
+          --reload-dir=/app/src 
+          solidus.asgi:application
+      "
+    volumes:
+      - .:/app:cached
+      - /app/.venv
+    ports:
+      - "8001:8001"
+    environment:
+      - DEBUG=True
+      - DJANGO_SETTINGS_MODULE=solidus.settings
+      - PYTHONUNBUFFERED=1
+      - DB_HOST=postgres
+      - REDIS_HOST=redis
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - solidus_network
+    profiles:
+      - websocket
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: solidus_worker
+    # Reduced frequency for development
+    command: >
+      sh -c "
+        while true; do
+          uv run python manage.py process_assets --batch-size 2;
+          uv run python manage.py generate_feeds;
+          sleep 300;  # 5 minutes vs 1 minute in production
+        done
+      "
+    volumes:
+      - .:/app:cached
+      - /app/.venv
+      - media_data:/app/media
+    environment:
+      - DEBUG=True
+      - DJANGO_SETTINGS_MODULE=solidus.settings
+      - DB_HOST=postgres
+      - REDIS_HOST=redis
+    depends_on:
+      - postgres
+      - redis
+      - web
+    networks:
+      - solidus_network
+
+  mailhog:
+    image: mailhog/mailhog
+    container_name: solidus_mailhog
+    ports:
+      - "1025:1025"  # SMTP
+      - "8025:8025"  # Web interface
+    networks:
+      - solidus_network
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: solidus_pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@solidus.local
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+    networks:
+      - solidus_network
+    profiles:
+      - tools
+
+volumes:
+  postgres_data:
+  redis_data:
+  media_data:
+  static_data:
+
+networks:
+  solidus_network:
+    driver: bridge

@@ -1,13 +1,23 @@
 # src/solidus/urls.py
+
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
 from django.views.generic import RedirectView
+from core.simple_health import SimpleHealthCheckView
+from core.favicon import FaviconView
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    # App URLs
+
+    # Root-level health endpoint for monitoring systems
+    path("health/", SimpleHealthCheckView.as_view(), name="health"),
+
+    # Favicon to prevent 404 errors
+    path("favicon.ico", FaviconView.as_view(), name="favicon"),
+
+    # Main application URLs
     path("", RedirectView.as_view(url="/dashboard/", permanent=False), name="home"),
     path("dashboard/", include("core.urls", namespace="core")),
     path("accounts/", include("accounts.urls", namespace="accounts")),
@@ -15,6 +25,7 @@ urlpatterns = [
     path("assets/", include("assets.urls", namespace="assets")),
     path("feeds/", include("feeds.urls", namespace="feeds")),
     path("audit/", include("audit.urls", namespace="audit")),
+
     # API endpoints
     path("api/v1/", include("api.urls", namespace="api")),
 ]

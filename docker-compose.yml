@@ -5,16 +5,16 @@ services:
     image: postgres:15-alpine
     container_name: solidus_postgres
     environment:
-      POSTGRES_DB: ${DB_NAME}
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: solidus
+      POSTGRES_USER: solidus
+      POSTGRES_PASSWORD: solidus_password
       PGDATA: /var/lib/postgresql/data/pgdata
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
-      - "5432:5432"
+      - "5432:5432"  # EXPOSED to host for host-based migrations
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER}"]
+      test: ["CMD-SHELL", "pg_isready -U solidus"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -28,7 +28,7 @@ services:
     volumes:
       - redis_data:/data
     ports:
-      - "6379:6379"
+      - "6379:6379"  # EXPOSED to host for host-based commands
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -45,7 +45,6 @@ services:
         UID: ${UID:-1000}
         GID: ${GID:-1000}
     container_name: solidus_web
-    # REMOVED the PYTHONPATH environment variable - it's now in Dockerfile
     entrypoint: [ "bash", "/app/docker-entrypoint.sh" ]
     command: [ "uv", "run", "daphne", "-b", "0.0.0.0", "-p", "8000", "solidus.asgi:application" ]
     volumes:
@@ -55,8 +54,29 @@ services:
       - static_data:/app/static
     ports:
       - "8000:8000"
-    env_file:
-      - .env
+    # Use Docker-specific environment
+    environment:
+      - DEBUG=True
+      - SECRET_KEY=your-secret-key-here-change-in-production
+      - DJANGO_SETTINGS_MODULE=solidus.settings
+      - ALLOWED_HOSTS=localhost,127.0.0.1,0.0.0.0,web
+      - DB_NAME=solidus
+      - DB_USER=solidus
+      - DB_PASSWORD=solidus_password
+      - DB_HOST=postgres  # Docker service name
+      - DB_PORT=5432
+      - REDIS_HOST=redis  # Docker service name
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=
+      - EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
+      - EMAIL_HOST=mailhog  # Docker service name
+      - EMAIL_PORT=1025
+      - EMAIL_USE_TLS=False
+      - EMAIL_HOST_USER=
+      - EMAIL_HOST_PASSWORD=
+      - DEFAULT_FROM_EMAIL=noreply@solidus.local
+      - CREATE_SUPERUSER=True
+      - LOAD_INITIAL_DATA=True
     depends_on:
       postgres:
         condition: service_healthy
@@ -70,7 +90,6 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: solidus_worker
-    # REMOVED the PYTHONPATH environment variable - it's now in Dockerfile
     command: >
       sh -c "
         while true; do
@@ -83,8 +102,27 @@ services:
       - .:/app:cached
       - null_venv:/app/.venv
       - media_data:/app/media
-    env_file:
-      - .env
+    # Use same Docker environment as web
+    environment:
+      - DEBUG=True
+      - SECRET_KEY=your-secret-key-here-change-in-production
+      - DJANGO_SETTINGS_MODULE=solidus.settings
+      - ALLOWED_HOSTS=localhost,127.0.0.1,0.0.0.0,web
+      - DB_NAME=solidus
+      - DB_USER=solidus
+      - DB_PASSWORD=solidus_password
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=
+      - EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
+      - EMAIL_HOST=mailhog
+      - EMAIL_PORT=1025
+      - EMAIL_USE_TLS=False
+      - EMAIL_HOST_USER=
+      - EMAIL_HOST_PASSWORD=
+      - DEFAULT_FROM_EMAIL=noreply@solidus.local
     depends_on:
       - postgres
       - redis
@@ -110,8 +148,8 @@ services:
     image: mailhog/mailhog
     container_name: solidus_mailhog
     ports:
-      - "1025:1025"
-      - "8025:8025"
+      - "1025:1025"  # SMTP port EXPOSED to host
+      - "8025:8025"  # Web interface
     networks:
       - solidus_network
 
