@@ -112,7 +112,6 @@ class UserEditForm(forms.ModelForm):
             "customer_number",
             "tax_id",
             "is_active",
-            "allowed_asset_categories",
         ]
         widgets = {
             "username": forms.TextInput(attrs={"class": "form-input"}),
@@ -124,19 +123,7 @@ class UserEditForm(forms.ModelForm):
             "phone": forms.TextInput(attrs={"class": "form-input"}),
             "customer_number": forms.TextInput(attrs={"class": "form-input"}),
             "tax_id": forms.TextInput(attrs={"class": "form-input"}),
-            "allowed_asset_categories": forms.SelectMultiple(
-                attrs={"class": "form-select", "size": "6"}
-            ),
         }
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        # Populate asset category choices
-        from assets.models import AssetCategory
-
-        self.fields["allowed_asset_categories"].choices = [
-            (cat.slug, cat.name) for cat in AssetCategory.objects.filter(is_active=True)
-        ]
 
 
 class ProfileEditForm(forms.ModelForm):

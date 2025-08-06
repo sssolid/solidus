@@ -1,0 +1,46 @@
+<!-- templates/assets/partials/upload_progress.html -->
+<div id="upload-progress-{{ session_id }}"
+     hx-get="{% url 'assets:upload_progress' session_id %}"
+     hx-trigger="every 2s"
+     hx-target="this"
+     hx-swap="outerHTML">
+
+    <div class="bg-white border rounded-lg p-4">
+        <div class="flex items-center justify-between mb-2">
+            <h3 class="font-semibold">Upload Progress</h3>
+            <span class="text-sm text-gray-500">
+                {{ progress.completed|default:0 }}/{{ progress.total|default:0 }} files
+            </span>
+        </div>
+
+        {% if progress.total %}
+        <div class="w-full bg-gray-200 rounded-full h-3 mb-2">
+            {% widthratio progress.completed progress.total 100 as percentage %}
+            <div class="bg-blue-600 h-3 rounded-full transition-all duration-300"
+                 style="width: {{ percentage }}%"></div>
+        </div>
+
+        <div class="text-sm text-gray-600">
+            {% if progress.completed == progress.total %}
+                <span class="text-green-600">✓ Upload complete!</span>
+                {% if progress.failed > 0 %}
+                    <span class="text-red-600">({{ progress.failed }} failed)</span>
+                {% endif %}
+            {% else %}
+                Processing files...
+            {% endif %}
+        </div>
+
+        {% if progress.errors %}
+        <div class="mt-3 p-2 bg-red-50 rounded text-sm text-red-700">
+            <strong>Errors:</strong>
+            <ul class="mt-1 list-disc list-inside">
+                {% for error in progress.errors %}
+                <li>{{ error }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+        {% endif %}
+    </div>
+</div>

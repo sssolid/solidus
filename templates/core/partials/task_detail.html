@@ -1,0 +1,145 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Task Details - {{ task.task_name }}{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <!-- Breadcrumbs -->
+    <nav class="mb-6">
+        <ol class="flex items-center space-x-2 text-sm text-gray-500">
+            <li><a href="{% url 'core:dashboard' %}" class="hover:text-blue-600">Dashboard</a></li>
+            <li>/</li>
+            <li><a href="{% url 'core:tasks' %}" class="hover:text-blue-600">Tasks</a></li>
+            <li>/</li>
+            <li>{{ task.task_name }}</li>
+        </ol>
+    </nav>
+
+    <!-- Header -->
+    <div class="flex justify-between items-start mb-8">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">{{ task.task_name }}</h1>
+            <p class="text-gray-600 mt-2">Task ID: {{ task.task_id }}</p>
+        </div>
+        <div class="flex space-x-2">
+            <span class="inline-flex px-3 py-1 text-sm font-semibold rounded-full
+                         {% if task.status == 'completed' %}bg-green-100 text-green-800
+                         {% elif task.status == 'running' %}bg-blue-100 text-blue-800
+                         {% elif task.status == 'pending' %}bg-yellow-100 text-yellow-800
+                         {% elif task.status == 'failed' %}bg-red-100 text-red-800
+                         {% else %}bg-gray-100 text-gray-800{% endif %}">
+                {{ task.get_status_display }}
+            </span>
+            {% if task.status == 'running' %}
+            <button hx-get="{% url 'core:task_detail' task.task_id %}"
+                    hx-target="#task-content"
+                    class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                <i class="fas fa-sync-alt mr-2"></i>Refresh
+            </button>
+            {% endif %}
+        </div>
+    </div>
+
+    <div id="task-content">
+        <!-- Task Info -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Main Info -->
+            <div class="lg:col-span-2">
+                <div class="bg-white rounded-lg shadow-sm border p-6 mb-6">
+                    <h2 class="text-lg font-semibold text-gray-900 mb-4">Task Information</h2>
+                    <dl class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Created</dt>
+                            <dd class="text-sm text-gray-900">{{ task.created_at|date:"M d, Y H:i:s" }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Started</dt>
+                            <dd class="text-sm text-gray-900">
+                                {% if task.started_at %}
+                                    {{ task.started_at|date:"M d, Y H:i:s" }}
+                                {% else %}
+                                    Not started
+                                {% endif %}
+                            </dd>
+                        </div>
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Completed</dt>
+                            <dd class="text-sm text-gray-900">
+                                {% if task.completed_at %}
+                                    {{ task.completed_at|date:"M d, Y H:i:s" }}
+                                {% else %}
+                                    Not completed
+                                {% endif %}
+                            </dd>
+                        </div>
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Duration</dt>
+                            <dd class="text-sm text-gray-900">
+                                {% if task.duration %}
+                                    {{ task.duration }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </dd>
+                        </div>
+                    </dl>
+                </div>
+
+                <!-- Progress -->
+                {% if task.progress is not None %}
+                <div class="bg-white rounded-lg shadow-sm border p-6 mb-6">
+                    <h2 class="text-lg font-semibold text-gray-900 mb-4">Progress</h2>
+                    <div class="mb-2">
+                        <div class="flex justify-between text-sm text-gray-600 mb-1">
+                            <span>{{ task.progress }}% Complete</span>
+                            <span>{{ task.progress_message|default:"Processing..." }}</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-3">
+                            <div class="bg-blue-600 h-3 rounded-full transition-all duration-300"
+                                 style="width: {{ task.progress }}%"></div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Results -->
+                {% if task.result %}
+                <div class="bg-white rounded-lg shadow-sm border p-6">
+                    <h2 class="text-lg font-semibold text-gray-900 mb-4">Results</h2>
+                    <pre class="bg-gray-50 p-4 rounded-lg text-sm overflow-x-auto">{{ task.result|default:"No results available" }}</pre>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Sidebar -->
+            <div>
+                <!-- Error Info -->
+                {% if task.status == 'failed' and task.error_message %}
+                <div class="bg-red-50 border border-red-200 rounded-lg p-6 mb-6">
+                    <h3 class="text-lg font-semibold text-red-800 mb-2">
+                        <i class="fas fa-exclamation-triangle mr-2"></i>Error
+                    </h3>
+                    <p class="text-sm text-red-700">{{ task.error_message }}</p>
+                </div>
+                {% endif %}
+
+                <!-- Metadata -->
+                {% if task.metadata %}
+                <div class="bg-white rounded-lg shadow-sm border p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Metadata</h3>
+                    <dl class="space-y-2">
+                        {% for key, value in task.metadata.items %}
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">{{ key|title }}</dt>
+                            <dd class="text-sm text-gray-900">{{ value }}</dd>
+                        </div>
+                        {% endfor %}
+                    </dl>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -14,24 +14,12 @@ class ProductForm(forms.ModelForm):
         fields = [
             "sku",
             "number",
-            # "description",
             "brand",
-            "categories",
-            "weight",
-            # "dimensions",
-            # "material",
-            # "color",
-            # "finish",
-            "part_numbers",
-            "oem_numbers",
             "msrp",
-            "map_price",
             "is_active",
             "is_featured",
             "launch_date",
             "discontinue_date",
-            "meta_title",
-            "meta_description",
             "tags",
         ]
         widgets = {
@@ -41,51 +29,8 @@ class ProductForm(forms.ModelForm):
             "number": forms.TextInput(
                 attrs={"class": "form-input", "placeholder": "Product Number"}
             ),
-            "description": forms.Textarea(
-                attrs={
-                    "class": "form-textarea",
-                    "rows": 4,
-                    "placeholder": "Detailed product description...",
-                }
-            ),
             "brand": forms.Select(attrs={"class": "form-select"}),
-            "categories": forms.CheckboxSelectMultiple(),
-            "weight": forms.NumberInput(
-                attrs={"class": "form-input", "placeholder": "0.00", "step": "0.01"}
-            ),
-            "dimensions": forms.TextInput(
-                attrs={"class": "form-input", "placeholder": "L x W x H (inches)"}
-            ),
-            "material": forms.TextInput(
-                attrs={"class": "form-input", "placeholder": "e.g., Steel, Aluminum"}
-            ),
-            "color": forms.TextInput(
-                attrs={"class": "form-input", "placeholder": "e.g., Black, Silver"}
-            ),
-            "finish": forms.TextInput(
-                attrs={
-                    "class": "form-input",
-                    "placeholder": "e.g., Powder Coated, Anodized",
-                }
-            ),
-            "part_numbers": forms.Textarea(
-                attrs={
-                    "class": "form-textarea",
-                    "rows": 3,
-                    "placeholder": "One part number per line",
-                }
-            ),
-            "oem_numbers": forms.Textarea(
-                attrs={
-                    "class": "form-textarea",
-                    "rows": 3,
-                    "placeholder": "One OEM number per line",
-                }
-            ),
             "msrp": forms.NumberInput(
-                attrs={"class": "form-input", "placeholder": "0.00", "step": "0.01"}
-            ),
-            "map_price": forms.NumberInput(
                 attrs={"class": "form-input", "placeholder": "0.00", "step": "0.01"}
             ),
             "is_active": forms.CheckboxInput(attrs={"class": "form-checkbox"}),
@@ -95,19 +40,6 @@ class ProductForm(forms.ModelForm):
             ),
             "discontinue_date": forms.DateInput(
                 attrs={"class": "form-input", "type": "date"}
-            ),
-            "meta_title": forms.TextInput(
-                attrs={
-                    "class": "form-input",
-                    "placeholder": "SEO title (max 150 chars)",
-                }
-            ),
-            "meta_description": forms.Textarea(
-                attrs={
-                    "class": "form-textarea",
-                    "rows": 3,
-                    "placeholder": "SEO description (max 300 chars)",
-                }
             ),
             "tags": TagWidget(
                 attrs={

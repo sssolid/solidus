@@ -1,0 +1,35 @@
+<div id="compare-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 z-50">
+    <div class="flex items-center justify-center min-h-screen">
+        <div class="bg-white rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-screen overflow-y-auto">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-medium">Version Comparison</h3>
+                    <button onclick="document.getElementById('compare-modal').remove()"
+                            class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+
+                <div class="space-y-4">
+                    {% for log in logs %}
+                    <div class="border rounded-lg p-4">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <span class="font-medium">{{ log.get_action_display }}</span>
+                                <span class="text-gray-500">{{ log.timestamp|date:"M d, Y H:i" }}</span>
+                            </div>
+                            <button hx-get="{% url 'audit:view_version' log.pk %}"
+                                    hx-target="#version-detail"
+                                    class="text-blue-600 hover:text-blue-800">
+                                View Details
+                            </button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <div id="version-detail" class="mt-6"></div>
+            </div>
+        </div>
+    </div>
+</div>

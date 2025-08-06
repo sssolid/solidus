@@ -6,7 +6,8 @@ ARG GID=1000
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     UV_COMPILE_BYTECODE=1 \
-    UV_LINK_MODE=copy
+    UV_LINK_MODE=copy \
+    JAVA_HOME=/usr/lib/jvm/default
 
 RUN apt-get update && apt-get install -y \
     build-essential \
@@ -17,6 +18,7 @@ RUN apt-get update && apt-get install -y \
     imagemagick \
     exiftool \
     netcat-openbsd \
+    openjdk-21-jdk \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv

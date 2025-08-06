@@ -1,0 +1,8 @@
+<!-- templates/products/partials/status_badge.html -->
+<span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full cursor-pointer
+             {% if product.is_active %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}"
+      hx-post="{% url 'products:toggle_status' product.pk %}"
+      hx-target="this"
+      hx-swap="outerHTML">
+    {{ product.is_active|yesno:'Active,Inactive' }}
+</span>

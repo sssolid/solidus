@@ -26,12 +26,6 @@ class User(AbstractUser):
 
     # Preferences
     notification_preferences = models.JSONField(default=dict, blank=True)
-    allowed_asset_categories = ArrayField(
-        models.CharField(max_length=50),
-        default=list,
-        blank=True,
-        help_text="Categories this user can access",
-    )
 
     # Tracking
     last_activity = models.DateTimeField(null=True, blank=True)
@@ -61,6 +55,10 @@ class User(AbstractUser):
     def is_admin(self):
         return self.role == "admin"
 
+    @property
+    def allowed_categories(self):
+        return [access.category.slug for access in self.asset_category_access.all()]
+
     def update_last_activity(self):
         """Update last activity timestamp"""
         self.last_activity = timezone.now()
@@ -76,15 +74,6 @@ class User(AbstractUser):
             self.notification_preferences = {}
         self.notification_preferences[notification_type] = enabled
         self.save(update_fields=["notification_preferences"])
-
-    def can_access_asset_category(self, category):
-        """Check if user can access a specific asset category"""
-        if self.is_employee:
-            return True
-        return (
-            not self.allowed_asset_categories
-            or category in self.allowed_asset_categories
-        )
 
 
 class CustomerProfile(models.Model):
@@ -123,3 +112,13 @@ class CustomerProfile(models.Model):
 
     def __str__(self):
         return f"Profile for {self.user.company_name or self.user.username}"
+
+
+class UserAssetCategoryAccess(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='asset_category_access')
+    category = models.ForeignKey('assets.AssetCategory', on_delete=models.CASCADE)
+    granted_at = models.DateTimeField(auto_now_add=True)
+    granted_by = models.ForeignKey(User, on_delete=models.PROTECT, related_name='granted_access')
+
+    class Meta:
+        unique_together = [['user', 'category']]

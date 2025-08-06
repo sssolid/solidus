@@ -1,0 +1,17 @@
+{% if parts %}
+<div class="card search-results">
+    <div class="card-body">
+        <h6>Search Results:</h6>
+        {% for part in parts %}
+            <div class="border-bottom py-2">
+                <a href="{% url 'parts:part-detail' part.pk %}" class="text-decoration-none">
+                    <strong>{{ part.part_terminology_name }}</strong>
+                    {% if part.parts_description %}
+                        <br><small class="text-muted">{{ part.parts_description.parts_description|truncatechars:60 }}</small>
+                    {% endif %}
+                </a>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}

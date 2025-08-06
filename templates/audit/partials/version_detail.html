@@ -1,0 +1,17 @@
+<div class="bg-gray-50 rounded-lg p-4">
+    <h4 class="font-medium mb-3">Version Details</h4>
+
+    {% if formatted_changes %}
+    <div class="space-y-2">
+        {% for change in formatted_changes %}
+        <div class="grid grid-cols-3 gap-4 text-sm">
+            <div class="font-medium">{{ change.field }}</div>
+            <div class="text-red-600">{{ change.old_value|default:"(empty)" }}</div>
+            <div class="text-green-600">{{ change.new_value|default:"(empty)" }}</div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p class="text-gray-500">No changes recorded for this version.</p>
+    {% endif %}
+</div>

@@ -42,6 +42,7 @@ THIRD_PARTY_APPS = [
 
 LOCAL_APPS = [
     'accounts',  # Must be first due to custom User model
+    'autocare',
     'core',
     'products',
     'assets',

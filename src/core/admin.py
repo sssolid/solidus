@@ -1,4 +1,5 @@
 # src/core/admin.py
+import json
 import logging
 
 from django.contrib import admin
@@ -440,49 +441,24 @@ class FileImportAdmin(admin.ModelAdmin):
     ]
 
     fieldsets = (
-        (
-            "Import Information",
-            # TODO: filename does not exist
-            {"fields": ("import_id", "import_type", "status")}, # "filename"},
-        ),
-        (
-            "Progress",
-            {
-                "fields": (
-                    # TODO: progress_display does not exist
-                    # 'progress_display',
-                    "total_rows",
-                    "processed_rows",
-                    "failed_rows",
-                )
-            },
-        ),
-        (
-            "Timing",
-            {
-                # TODO: duration_display does not exist
-                "fields": (
-                    "started_at",
-                    "completed_at",
-                ),  # 'duration_display'),
-                "classes": ("collapse",),
-            },
-        ),
-        # TODO: get_results_display does not exist
-        # ('Results', {
-        #     'fields': ('get_results_display',),
-        #     'classes': ('collapse',)
-        # }),
-        # TODO: get_errors_display does not exist
-        # ('Errors', {
-        #     'fields': ('get_errors_display',),
-        #     'classes': ('collapse',)
-        # }),
-        # TODO: created_by does not exist
-        # ('System Information', {
-        #     'fields': ('created_by',),
-        #     'classes': ('collapse',)
-        # })
+        ("Import Information", {
+            "fields": ("import_id", "import_type", "status")
+        }),
+        ("Progress", {
+            "fields": ("progress_display", "total_rows", "processed_rows", "failed_rows")
+        }),
+        ("Timing", {
+            "fields": ("started_at", "completed_at"),
+            "classes": ("collapse",),
+        }),
+        ("Results", {
+            "fields": ("get_results_display",),
+            "classes": ("collapse",)
+        }),
+        ("Errors", {
+            "fields": ("get_errors_display",),
+            "classes": ("collapse",)
+        }),
     )
 
     def import_id_short(self, obj):
@@ -492,10 +468,17 @@ class FileImportAdmin(admin.ModelAdmin):
     import_id_short.short_description = "Import ID"
 
     def progress_display(self, obj):
-        """Display import progress"""
+        """Display import progress with visual bar"""
         if obj.total_rows and obj.total_rows > 0:
             percentage = (obj.processed_rows / obj.total_rows) * 100
-            return f"{obj.processed_rows}/{obj.total_rows} ({percentage:.1f}%)"
+            color = 'green' if percentage == 100 else 'blue' if percentage > 0 else 'gray'
+            return format_html(
+                '<div style="width: 100px; background: #f0f0f0; border-radius: 3px;">'
+                '<div style="width: {}%; background: {}; height: 20px; border-radius: 3px;"></div>'
+                '</div>'
+                '<small>{}/{} ({}%)</small>',
+                percentage, color, obj.processed_rows, obj.total_rows, round(percentage, 1)
+            )
         return f"{obj.processed_rows} rows"
 
     progress_display.short_description = "Progress"
@@ -518,30 +501,17 @@ class FileImportAdmin(admin.ModelAdmin):
     duration_display.short_description = "Duration"
 
     def get_results_display(self, obj):
-        """Display import results"""
-        if obj.results:
-            items = []
-            for key, value in list(obj.results.items())[:5]:
-                items.append(f"<strong>{key}:</strong> {value}")
-            html = "<br>".join(items)
-            if len(obj.results) > 5:
-                html += f"<br><em>... and {len(obj.results) - 5} more</em>"
-            return mark_safe(html)
+        """Display formatted import results"""
+        if hasattr(obj, 'results') and obj.results:
+            return format_html('<pre>{}</pre>', json.dumps(obj.results, indent=2))
         return "No results"
 
     get_results_display.short_description = "Results"
 
     def get_errors_display(self, obj):
-        """Display import errors"""
-        if obj.errors:
-            error_count = len(obj.errors)
-            if error_count > 0:
-                html = f"<strong>{error_count} errors:</strong><br>"
-                for error in obj.errors[:3]:
-                    html += f"• {error}<br>"
-                if error_count > 3:
-                    html += f"<em>... and {error_count - 3} more</em>"
-                return mark_safe(html)
+        """Display formatted import errors"""
+        if hasattr(obj, 'errors') and obj.errors:
+            return format_html('<pre style="color: red;">{}</pre>', json.dumps(obj.errors, indent=2))
         return "No errors"
 
     get_errors_display.short_description = "Errors"

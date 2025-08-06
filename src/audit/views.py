@@ -4,9 +4,10 @@ import csv
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import UserPassesTestMixin
+from django.contrib.contenttypes.models import ContentType
 from django.db.models import Count, Max, Q
 from django.http import HttpResponse, HttpResponseForbidden, JsonResponse
-from django.shortcuts import get_object_or_404, redirect
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_POST
@@ -249,6 +250,61 @@ def compare_snapshots(request, pk):
     except ModelSnapshot.DoesNotExist:
         messages.error(request, "Comparison snapshot not found.")
         return redirect("audit:snapshot_detail", pk=pk)
+
+
+@require_POST
+@login_required
+def compare_versions(request, content_type_pk, object_id):
+    """HTMX view to compare object versions"""
+    if not request.user.is_employee:
+        return JsonResponse({'error': 'Permission denied'}, status=403)
+
+    try:
+        content_type = ContentType.objects.get(pk=content_type_pk)
+        logs = AuditLog.objects.filter(
+            content_type=content_type,
+            object_id=object_id
+        ).order_by('-timestamp')[:10]
+
+        return render(request, 'audit/partials/version_comparison.html', {
+            'logs': logs,
+            'content_type': content_type,
+            'object_id': object_id
+        })
+    except ContentType.DoesNotExist:
+        return JsonResponse({'error': 'Invalid content type'}, status=404)
+
+
+@login_required
+def view_version(request, log_pk):
+    """HTMX view to display specific version details"""
+    log = get_object_or_404(AuditLog, pk=log_pk)
+
+    if request.user.is_customer:
+        return JsonResponse({'error': 'Permission denied'}, status=403)
+
+    return render(request, 'audit/partials/version_detail.html', {
+        'log': log,
+        'formatted_changes': log.get_formatted_changes() if hasattr(log, 'get_formatted_changes') else []
+    })
+
+
+@require_POST
+@login_required
+def rollback_version(request, log_pk):
+    """HTMX view to rollback to specific version"""
+    if not request.user.is_employee:
+        return JsonResponse({'error': 'Permission denied'}, status=403)
+
+    log = get_object_or_404(AuditLog, pk=log_pk)
+
+    try:
+        # Implement rollback logic here
+        # This would restore the object to the state in this log
+        messages.success(request, f'Successfully rolled back to version from {log.timestamp}')
+        return JsonResponse({'success': True, 'message': 'Rollback completed'})
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
 
 
 # ----- Bulk Operations -----

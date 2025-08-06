@@ -1,0 +1,74 @@
+{% extends 'parts/base.html' %}
+
+{% block title %}Change {{ change.change_id }} - Parts Management{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Change {{ change.change_id }}</h1>
+    <a href="{% url 'parts:change-log' %}" class="btn btn-outline-secondary">Back to Log</a>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>Change Information</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>Change ID:</strong> {{ change.change_id }}</p>
+                <p><strong>Request ID:</strong> {{ change.request_id }}</p>
+                <p><strong>Reason:</strong> {{ change.change_reason }}</p>
+                <p><strong>Date:</strong> {{ change.rev_date|date:"M d, Y"|default:"Not set" }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <h3>Change Details</h3>
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Detail ID</th>
+                        <th>State</th>
+                        <th>Table</th>
+                        <th>Column</th>
+                        <th>Before</th>
+                        <th>After</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for detail in change_details %}
+                    <tr>
+                        <td>{{ detail.change_detail_id }}</td>
+                        <td>{{ detail.change_attribute_state }}</td>
+                        <td>{{ detail.table_name }}</td>
+                        <td>{{ detail.column_name|default:"-" }}</td>
+                        <td>
+                            {% if detail.column_value_before %}
+                                <code>{{ detail.column_value_before|truncatechars:30 }}</code>
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if detail.column_value_after %}
+                                <code>{{ detail.column_value_after|truncatechars:30 }}</code>
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center">No change details found.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

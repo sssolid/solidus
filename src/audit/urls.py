@@ -28,6 +28,9 @@ urlpatterns = [
     path(
         "snapshots/<int:pk>/compare/", views.compare_snapshots, name="compare_snapshots"
     ),
+    path('compare/<int:content_type_pk>/<int:object_id>/', views.compare_versions, name='compare_versions'),
+    path('version/<int:log_pk>/', views.view_version, name='view_version'),
+    path('rollback/<int:log_pk>/', views.rollback_version, name='rollback_version'),
     # Bulk operations
     path(
         "bulk-operations/",

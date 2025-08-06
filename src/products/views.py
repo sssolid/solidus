@@ -12,6 +12,7 @@ from django.views.generic import CreateView, DetailView, ListView, UpdateView
 
 from accounts.forms import CustomerPricingForm
 from assets.models import Asset, ProductAsset
+from core.mixins import HTMXResponseMixin, AjaxableResponseMixin
 
 from .forms import ProductFitmentForm, ProductForm, ProductSearchForm
 from .models import Brand, Category, CustomerPricing, Product, ProductFitment
@@ -25,7 +26,7 @@ class EmployeeRequiredMixin(UserPassesTestMixin):
 
 
 # ----- Product catalog (customer view) -----
-class ProductCatalogView(LoginRequiredMixin, ListView):
+class ProductCatalogView(HTMXResponseMixin, LoginRequiredMixin, ListView):
     """Product catalog view for customers"""
 
     model = Product
@@ -83,13 +84,34 @@ class ProductCatalogView(LoginRequiredMixin, ListView):
             if form.cleaned_data.get("price_max"):
                 queryset = queryset.filter(msrp__lte=form.cleaned_data["price_max"])
 
+        # Sorting
+        sort = self.request.GET.get('sort', 'number')
+        if sort == 'sku':
+            queryset = queryset.order_by('sku')
+        elif sort == 'brand':
+            queryset = queryset.order_by('brand__name', 'number')
+        elif sort == 'newest':
+            queryset = queryset.order_by('-created_at')
+        else:
+            queryset = queryset.order_by('number')
+
         return queryset.distinct()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["search_form"] = ProductSearchForm(self.request.GET)
-        context["brands"] = Brand.objects.filter(is_active=True)
-        context["categories"] = Category.objects.filter(is_active=True)
+        context["brands"] = Brand.objects.filter(is_active=True, product__isnull=False).distinct()
+        context["categories"] = Category.objects.filter(is_active=True, product__isnull=False).distinct()
+
+        # Current filters
+        context['current_search'] = self.request.GET.get('search', '')
+        context['current_brand'] = self.request.GET.get('brand', '')
+        context['current_category'] = self.request.GET.get('category', '')
+        context['current_sort'] = self.request.GET.get('sort', 'number')
+
+        # View mode
+        context['view_mode'] = self.request.GET.get('view', 'grid')
+
         return context
 
 
@@ -206,23 +228,58 @@ class ProductCreateView(EmployeeRequiredMixin, CreateView):
         return reverse("products:detail", kwargs={"pk": self.object.pk})
 
 
-class ProductEditView(EmployeeRequiredMixin, UpdateView):
-    """Edit existing product"""
-
+class ProductEditView(HTMXResponseMixin, AjaxableResponseMixin, EmployeeRequiredMixin, UpdateView):
+    """Enhanced product editing with HTMX support"""
     model = Product
     form_class = ProductForm
-    # TODO: Implement products/edit.html
-    template_name = "products/edit.html"
+    template_name = 'products/edit.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['page_title'] = f'Edit Product - {self.object.sku}'
+        return context
 
     def form_valid(self, form):
+        # Set audit context
+        form.instance._current_user = self.request.user
+
         response = super().form_valid(form)
-        messages.success(
-            self.request, f'Product "{self.object.name}" updated successfully.'
-        )
+
+        if self.request.htmx:
+            messages.success(self.request, f'Product {self.object.sku} updated successfully')
+            # Trigger notification update
+            self.htmx_trigger = 'productUpdated'
+
         return response
 
-    def get_success_url(self):
-        return reverse("products:detail", kwargs={"pk": self.object.pk})
+
+@login_required
+def product_quick_edit(request, pk):
+    """HTMX view for quick product editing"""
+    product = get_object_or_404(Product, pk=pk)
+
+    if not request.user.is_employee:
+        return JsonResponse({'error': 'Permission denied'}, status=403)
+
+    if request.method == 'POST':
+        # Handle quick edit form
+        field = request.POST.get('field')
+        value = request.POST.get('value')
+
+        if field and hasattr(product, field):
+            setattr(product, field, value)
+            product._current_user = request.user
+            product.save()
+
+            return JsonResponse({
+                'success': True,
+                'message': f'{field} updated successfully',
+                'new_value': getattr(product, field)
+            })
+
+    return render(request, 'products/partials/quick_edit_form.html', {
+        'product': product
+    })
 
 
 @require_POST
