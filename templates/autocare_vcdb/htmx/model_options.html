@@ -1,0 +1,5 @@
+<!-- templates/autocare_vcdb/htmx/model_options.html -->
+<option value="">All Models</option>
+{% for model in models %}
+    <option value="{{ model.model_id }}">{{ model.model_name|default:"Unknown Model" }}</option>
+{% endfor %}

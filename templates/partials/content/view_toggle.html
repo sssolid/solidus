@@ -1,0 +1,41 @@
+<!-- templates/partials/content/view_toggle.html -->
+<div class="flex items-center space-x-1 bg-gray-100 rounded-md p-1">
+    <button onclick="setView('grid')"
+            id="grid-view-btn"
+            class="p-2 rounded-md text-sm font-medium transition-all duration-200"
+            title="Grid View">
+        <i class="fas fa-th"></i>
+    </button>
+    <button onclick="setView('list')"
+            id="list-view-btn"
+            class="p-2 rounded-md text-sm font-medium transition-all duration-200"
+            title="List View">
+        <i class="fas fa-list"></i>
+    </button>
+</div>
+
+<script>
+function setView(viewType) {
+    const container = document.querySelector('[data-view-container]');
+    const gridBtn = document.getElementById('grid-view-btn');
+    const listBtn = document.getElementById('list-view-btn');
+
+    if (viewType === 'grid') {
+        container.className = 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6';
+        gridBtn.className = 'p-2 rounded-md text-sm font-medium transition-all duration-200 bg-white text-gray-900 shadow-sm';
+        listBtn.className = 'p-2 rounded-md text-sm font-medium transition-all duration-200 text-gray-500 hover:text-gray-900';
+    } else {
+        container.className = 'space-y-4';
+        listBtn.className = 'p-2 rounded-md text-sm font-medium transition-all duration-200 bg-white text-gray-900 shadow-sm';
+        gridBtn.className = 'p-2 rounded-md text-sm font-medium transition-all duration-200 text-gray-500 hover:text-gray-900';
+    }
+
+    localStorage.setItem('view-preference', viewType);
+}
+
+// Load saved view preference
+document.addEventListener('DOMContentLoaded', function() {
+    const savedView = localStorage.getItem('view-preference') || 'grid';
+    setView(savedView);
+});
+</script>

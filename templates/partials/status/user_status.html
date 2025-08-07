@@ -1,0 +1,19 @@
+<!-- templates/partials/status/user_status.html -->
+<div class="flex items-center">
+    <div class="relative">
+        {% include 'partials/users/user_avatar.html' with user=user size=size %}
+        {% if show_online_status %}
+            <span class="absolute bottom-0 right-0 block h-3 w-3 rounded-full ring-2 ring-white
+                {% if user.is_online %}bg-green-400{% else %}bg-gray-400{% endif %}"></span>
+        {% endif %}
+    </div>
+
+    {% if show_name %}
+        <div class="ml-3">
+            <p class="text-sm font-medium text-gray-900">{{ user.get_full_name|default:user.username }}</p>
+            {% if show_last_seen and user.last_login %}
+                <p class="text-xs text-gray-500">Last seen {{ user.last_login|timesince }} ago</p>
+            {% endif %}
+        </div>
+    {% endif %}
+</div>

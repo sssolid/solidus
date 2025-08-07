@@ -1,0 +1,75 @@
+<!-- templates/partials/products/product_list_item.html -->
+<div class="bg-white rounded-lg shadow p-4 flex items-center space-x-4 hover:shadow-md transition-shadow">
+    <!-- Image -->
+    <div class="flex-shrink-0 w-16 h-16">
+        {% if product.primary_image %}
+            <img src="{{ product.primary_image.thumbnail_url }}"
+                 alt="{{ product.name }}"
+                 class="w-16 h-16 object-cover rounded">
+        {% else %}
+            <div class="w-16 h-16 bg-gray-100 rounded flex items-center justify-center">
+                <i class="fas fa-box text-gray-400 text-xl"></i>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Info -->
+    <div class="flex-1 min-w-0">
+        <h3 class="text-sm font-semibold text-gray-900 truncate">
+            <a href="{{ product.get_absolute_url }}" class="hover:text-blue-600">
+                {{ product.name }}
+            </a>
+        </h3>
+
+        <div class="flex items-center space-x-4 mt-1">
+            {% if product.part_number %}
+                <span class="text-xs text-gray-500">{{ product.part_number }}</span>
+            {% endif %}
+            {% if product.brand %}
+                <span class="text-xs text-gray-500">{{ product.brand.name }}</span>
+            {% endif %}
+            <span class="text-xs text-gray-500">{{ product.created_at|date:"M d, Y" }}</span>
+        </div>
+
+        {% if product.description %}
+            <p class="text-sm text-gray-600 truncate mt-1">{{ product.description|truncatewords:15 }}</p>
+        {% endif %}
+    </div>
+
+    <!-- Categories -->
+    {% if product.categories.all %}
+        <div class="flex flex-wrap gap-1 max-w-xs">
+            {% for category in product.categories.all|slice:":3" %}
+                <span class="bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded">
+                    {{ category.name }}
+                </span>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <!-- Status and Price -->
+    <div class="flex-shrink-0 text-right">
+        {% include 'partials/status/badge.html' with status=product.status show_icon=True %}
+        {% if show_pricing and product.base_price %}
+            <p class="text-sm font-semibold text-green-600 mt-1">${{ product.base_price }}</p>
+        {% endif %}
+    </div>
+
+    <!-- Actions -->
+    <div class="flex-shrink-0 flex space-x-2">
+        <a href="{{ product.get_absolute_url }}"
+           class="text-gray-400 hover:text-blue-600" title="View">
+            <i class="fas fa-eye"></i>
+        </a>
+        {% if product.can_edit %}
+            <a href="{% url 'products:edit' product.pk %}"
+               class="text-gray-400 hover:text-blue-600" title="Edit">
+                <i class="fas fa-edit"></i>
+            </a>
+        {% endif %}
+        <button onclick="showProductMenu({{ product.pk }})"
+                class="text-gray-400 hover:text-blue-600" title="More">
+            <i class="fas fa-ellipsis-v"></i>
+        </button>
+    </div>
+</div>

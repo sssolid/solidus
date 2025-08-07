@@ -1,0 +1,139 @@
+{% extends 'autocare_pcadb/base.html' %}
+
+{% block title %}{{ part.part_terminology_name }} - Parts Management{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>{{ part.part_terminology_name }}</h1>
+    <div>
+        <a href="{% url 'parts:part-edit' part.pk %}" class="btn btn-secondary">Edit</a>
+        <a href="{% url 'parts:part-list' %}" class="btn btn-outline-secondary">Back to List</a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>Part Information</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>ID:</strong> {{ part.part_terminology_id }}</p>
+                <p><strong>Name:</strong> {{ part.part_terminology_name }}</p>
+                <p><strong>Description:</strong>
+                    {% if part.parts_description %}
+                        {{ part.parts_description.parts_description }}
+                    {% else %}
+                        No description available
+                    {% endif %}
+                </p>
+                <p><strong>Revision Date:</strong> {{ part.rev_date|date:"M d, Y"|default:"Not set" }}</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>Categories</h5>
+            </div>
+            <div class="card-body">
+                {% for category in categories %}
+                    <span class="badge bg-primary me-2">{{ category.category }} / {{ category.subcategory }}</span>
+                {% empty %}
+                    <p class="text-muted">No categories assigned</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>Attributes</h5>
+            </div>
+            <div class="card-body">
+                {% if attributes %}
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Attribute</th>
+                                    <th>Meta Data</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for attr in attributes %}
+                                <tr>
+                                    <td>{{ attr.part_attribute.pa_name }}</td>
+                                    <td>{{ attr.meta_data.meta_name }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="text-muted">No attributes assigned</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>Positions & Uses</h5>
+            </div>
+            <div class="card-body">
+                <h6>Positions:</h6>
+                {% for position in positions %}
+                    <span class="badge bg-secondary me-1">{{ position.position }}</span>
+                {% empty %}
+                    <p class="text-muted">No positions assigned</p>
+                {% endfor %}
+
+                <h6 class="mt-3">Uses:</h6>
+                {% for use in uses %}
+                    <span class="badge bg-info me-1">{{ use.use.use_description }}</span>
+                {% empty %}
+                    <p class="text-muted">No uses assigned</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>Aliases</h5>
+            </div>
+            <div class="card-body">
+                {% for alias in aliases %}
+                    <span class="badge bg-warning text-dark me-1">{{ alias.alias.alias_name }}</span>
+                {% empty %}
+                    <p class="text-muted">No aliases assigned</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>Related Parts</h5>
+            </div>
+            <div class="card-body">
+                {% for rel in relationships %}
+                    <p><a href="{% url 'parts:part-detail' rel.related_part.pk %}">{{ rel.related_part.part_terminology_name }}</a></p>
+                {% empty %}
+                    <p class="text-muted">No related parts</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

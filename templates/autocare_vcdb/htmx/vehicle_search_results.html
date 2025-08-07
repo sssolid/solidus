@@ -1,0 +1,48 @@
+<!-- templates/autocare_vcdb/htmx/vehicle_search_results.html -->
+{% if vehicles %}
+    <div class="list-group position-relative" style="max-height: 400px; overflow-y: auto;">
+        {% for vehicle in vehicles %}
+            <a href="{% url 'automotive:vehicle_detail' vehicle.vehicle_id %}"
+               class="list-group-item list-group-item-action">
+                <div class="d-flex w-100 justify-content-between">
+                    <h6 class="mb-1">
+                        {{ vehicle.base_vehicle.year.year_id }} {{ vehicle.base_vehicle.make.make_name }}
+                        {{ vehicle.base_vehicle.model.model_name|default:"Unknown Model" }}
+                    </h6>
+                    <small class="text-muted">#{{ vehicle.vehicle_id }}</small>
+                </div>
+                <p class="mb-1">{{ vehicle.submodel.sub_model_name }}</p>
+                <small class="text-muted">{{ vehicle.region.region_name|default:"Unknown Region" }}</small>
+            </a>
+        {% endfor %}
+        {% if vehicles|length == 20 %}
+            <div class="list-group-item text-center text-muted">
+                <small>Showing first 20 results. Use Advanced Search for more options.</small>
+            </div>
+        {% endif %}
+    </div>
+    <script>
+        document.getElementById('search-results').style.display = 'block';
+
+        // Hide results when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('#search-results') && !e.target.closest('input[type="search"]')) {
+                document.getElementById('search-results').style.display = 'none';
+            }
+        });
+    </script>
+{% else %}
+    {% if search_query %}
+        <div class="p-3 text-center text-muted">
+            <i class="bi bi-search"></i><br>
+            No vehicles found for "{{ search_query }}"
+        </div>
+        <script>
+            document.getElementById('search-results').style.display = 'block';
+        </script>
+    {% else %}
+        <script>
+            document.getElementById('search-results').style.display = 'none';
+        </script>
+    {% endif %}
+{% endif %}

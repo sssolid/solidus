@@ -1,0 +1,22 @@
+<!-- templates/partials/content/stats_cards.html -->
+<div class="grid grid-cols-1 md:grid-cols-{{ cols|default:'4' }} gap-6 mb-8">
+    {% for stat in stats %}
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center">
+                <div class="p-3 rounded-full bg-{{ stat.color|default:'blue' }}-100 text-{{ stat.color|default:'blue' }}-600">
+                    <i class="{{ stat.icon }} text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm text-gray-600">{{ stat.label }}</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ stat.value }}</p>
+                    {% if stat.change %}
+                        <p class="text-xs {% if stat.change.positive %}text-green-600{% else %}text-red-600{% endif %}">
+                            <i class="fas fa-arrow-{% if stat.change.positive %}up{% else %}down{% endif %} mr-1"></i>
+                            {{ stat.change.value }}% {{ stat.change.period }}
+                        </p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+</div>

@@ -1,0 +1,17 @@
+<!-- templates/partials/users/role_badge.html -->
+<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium
+    {% if user.is_superuser %}
+        bg-purple-100 text-purple-800
+    {% elif user.is_employee %}
+        bg-blue-100 text-blue-800
+    {% else %}
+        bg-green-100 text-green-800
+    {% endif %}">
+    {% if user.is_superuser %}
+        <i class="fas fa-crown mr-1"></i>Admin
+    {% elif user.is_employee %}
+        <i class="fas fa-user-tie mr-1"></i>Employee
+    {% else %}
+        <i class="fas fa-user mr-1"></i>Customer
+    {% endif %}
+</span>

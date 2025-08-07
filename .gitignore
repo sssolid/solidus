@@ -111,3 +111,5 @@ dmypy.json
 .idea/
 /libs/
 /autocare/
+/static/
+/staticfiles/

@@ -29,15 +29,6 @@ class Command(BaseCommand):
 
         self.stdout.write(self.style.WARNING('Resetting migrations...'))
 
-        # List of apps in dependency order
-        apps_in_order = [
-            'accounts',  # Must be first due to custom User model
-            'core',
-            'products',
-            'assets',
-            'feeds',
-            'audit',
-        ]
 
         # Remove existing migration files
         self.stdout.write('Removing migration files...')
@@ -46,7 +37,7 @@ class Command(BaseCommand):
         project_root = settings.BASE_DIR.parent if settings.BASE_DIR.name == 'src' else settings.BASE_DIR
         src_dir = project_root / 'src'
 
-        for app in apps_in_order:
+        for app in settings.LOCAL_APPS:
             migrations_dir = src_dir / app / 'migrations'
             if migrations_dir.exists():
                 # Keep __init__.py but remove everything else
@@ -61,7 +52,7 @@ class Command(BaseCommand):
 
         # Create new migrations in the correct order
         self.stdout.write('Creating new migrations...')
-        for app in apps_in_order:
+        for app in settings.LOCAL_APPS:
             self.stdout.write(f'Creating migration for {app}...')
             try:
                 call_command('makemigrations', app, verbosity=2)

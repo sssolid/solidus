@@ -1,0 +1,23 @@
+<!-- templates/partials/ui/button.html -->
+{% if button.url %}
+    <a href="{% if button.url_name %}{% url button.url_name %}{% else %}{{ button.url }}{% endif %}"
+       class="{% include 'partials/ui/button_classes.html' %}"
+       {% if button.target %}target="{{ button.target }}"{% endif %}
+       {% if button.hx_get %}hx-get="{{ button.hx_get }}"{% endif %}
+       {% if button.hx_post %}hx-post="{{ button.hx_post }}"{% endif %}
+       {% if button.hx_target %}hx-target="{{ button.hx_target }}"{% endif %}>
+        {% if button.icon %}<i class="{{ button.icon }} {% if button.text %}mr-2{% endif %}"></i>{% endif %}
+        {{ button.text }}
+    </a>
+{% else %}
+    <button type="{{ button.type|default:'button' }}"
+            class="{% include 'partials/ui/button_classes.html' %}"
+            {% if button.onclick %}onclick="{{ button.onclick }}"{% endif %}
+            {% if button.hx_get %}hx-get="{{ button.hx_get }}"{% endif %}
+            {% if button.hx_post %}hx-post="{{ button.hx_post }}"{% endif %}
+            {% if button.hx_target %}hx-target="{{ button.hx_target }}"{% endif %}
+            {% if button.disabled %}disabled{% endif %}>
+        {% if button.icon %}<i class="{{ button.icon }} {% if button.text %}mr-2{% endif %}"></i>{% endif %}
+        {{ button.text }}
+    </button>
+{% endif %}

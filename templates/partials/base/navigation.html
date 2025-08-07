@@ -1,0 +1,21 @@
+<!-- templates/partials/base/navigation.html -->
+<nav class="bg-gray-800 text-white w-64 min-h-screen flex flex-col">
+    <!-- Logo -->
+    <div class="flex items-center justify-center h-16 px-4 bg-gray-900">
+        <h1 class="text-xl font-bold">Solidus</h1>
+    </div>
+
+    <!-- Navigation Menu -->
+    <div class="flex-1 px-3 py-4">
+        {% if user.is_employee %}
+            {% include 'partials/base/employee_menu.html' %}
+        {% else %}
+            {% include 'partials/base/customer_menu.html' %}
+        {% endif %}
+    </div>
+
+    <!-- User Info -->
+    <div class="border-t border-gray-700 p-4">
+        {% include 'partials/users/user_info.html' with user=request.user %}
+    </div>
+</nav>

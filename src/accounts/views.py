@@ -217,7 +217,7 @@ class UserListView(EmployeeRequiredMixin, ListView):
     """List all users"""
 
     model = User
-    template_name = "accounts/list.html"
+    template_name = "accounts/user_list.html"
     context_object_name = "users"
     paginate_by = 50
 

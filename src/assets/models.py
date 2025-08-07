@@ -59,10 +59,17 @@ class Asset(models.Model):
         ("other", "Other"),
     ]
 
+    STATUS_CHOICES = [
+        ("active", "Active"),
+        ("inactive", "Inactive"),
+        ("deleted", "Deleted"),
+    ]
+
     # Basic info
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True)
     asset_type = models.CharField(max_length=20, choices=ASSET_TYPES)
+    asset_status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="inactive")
 
     # File info
     original_filename = models.CharField(max_length=255)

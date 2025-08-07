@@ -1,0 +1,90 @@
+<!-- templates/partials/products/product_card.html -->
+<div class="bg-white rounded-lg shadow hover:shadow-md transition-shadow group">
+    <!-- Product Image -->
+    <div class="aspect-w-4 aspect-h-3 bg-gray-200 rounded-t-lg overflow-hidden">
+        {% if product.primary_image %}
+            {% include 'partials/media/image_preview.html' with image_url=product.primary_image.thumbnail_url alt_text=product.name height='48' show_overlay=True view_url=product.get_absolute_url %}
+        {% else %}
+            <div class="w-full h-48 flex items-center justify-center">
+                <i class="fas fa-box text-gray-400 text-4xl"></i>
+            </div>
+        {% endif %}
+
+        <!-- Quick Actions Overlay -->
+        {% if show_quick_actions %}
+            <div class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity space-y-1">
+                {% if product.can_edit %}
+                    <a href="{% url 'products:edit' product.pk %}"
+                       class="block bg-white text-gray-700 p-2 rounded-full shadow hover:bg-gray-100 transition">
+                        <i class="fas fa-edit text-sm"></i>
+                    </a>
+                {% endif %}
+                <button onclick="addToQuickList({{ product.pk }})"
+                        class="block bg-white text-gray-700 p-2 rounded-full shadow hover:bg-gray-100 transition">
+                    <i class="fas fa-heart text-sm"></i>
+                </button>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Product Info -->
+    <div class="p-4">
+        <div class="flex items-start justify-between mb-2">
+            <h3 class="text-sm font-semibold text-gray-900 line-clamp-2">
+                <a href="{{ product.get_absolute_url }}" class="hover:text-blue-600">
+                    {{ product.name }}
+                </a>
+            </h3>
+            {% include 'partials/status/badge.html' with status=product.status show_icon=True %}
+        </div>
+
+        {% if product.part_number %}
+            <p class="text-xs text-gray-600 mb-2">
+                <span class="font-medium">Part #:</span> {{ product.part_number }}
+            </p>
+        {% endif %}
+
+        {% if product.description %}
+            <p class="text-xs text-gray-600 mb-3 line-clamp-2">
+                {{ product.description|truncatewords:20 }}
+            </p>
+        {% endif %}
+
+        <!-- Categories -->
+        {% if product.categories.all %}
+            <div class="flex flex-wrap gap-1 mb-3">
+                {% for category in product.categories.all|slice:":2" %}
+                    <span class="bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded">
+                        {{ category.name }}
+                    </span>
+                {% endfor %}
+                {% if product.categories.count > 2 %}
+                    <span class="text-xs text-gray-400">+{{ product.categories.count|add:"-2" }}</span>
+                {% endif %}
+            </div>
+        {% endif %}
+
+        <!-- Brand and Price -->
+        <div class="flex items-center justify-between">
+            {% if product.brand %}
+                <span class="text-xs text-gray-500">{{ product.brand.name }}</span>
+            {% else %}
+                <span></span>
+            {% endif %}
+
+            {% if show_pricing and product.base_price %}
+                <span class="text-sm font-semibold text-green-600">${{ product.base_price }}</span>
+            {% endif %}
+        </div>
+
+        <!-- Assets Count -->
+        {% if product.assets_count %}
+            <div class="mt-2 pt-2 border-t border-gray-100">
+                <span class="text-xs text-gray-500">
+                    <i class="fas fa-images mr-1"></i>
+                    {{ product.assets_count }} asset{{ product.assets_count|pluralize }}
+                </span>
+            </div>
+        {% endif %}
+    </div>
+</div>

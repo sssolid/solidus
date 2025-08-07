@@ -1,0 +1,397 @@
+<!-- templates/autocare/vcdb/advanced_search.html -->
+{% extends 'autocare/vcdb/base.html' %}
+{% load static %}
+{% load i18n %}
+{% load widget_tweaks %}
+
+{% block title %}Advanced Search{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'automotive:dashboard' %}">Dashboard</a></li>
+        <li class="breadcrumb-item active">Advanced Search</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-3">
+        <!-- Search Form -->
+        <div class="card sticky-top">
+            <div class="card-header">
+                <h5><i class="bi bi-search"></i> Search Criteria</h5>
+            </div>
+            <div class="card-body">
+                <form method="get" id="advanced-search-form">
+                    <!-- Basic Information -->
+                    <div class="search-section">
+                        <h6>Basic Information</h6>
+                        <div class="mb-3">
+                            <label class="form-label">Year Range</label>
+                            <div class="row">
+                                <div class="col-6">
+                                    <input type="number" name="year_from" class="form-control form-control-sm"
+                                           placeholder="From" min="1900" max="2050" id="id_year_from">
+                                </div>
+                                <div class="col-6">
+                                    <input type="number" name="year_to" class="form-control form-control-sm"
+                                           placeholder="To" min="1900" max="2050" id="id_year_to">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="id_make" class="form-label">Makes</label>
+                            <select name="make" id="id_make" class="form-select form-select-sm" multiple size="4">
+                                {% for make in makes %}
+                                    <option value="{{ make.make_id }}">{{ make.make_name }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="filter-tags"></div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="id_region" class="form-label">Regions</label>
+                            <select name="region" id="id_region" class="form-select form-select-sm" multiple size="3">
+                                {% for region in regions %}
+                                    <option value="{{ region.region_id }}">{{ region.region_name }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="filter-tags"></div>
+                        </div>
+                    </div>
+
+                    <!-- Drivetrain -->
+                    <div class="search-section">
+                        <h6>Drivetrain</h6>
+                        <div class="mb-3">
+                            <label for="id_drive_type" class="form-label">Drive Type</label>
+                            <select name="drive_type" id="id_drive_type" class="form-select form-select-sm" multiple size="3">
+                                {% for drive_type in drive_types %}
+                                    <option value="{{ drive_type.drive_type_id }}">{{ drive_type.drive_type_name }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="filter-tags"></div>
+                        </div>
+                    </div>
+
+                    <!-- Engine Specifications -->
+                    <div class="search-section">
+                        <h6>Engine Specifications</h6>
+                        <div class="mb-3">
+                            <label for="id_min_cylinders" class="form-label">Minimum Cylinders</label>
+                            <select name="min_cylinders" id="id_min_cylinders" class="form-select form-select-sm">
+                                <option value="">Any</option>
+                                <option value="3">3+</option>
+                                <option value="4">4+</option>
+                                <option value="6">6+</option>
+                                <option value="8">8+</option>
+                                <option value="10">10+</option>
+                                <option value="12">12+</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="id_fuel_type" class="form-label">Fuel Type</label>
+                            <select name="fuel_type" id="id_fuel_type" class="form-select form-select-sm" multiple size="3">
+                                <option value="1">Gasoline</option>
+                                <option value="2">Diesel</option>
+                                <option value="3">Electric</option>
+                                <option value="4">Hybrid</option>
+                            </select>
+                            <div class="filter-tags"></div>
+                        </div>
+                    </div>
+
+                    <!-- Vehicle Classification -->
+                    <div class="search-section">
+                        <h6>Classification</h6>
+                        <div class="mb-3">
+                            <label for="id_vehicle_class" class="form-label">Vehicle Class</label>
+                            <select name="vehicle_class" id="id_vehicle_class" class="form-select form-select-sm" multiple size="3">
+                                {% for vehicle_class in vehicle_classes %}
+                                    <option value="{{ vehicle_class.class_id }}">{{ vehicle_class.class_name }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="filter-tags"></div>
+                        </div>
+                    </div>
+
+                    <!-- Search Options -->
+                    <div class="search-section">
+                        <h6>Options</h6>
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input type="checkbox" name="include_discontinued" id="id_include_discontinued" class="form-check-input">
+                                <label for="id_include_discontinued" class="form-check-label">Include Discontinued</label>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="id_results_per_page" class="form-label">Results Per Page</label>
+                            <select name="results_per_page" id="id_results_per_page" class="form-select form-select-sm">
+                                <option value="25">25</option>
+                                <option value="50" selected>50</option>
+                                <option value="100">100</option>
+                                <option value="200">200</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-search"></i> Search Vehicles
+                        </button>
+                        <button type="reset" class="btn btn-outline-secondary">
+                            <i class="bi bi-x-circle"></i> Clear All
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-9">
+        {% if show_results %}
+            <!-- Search Results -->
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5>
+                        <i class="bi bi-list-check"></i>
+                        Search Results ({{ vehicles|length }} vehicles found)
+                    </h5>
+                    <div class="btn-group btn-group-sm">
+                        <button type="button" class="btn btn-outline-secondary" id="view-table">
+                            <i class="bi bi-table"></i> Table
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary" id="view-grid">
+                            <i class="bi bi-grid"></i> Grid
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if vehicles %}
+                        <!-- Table View -->
+                        <div id="results-table">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>
+                                                <input type="checkbox" class="form-check-input" id="select-all-results">
+                                            </th>
+                                            <th>Vehicle</th>
+                                            <th>Year</th>
+                                            <th>Submodel</th>
+                                            <th>Region</th>
+                                            <th>Engine</th>
+                                            <th>Drive</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for vehicle in vehicles %}
+                                            <tr>
+                                                <td>
+                                                    <input type="checkbox" class="form-check-input vehicle-select"
+                                                           value="{{ vehicle.vehicle_id }}">
+                                                </td>
+                                                <td>
+                                                    <a href="{% url 'automotive:vehicle_detail' vehicle.vehicle_id %}">
+                                                        {{ vehicle.base_vehicle.make.make_name }}
+                                                        {{ vehicle.base_vehicle.model.model_name|default:"Unknown" }}
+                                                    </a>
+                                                </td>
+                                                <td>{{ vehicle.base_vehicle.year.year_id }}</td>
+                                                <td>{{ vehicle.submodel.sub_model_name }}</td>
+                                                <td>
+                                                    <small class="text-muted">
+                                                        {{ vehicle.region.region_name|default:"N/A" }}
+                                                    </small>
+                                                </td>
+                                                <td>
+                                                    {% if vehicle.engine_configs.first %}
+                                                        {% with engine=vehicle.engine_configs.first.engine_config %}
+                                                            <small class="engine-spec">
+                                                                {{ engine.engine_base.liter }}L {{ engine.engine_base.cylinders }}cyl
+                                                            </small>
+                                                        {% endwith %}
+                                                    {% else %}
+                                                        <small class="text-muted">N/A</small>
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    {% if vehicle.drive_types.first %}
+                                                        <small class="spec-badge">
+                                                            {{ vehicle.drive_types.first.drive_type.drive_type_name }}
+                                                        </small>
+                                                    {% else %}
+                                                        <small class="text-muted">N/A</small>
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    <div class="btn-group btn-group-sm">
+                                                        <a href="{% url 'automotive:vehicle_detail' vehicle.vehicle_id %}"
+                                                           class="btn btn-outline-primary btn-sm">
+                                                            <i class="bi bi-eye"></i>
+                                                        </a>
+                                                        <a href="{% url 'automotive:vehicle_compare' %}?vehicle_id={{ vehicle.vehicle_id }}"
+                                                           class="btn btn-outline-info btn-sm">
+                                                            <i class="bi bi-arrows-expand"></i>
+                                                        </a>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Grid View (Hidden by default) -->
+                        <div id="results-grid" style="display: none;">
+                            <div class="row">
+                                {% for vehicle in vehicles %}
+                                    <div class="col-lg-4 col-md-6 mb-3">
+                                        {% vehicle_card vehicle %}
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Bulk Actions -->
+                        <div class="mt-3 text-center">
+                            <button type="button" class="btn btn-outline-info" id="compare-selected" style="display: none;">
+                                <i class="bi bi-arrows-expand"></i> Compare Selected
+                            </button>
+                            <a href="{% url 'automotive:export_vehicles_csv' %}?{{ request.GET.urlencode }}"
+                               class="btn btn-outline-secondary">
+                                <i class="bi bi-download"></i> Export Results
+                            </a>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="bi bi-search" style="font-size: 4rem; color: #ccc;"></i>
+                            <h4 class="mt-3">No vehicles found</h4>
+                            <p class="text-muted">Try adjusting your search criteria to find more results.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        {% else %}
+            <!-- Search Instructions -->
+            <div class="card">
+                <div class="card-body text-center py-5">
+                    <i class="bi bi-search" style="font-size: 4rem; color: #0066cc;"></i>
+                    <h3 class="mt-3">Advanced Vehicle Search</h3>
+                    <p class="text-muted">Use the filters on the left to search for specific vehicles. You can combine multiple criteria to narrow down your results.</p>
+
+                    <div class="row mt-4">
+                        <div class="col-md-4">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <i class="bi bi-calendar text-primary" style="font-size: 2rem;"></i>
+                                    <h6 class="mt-2">Year Range</h6>
+                                    <small class="text-muted">Find vehicles from specific years</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <i class="bi bi-building text-success" style="font-size: 2rem;"></i>
+                                    <h6 class="mt-2">Makes & Models</h6>
+                                    <small class="text-muted">Filter by manufacturer</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <i class="bi bi-gear text-info" style="font-size: 2rem;"></i>
+                                    <h6 class="mt-2">Engine Specs</h6>
+                                    <small class="text-muted">Search by engine characteristics</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // View toggle functionality
+    const tableBtn = document.getElementById('view-table');
+    const gridBtn = document.getElementById('view-grid');
+    const tableView = document.getElementById('results-table');
+    const gridView = document.getElementById('results-grid');
+
+    if (tableBtn && gridBtn) {
+        tableBtn.addEventListener('click', function() {
+            tableView.style.display = 'block';
+            gridView.style.display = 'none';
+            tableBtn.classList.add('active');
+            gridBtn.classList.remove('active');
+        });
+
+        gridBtn.addEventListener('click', function() {
+            tableView.style.display = 'none';
+            gridView.style.display = 'block';
+            gridBtn.classList.add('active');
+            tableBtn.classList.remove('active');
+        });
+    }
+
+    // Select all functionality
+    const selectAllCheckbox = document.getElementById('select-all-results');
+    const vehicleCheckboxes = document.querySelectorAll('.vehicle-select');
+    const compareBtn = document.getElementById('compare-selected');
+
+    if (selectAllCheckbox) {
+        selectAllCheckbox.addEventListener('change', function() {
+            vehicleCheckboxes.forEach(checkbox => {
+                checkbox.checked = this.checked;
+            });
+            updateCompareButton();
+        });
+    }
+
+    vehicleCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', updateCompareButton);
+    });
+
+    function updateCompareButton() {
+        const selected = document.querySelectorAll('.vehicle-select:checked');
+        if (compareBtn) {
+            if (selected.length >= 2 && selected.length <= 5) {
+                compareBtn.style.display = 'inline-block';
+                compareBtn.textContent = `Compare ${selected.length} Vehicles`;
+            } else {
+                compareBtn.style.display = 'none';
+            }
+        }
+    }
+
+    // Compare selected vehicles
+    if (compareBtn) {
+        compareBtn.addEventListener('click', function() {
+            const selected = Array.from(document.querySelectorAll('.vehicle-select:checked'))
+                .map(cb => cb.value);
+
+            if (selected.length >= 2) {
+                const url = '/automotive/vehicles/compare/?' +
+                    selected.map(id => `vehicle_id=${id}`).join('&');
+                window.open(url, '_blank');
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

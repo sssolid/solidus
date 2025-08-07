@@ -1,0 +1,32 @@
+<!-- templates/partials/status/badge.html -->
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+    {% if status == 'active' or status == 'published' or status == 'completed' or status == 'success' %}
+        bg-green-100 text-green-800
+    {% elif status == 'inactive' or status == 'draft' or status == 'pending' or status == 'processing' %}
+        bg-yellow-100 text-yellow-800
+    {% elif status == 'error' or status == 'failed' or status == 'rejected' %}
+        bg-red-100 text-red-800
+    {% elif status == 'running' or status == 'in_progress' %}
+        bg-blue-100 text-blue-800
+    {% elif status == 'paused' or status == 'suspended' %}
+        bg-gray-100 text-gray-800
+    {% else %}
+        bg-gray-100 text-gray-800
+    {% endif %}">
+
+    {% if show_icon %}
+        {% if status == 'active' or status == 'published' or status == 'completed' or status == 'success' %}
+            <i class="fas fa-check-circle mr-1"></i>
+        {% elif status == 'processing' or status == 'running' or status == 'in_progress' %}
+            <i class="fas fa-spinner fa-spin mr-1"></i>
+        {% elif status == 'error' or status == 'failed' or status == 'rejected' %}
+            <i class="fas fa-exclamation-circle mr-1"></i>
+        {% elif status == 'pending' or status == 'draft' %}
+            <i class="fas fa-clock mr-1"></i>
+        {% elif status == 'paused' or status == 'suspended' %}
+            <i class="fas fa-pause mr-1"></i>
+        {% endif %}
+    {% endif %}
+
+    {{ status|title }}
+</span>

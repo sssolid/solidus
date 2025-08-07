@@ -1,0 +1,60 @@
+<!-- templates/autocare_vcdb/tags/vehicle_card.html -->
+<div class="card h-100 vehicle-card">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-start mb-2">
+            <h6 class="card-title mb-0">
+                <a href="{% url 'automotive:vehicle_detail' vehicle.vehicle_id %}" class="text-decoration-none">
+                    {{ vehicle.base_vehicle.year.year_id }} {{ vehicle.base_vehicle.make.make_name }}
+                </a>
+            </h6>
+            <small class="text-muted">#{{ vehicle.vehicle_id }}</small>
+        </div>
+
+        <p class="card-text">
+            <strong>{{ vehicle.base_vehicle.model.model_name|default:"Unknown Model" }}</strong><br>
+            <span class="text-muted">{{ vehicle.submodel.sub_model_name }}</span>
+        </p>
+
+        {% if show_details %}
+            <div class="row small text-muted mb-2">
+                <div class="col-6">
+                    <i class="bi bi-geo-alt"></i> {{ vehicle.region.region_name|default:"N/A" }}
+                </div>
+                <div class="col-6">
+                    <i class="bi bi-calendar"></i> {{ vehicle.publication_stage_date|date:"M d, Y" }}
+                </div>
+            </div>
+
+            <!-- Quick specs -->
+            {% if vehicle.engine_configs.first %}
+                <div class="small text-muted mb-1">
+                    <i class="bi bi-gear"></i>
+                    {% with engine=vehicle.engine_configs.first.engine_config %}
+                        {{ engine.engine_base.liter }}L {{ engine.engine_base.cylinders }}cyl {{ engine.fuel_type.fuel_type_name }}
+                    {% endwith %}
+                </div>
+            {% endif %}
+
+            {% if vehicle.transmissions.first %}
+                <div class="small text-muted mb-2">
+                    <i class="bi bi-gear-fill"></i>
+                    {% with trans=vehicle.transmissions.first.transmission %}
+                        {{ trans.transmission_base.transmission_type.transmission_type_name }}
+                        {{ trans.transmission_base.transmission_num_speeds.transmission_num_speeds }}
+                    {% endwith %}
+                </div>
+            {% endif %}
+        {% endif %}
+    </div>
+
+    <div class="card-footer bg-transparent">
+        <div class="btn-group btn-group-sm w-100">
+            <a href="{% url 'automotive:vehicle_detail' vehicle.vehicle_id %}" class="btn btn-outline-primary">
+                <i class="bi bi-eye"></i> View
+            </a>
+            <a href="{% url 'automotive:vehicle_edit' vehicle.vehicle_id %}" class="btn btn-outline-secondary">
+                <i class="bi bi-pencil"></i> Edit
+            </a>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,54 @@
+<!-- templates/partials/forms/field.html -->
+<div class="{% if field_class %}{{ field_class }}{% else %}mb-6{% endif %}">
+    {% if field.label and field_type != 'checkbox' %}
+        <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+            {{ field.label }}
+            {% if field.field.required %}
+                <span class="text-red-500">*</span>
+            {% endif %}
+        </label>
+    {% endif %}
+
+    {% if field_type == 'textarea' %}
+        {{ field|add_class:"block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" }}
+    {% elif field_type == 'select' %}
+        {{ field|add_class:"block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" }}
+    {% elif field_type == 'checkbox' %}
+        <div class="flex items-center">
+            {{ field|add_class:"h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" }}
+            {% if field.label %}
+                <label for="{{ field.id_for_label }}" class="ml-2 block text-sm text-gray-900">
+                    {{ field.label }}
+                    {% if field.field.required %}
+                        <span class="text-red-500">*</span>
+                    {% endif %}
+                </label>
+            {% endif %}
+        </div>
+    {% elif field_type == 'radio' %}
+        <div class="space-y-2">
+            {% for choice in field %}
+                <div class="flex items-center">
+                    {{ choice.tag|add_class:"h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300" }}
+                    <label for="{{ choice.id_for_label }}" class="ml-2 block text-sm text-gray-900">
+                        {{ choice.choice_label }}
+                    </label>
+                </div>
+            {% endfor %}
+        </div>
+    {% elif field_type == 'file' %}
+        {% include 'partials/forms/file_input.html' %}
+    {% elif field_type == 'multiple_file' %}
+        {% include 'partials/forms/multiple_file_input.html' %}
+    {% else %}
+        {{ field|add_class:"block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" }}
+    {% endif %}
+
+    {% if field.errors %}
+        <p class="mt-2 text-sm text-red-600">{{ field.errors.0 }}</p>
+    {% endif %}
+
+    {% if field.help_text %}
+        <p class="mt-1 text-sm text-gray-500">{{ field.help_text }}</p>
+    {% endif %}
+</div>

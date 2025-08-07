@@ -89,3 +89,38 @@ class AjaxableResponseMixin:
             })
 
         return response
+
+
+class PartialTemplateContextMixin:
+    """Mixin to provide consistent context for partial templates"""
+
+    def get_list_header_context(self, title, subtitle=None, actions=None):
+        """Standard context for list headers"""
+        return {
+            'title': title,
+            'subtitle': subtitle,
+            'actions': actions or [],
+        }
+
+    def get_search_filter_context(self, form=None, use_htmx=True, target_id='results'):
+        """Standard context for search/filter forms"""
+        return {
+            'filter_form': form,
+            'use_htmx': use_htmx,
+            'target_id': target_id,
+            'show_search': True,
+            'search_placeholder': f'Search {self.model._meta.verbose_name_plural.lower()}...',
+            'grid_cols': 4,
+        }
+
+    def get_empty_state_context(self, icon=None, title=None, message=None, action_url=None, action_text=None):
+        """Standard context for empty states"""
+        model_name = self.model._meta.verbose_name
+        return {
+            'icon': icon or 'fas fa-inbox',
+            'title': title or f'No {model_name.lower()}s found',
+            'message': message or f'Create your first {model_name.lower()} to get started.',
+            'action_url': action_url,
+            'action_text': action_text or f'Add {model_name}',
+            'action_icon': 'fas fa-plus',
+        }

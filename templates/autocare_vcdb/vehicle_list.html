@@ -1,0 +1,366 @@
+<!-- templates/autocare_vcdb/vehicle_list.html -->
+{% extends 'autocare_vcdb/base.html' %}
+{% load static %}
+{% load i18n %}
+{% load widget_tweaks %}
+
+{% block title %}Vehicles{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'automotive:dashboard' %}">Dashboard</a></li>
+        <li class="breadcrumb-item active">Vehicles</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-6">
+        <h1><i class="bi bi-car-front"></i> Vehicles</h1>
+        <p class="text-muted">Browse and manage vehicle records</p>
+    </div>
+    <div class="col-md-6 text-end">
+        <div class="btn-group" role="group">
+            <a href="{% url 'automotive:vehicle_create' %}" class="btn btn-primary">
+                <i class="bi bi-plus"></i> Add Vehicle
+            </a>
+            <a href="{% url 'automotive:export_vehicles_csv' %}" class="btn btn-outline-secondary">
+                <i class="bi bi-download"></i> Export CSV
+            </a>
+            <a href="{% url 'automotive:advanced_search' %}" class="btn btn-outline-info">
+                <i class="bi bi-search"></i> Advanced Search
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Search and Filters -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h6><i class="bi bi-funnel"></i> Search & Filters</h6>
+            </div>
+            <div class="card-body">
+                <form method="get" class="row g-3">
+                    <!-- Search -->
+                    <div class="col-md-4">
+                        {{ search_form.search|add_class:"form-control" }}
+                    </div>
+
+                    <!-- Filters -->
+                    <div class="col-md-2">
+                        {{ filter_form.year|add_class:"form-select" }}
+                    </div>
+
+                    <div class="col-md-2">
+                        {{ filter_form.make|add_class:"form-select" }}
+                    </div>
+
+                    <div class="col-md-2">
+                        <select name="model" class="form-select" id="id_model"
+                                hx-trigger="change from:#id_make"
+                                hx-get="{% url 'automotive:htmx_models_by_make' %}">
+                            <option value="">All Models</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-2">
+                        {{ filter_form.region|add_class:"form-select" }}
+                    </div>
+
+                    <div class="col-12">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-search"></i> Search
+                        </button>
+                        <a href="{% url 'automotive:vehicle_list' %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-x-circle"></i> Clear
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Results -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6>
+                    <i class="bi bi-list"></i>
+                    Results ({{ page_obj.paginator.count }} vehicles)
+                </h6>
+                <div class="btn-group btn-group-sm">
+                    <button type="button" class="btn btn-outline-secondary" id="view-table" data-bs-toggle="tooltip" title="Table View">
+                        <i class="bi bi-table"></i>
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary" id="view-cards" data-bs-toggle="tooltip" title="Card View">
+                        <i class="bi bi-grid"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <!-- Table View -->
+                <div id="table-view">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>
+                                        <input type="checkbox" class="form-check-input" id="select-all">
+                                    </th>
+                                    <th>Vehicle ID</th>
+                                    <th>Year</th>
+                                    <th>Make</th>
+                                    <th>Model</th>
+                                    <th>Submodel</th>
+                                    <th>Region</th>
+                                    <th>Engine</th>
+                                    <th>Transmission</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for vehicle in vehicles %}
+                                    <tr>
+                                        <td>
+                                            <input type="checkbox" class="form-check-input vehicle-select"
+                                                   value="{{ vehicle.vehicle_id }}">
+                                        </td>
+                                        <td>
+                                            <a href="{% url 'automotive:vehicle_detail' vehicle.vehicle_id %}">
+                                                #{{ vehicle.vehicle_id }}
+                                            </a>
+                                        </td>
+                                        <td>{{ vehicle.base_vehicle.year.year_id }}</td>
+                                        <td>{{ vehicle.base_vehicle.make.make_name }}</td>
+                                        <td>{{ vehicle.base_vehicle.model.model_name|default:"Unknown" }}</td>
+                                        <td>{{ vehicle.submodel.sub_model_name }}</td>
+                                        <td>
+                                            <small class="text-muted">
+                                                {{ vehicle.region.region_name|default:"N/A" }}
+                                            </small>
+                                        </td>
+                                        <td>
+                                            {% if vehicle.engine_configs.first %}
+                                                {% with engine=vehicle.engine_configs.first.engine_config %}
+                                                    <small class="text-muted">
+                                                        {{ engine.engine_base.liter }}L {{ engine.engine_base.cylinders }}cyl
+                                                    </small>
+                                                {% endwith %}
+                                            {% else %}
+                                                <small class="text-muted">N/A</small>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if vehicle.transmissions.first %}
+                                                {% with trans=vehicle.transmissions.first.transmission %}
+                                                    <small class="text-muted">
+                                                        {{ trans.transmission_base.transmission_type.transmission_type_name }}
+                                                    </small>
+                                                {% endwith %}
+                                            {% else %}
+                                                <small class="text-muted">N/A</small>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm">
+                                                <a href="{% url 'automotive:vehicle_detail' vehicle.vehicle_id %}"
+                                                   class="btn btn-outline-primary btn-sm" data-bs-toggle="tooltip" title="View">
+                                                    <i class="bi bi-eye"></i>
+                                                </a>
+                                                <a href="{% url 'automotive:vehicle_edit' vehicle.vehicle_id %}"
+                                                   class="btn btn-outline-secondary btn-sm" data-bs-toggle="tooltip" title="Edit">
+                                                    <i class="bi bi-pencil"></i>
+                                                </a>
+                                                <a href="{% url 'automotive:vehicle_delete' vehicle.vehicle_id %}"
+                                                   class="btn btn-outline-danger btn-sm" data-bs-toggle="tooltip" title="Delete">
+                                                    <i class="bi bi-trash"></i>
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                {% empty %}
+                                    <tr>
+                                        <td colspan="10" class="text-center text-muted py-4">
+                                            <i class="bi bi-inbox" style="font-size: 2rem;"></i><br>
+                                            No vehicles found matching your criteria.
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Card View (hidden by default) -->
+                <div id="card-view" style="display: none;">
+                    <div class="row">
+                        {% for vehicle in vehicles %}
+                            <div class="col-lg-4 col-md-6 mb-3">
+                                {% vehicle_card vehicle %}
+                            </div>
+                        {% empty %}
+                            <div class="col-12 text-center text-muted py-4">
+                                <i class="bi bi-inbox" style="font-size: 3rem;"></i><br>
+                                <h5>No vehicles found</h5>
+                                <p>Try adjusting your search criteria.</p>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Pagination -->
+{% if page_obj.has_other_pages %}
+<div class="row mt-4">
+    <div class="col-12">
+        <nav aria-label="Vehicle pagination">
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">First</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">Previous</a>
+                    </li>
+                {% endif %}
+
+                {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ num }}</span>
+                        </li>
+                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ num }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">{{ num }}</a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">Next</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">Last</a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+
+        <div class="text-center text-muted">
+            Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }} vehicles
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Bulk Actions Modal -->
+<div class="modal fade" id="bulkActionsModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Bulk Actions</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" id="bulk-actions-form">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <p>Perform bulk actions on <span id="selected-count">0</span> selected vehicles.</p>
+                    <div class="mb-3">
+                        <label for="bulk-action" class="form-label">Action</label>
+                        <select name="action" id="bulk-action" class="form-select" required>
+                            <option value="">Select action...</option>
+                            <option value="update_region">Update Region</option>
+                            <option value="update_publication_stage">Update Publication Stage</option>
+                            <option value="update_source">Update Source</option>
+                            <option value="delete" class="text-danger">Delete Selected</option>
+                        </select>
+                    </div>
+
+                    <div id="bulk-fields"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Apply</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // View toggle functionality
+    const viewTable = document.getElementById('view-table');
+    const viewCards = document.getElementById('view-cards');
+    const tableView = document.getElementById('table-view');
+    const cardView = document.getElementById('card-view');
+
+    viewTable.addEventListener('click', function() {
+        tableView.style.display = 'block';
+        cardView.style.display = 'none';
+        viewTable.classList.add('active');
+        viewCards.classList.remove('active');
+    });
+
+    viewCards.addEventListener('click', function() {
+        tableView.style.display = 'none';
+        cardView.style.display = 'block';
+        viewCards.classList.add('active');
+        viewTable.classList.remove('active');
+    });
+
+    // Select all functionality
+    const selectAll = document.getElementById('select-all');
+    const vehicleSelects = document.querySelectorAll('.vehicle-select');
+
+    selectAll.addEventListener('change', function() {
+        vehicleSelects.forEach(checkbox => {
+            checkbox.checked = this.checked;
+        });
+        updateBulkActions();
+    });
+
+    vehicleSelects.forEach(checkbox => {
+        checkbox.addEventListener('change', updateBulkActions);
+    });
+
+    function updateBulkActions() {
+        const selected = document.querySelectorAll('.vehicle-select:checked');
+        const count = selected.length;
+        document.getElementById('selected-count').textContent = count;
+
+        // Show/hide bulk actions button
+        let bulkBtn = document.getElementById('bulk-actions-btn');
+        if (count > 0 && !bulkBtn) {
+            bulkBtn = document.createElement('button');
+            bulkBtn.id = 'bulk-actions-btn';
+            bulkBtn.className = 'btn btn-warning btn-sm ms-2';
+            bulkBtn.innerHTML = '<i class="bi bi-gear"></i> Bulk Actions';
+            bulkBtn.setAttribute('data-bs-toggle', 'modal');
+            bulkBtn.setAttribute('data-bs-target', '#bulkActionsModal');
+            document.querySelector('.card-header .btn-group').appendChild(bulkBtn);
+        } else if (count === 0 && bulkBtn) {
+            bulkBtn.remove();
+        }
+    }
+
+    // Initialize tooltips
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.map(function(tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
+</script>
+{% endblock %}

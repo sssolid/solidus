@@ -1,302 +1,39 @@
-<!-- templates/assets/create.html -->
+<!-- templates/assets/create.html - COMPLETE REFACTORING -->
 {% extends "base.html" %}
 {% load widget_tweaks %}
 
 {% block title %}Upload Asset - Solidus{% endblock %}
 
 {% block content %}
-<div class="space-y-6">
-    <!-- Header -->
-    <div class="md:flex md:items-center md:justify-between">
-        <div class="min-w-0 flex-1">
-            <nav class="flex" aria-label="Breadcrumb">
-                <ol class="flex items-center space-x-4">
-                    <li>
-                        <a href="{% url 'assets:list' %}" class="text-gray-400 hover:text-gray-500">
-                            <i class="fas fa-images"></i>
-                            <span class="sr-only">Assets</span>
-                        </a>
-                    </li>
-                    <li>
-                        <div class="flex items-center">
-                            <i class="fas fa-chevron-right text-gray-400 mr-4"></i>
-                            <span class="text-sm font-medium text-gray-500">Upload Asset</span>
-                        </div>
-                    </li>
-                </ol>
-            </nav>
-            <h2 class="mt-2 text-2xl font-bold leading-7 text-gray-900 sm:truncate sm:text-3xl sm:tracking-tight">
-                Upload New Asset
-            </h2>
-            <p class="mt-1 text-sm text-gray-500">
-                Upload and organize digital assets with automatic metadata extraction.
-            </p>
-        </div>
+    {% include 'partials/content/list_header.html' with title="Upload Asset" subtitle="Add a new digital asset to your collection" %}
+
+    <div class="max-w-2xl">
+        {% include 'partials/ui/card.html' with card_header=True card_title="Asset Information" %}
+        <form method="post" enctype="multipart/form-data" class="space-y-6">
+            {% csrf_token %}
+
+            <!-- File Upload -->
+            {% include 'partials/forms/field.html' with field=form.file field_type='file' file_types='Images, Videos, Documents up to 100MB' %}
+
+            <!-- Title -->
+            {% include 'partials/forms/field.html' with field=form.title %}
+
+            <!-- Description -->
+            {% include 'partials/forms/field.html' with field=form.description field_type='textarea' %}
+
+            <!-- Category -->
+            {% include 'partials/forms/field.html' with field=form.category field_type='select' %}
+
+            <!-- Tags -->
+            {% include 'partials/forms/tags_input.html' with field=form.tags %}
+
+            <!-- Permissions -->
+            <div class="grid grid-cols-2 gap-4">
+                {% include 'partials/forms/field.html' with field=form.is_public field_type='checkbox' field_class='mb-0' %}
+                {% include 'partials/forms/field.html' with field=form.allow_download field_type='checkbox' field_class='mb-0' %}
+            </div>
+
+            {% include 'partials/forms/form_actions.html' with submit_text='Upload Asset' submit_icon='fas fa-upload' cancel_url='assets:list' %}
+        </form>
     </div>
-
-    <!-- Upload Form -->
-    <form method="post" enctype="multipart/form-data"
-          hx-post="{% url 'assets:create' %}"
-          hx-swap="innerHTML"
-          hx-target="#upload-results"
-          class="space-y-8">
-        {% csrf_token %}
-
-        <div class="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl">
-            <div class="px-4 py-6 sm:p-8">
-                <!-- File Upload Area -->
-                <div class="mb-8">
-                    <label class="block text-sm font-medium leading-6 text-gray-900 mb-4">
-                        Choose Files
-                    </label>
-
-                    <!-- Drag & Drop Zone -->
-                    <div id="drop-zone"
-                         class="relative border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-gray-400 transition-colors">
-                        <div class="space-y-4">
-                            <i class="fas fa-cloud-upload-alt text-4xl text-gray-400"></i>
-                            <div>
-                                <p class="text-lg font-medium text-gray-900">Drop files here to upload</p>
-                                <p class="text-sm text-gray-500">or click to browse</p>
-                            </div>
-                            {{ form.file|add_class:"hidden" }}
-                            <div class="text-xs text-gray-500">
-                                Supports: JPG, PNG, GIF, PDF, DOC, MP4 (Max: 100MB per file)
-                            </div>
-                        </div>
-
-                        <!-- File Preview Area -->
-                        <div id="file-preview" class="hidden mt-6">
-                            <h4 class="text-sm font-medium text-gray-900 mb-4">Selected Files:</h4>
-                            <div id="preview-list" class="space-y-2"></div>
-                        </div>
-                    </div>
-
-                    {% if form.file.errors %}
-                    <div class="mt-2 text-sm text-red-600">
-                        {{ form.file.errors.0 }}
-                    </div>
-                    {% endif %}
-                </div>
-
-                <!-- Asset Details -->
-                <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                    <!-- Title -->
-                    <div class="sm:col-span-2">
-                        <label for="{{ form.title.id_for_label }}" class="block text-sm font-medium leading-6 text-gray-900">
-                            Title <span class="text-red-500">*</span>
-                        </label>
-                        <div class="mt-2">
-                            {{ form.title|add_class:"block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6" }}
-                        </div>
-                        {% if form.title.errors %}
-                        <p class="mt-2 text-sm text-red-600">{{ form.title.errors.0 }}</p>
-                        {% endif %}
-                    </div>
-
-                    <!-- Description -->
-                    <div class="sm:col-span-2">
-                        <label for="{{ form.description.id_for_label }}" class="block text-sm font-medium leading-6 text-gray-900">
-                            Description
-                        </label>
-                        <div class="mt-2">
-                            {{ form.description|add_class:"block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6" }}
-                        </div>
-                        {% if form.description.errors %}
-                        <p class="mt-2 text-sm text-red-600">{{ form.description.errors.0 }}</p>
-                        {% endif %}
-                    </div>
-
-                    <!-- Category -->
-                    <div>
-                        <label for="{{ form.category.id_for_label }}" class="block text-sm font-medium leading-6 text-gray-900">
-                            Category <span class="text-red-500">*</span>
-                        </label>
-                        <div class="mt-2">
-                            {{ form.category|add_class:"block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6" }}
-                        </div>
-                        {% if form.category.errors %}
-                        <p class="mt-2 text-sm text-red-600">{{ form.category.errors.0 }}</p>
-                        {% endif %}
-                    </div>
-
-                    <!-- Asset Type -->
-                    <div>
-                        <label for="{{ form.asset_type.id_for_label }}" class="block text-sm font-medium leading-6 text-gray-900">
-                            Asset Type
-                        </label>
-                        <div class="mt-2">
-                            {{ form.asset_type|add_class:"block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6" }}
-                        </div>
-                        {% if form.asset_type.errors %}
-                        <p class="mt-2 text-sm text-red-600">{{ form.asset_type.errors.0 }}</p>
-                        {% endif %}
-                    </div>
-
-                    <!-- Tags -->
-                    <div class="sm:col-span-2">
-                        <label for="{{ form.tags.id_for_label }}" class="block text-sm font-medium leading-6 text-gray-900">
-                            Tags
-                        </label>
-                        <div class="mt-2">
-                            {{ form.tags|add_class:"block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6" }}
-                        </div>
-                        <p class="mt-2 text-sm text-gray-500">Separate tags with commas</p>
-                        {% if form.tags.errors %}
-                        <p class="mt-2 text-sm text-red-600">{{ form.tags.errors.0 }}</p>
-                        {% endif %}
-                    </div>
-                </div>
-
-                <!-- Access Control -->
-                <div class="mt-8 pt-8 border-t border-gray-200">
-                    <h3 class="text-lg font-medium leading-6 text-gray-900 mb-4">Access Control</h3>
-
-                    <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                        <!-- Requires Permission -->
-                        <div class="flex items-start">
-                            <div class="flex h-6 items-center">
-                                {{ form.requires_permission|add_class:"h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-600" }}
-                            </div>
-                            <div class="ml-3 text-sm leading-6">
-                                <label for="{{ form.requires_permission.id_for_label }}" class="font-medium text-gray-900">
-                                    Requires Permission
-                                </label>
-                                <p class="text-gray-500">Users must request access to download this asset</p>
-                            </div>
-                        </div>
-
-                        <!-- Allowed Roles -->
-                        <div>
-                            <label class="block text-sm font-medium leading-6 text-gray-900 mb-2">
-                                Allowed Roles
-                            </label>
-                            {{ form.allowed_roles }}
-                            {% if form.allowed_roles.errors %}
-                            <p class="mt-2 text-sm text-red-600">{{ form.allowed_roles.errors.0 }}</p>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Form Actions -->
-            <div class="flex items-center justify-end gap-x-6 border-t border-gray-900/10 px-4 py-4 sm:px-8">
-                <a href="{% url 'assets:list' %}"
-                   class="text-sm font-semibold leading-6 text-gray-900 hover:text-gray-700">
-                    Cancel
-                </a>
-                <button type="submit"
-                        class="rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600">
-                    <i class="fas fa-upload mr-2"></i>
-                    Upload Asset
-                </button>
-            </div>
-        </div>
-    </form>
-
-    <!-- Upload Results -->
-    <div id="upload-results"></div>
-</div>
-{% endblock %}
-
-{% block extra_js %}
-<script>
-// File upload handling
-document.addEventListener('DOMContentLoaded', function() {
-    const dropZone = document.getElementById('drop-zone');
-    const fileInput = document.getElementById('{{ form.file.id_for_label }}');
-    const filePreview = document.getElementById('file-preview');
-    const previewList = document.getElementById('preview-list');
-
-    // Click to browse
-    dropZone.addEventListener('click', function(e) {
-        if (e.target === dropZone || e.target.closest('#drop-zone')) {
-            fileInput.click();
-        }
-    });
-
-    // Drag and drop handlers
-    dropZone.addEventListener('dragover', function(e) {
-        e.preventDefault();
-        dropZone.classList.add('border-blue-400', 'bg-blue-50');
-    });
-
-    dropZone.addEventListener('dragleave', function(e) {
-        e.preventDefault();
-        dropZone.classList.remove('border-blue-400', 'bg-blue-50');
-    });
-
-    dropZone.addEventListener('drop', function(e) {
-        e.preventDefault();
-        dropZone.classList.remove('border-blue-400', 'bg-blue-50');
-
-        const files = e.dataTransfer.files;
-        handleFiles(files);
-    });
-
-    // File input change
-    fileInput.addEventListener('change', function(e) {
-        handleFiles(e.target.files);
-    });
-
-    function handleFiles(files) {
-        if (files.length > 0) {
-            // For single file upload, just take the first file
-            const file = files[0];
-
-            // Update file input
-            const dataTransfer = new DataTransfer();
-            dataTransfer.items.add(file);
-            fileInput.files = dataTransfer.files;
-
-            // Show preview
-            showFilePreview(file);
-
-            // Auto-populate title if empty
-            const titleInput = document.getElementById('{{ form.title.id_for_label }}');
-            if (!titleInput.value) {
-                titleInput.value = file.name.replace(/\.[^/.]+$/, "");
-            }
-        }
-    }
-
-    function showFilePreview(file) {
-        filePreview.classList.remove('hidden');
-
-        const fileItem = document.createElement('div');
-        fileItem.className = 'flex items-center justify-between p-3 bg-gray-50 rounded-lg';
-
-        fileItem.innerHTML = `
-            <div class="flex items-center space-x-3">
-                <i class="fas fa-file text-gray-400"></i>
-                <div>
-                    <p class="text-sm font-medium text-gray-900">${file.name}</p>
-                    <p class="text-xs text-gray-500">${formatFileSize(file.size)}</p>
-                </div>
-            </div>
-            <button type="button" class="text-red-500 hover:text-red-700" onclick="removeFile()">
-                <i class="fas fa-times"></i>
-            </button>
-        `;
-
-        previewList.innerHTML = '';
-        previewList.appendChild(fileItem);
-    }
-
-    window.removeFile = function() {
-        fileInput.value = '';
-        filePreview.classList.add('hidden');
-        previewList.innerHTML = '';
-    };
-
-    function formatFileSize(bytes) {
-        if (bytes === 0) return '0 Bytes';
-        const k = 1024;
-        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-        const i = Math.floor(Math.log(bytes) / Math.log(k));
-        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-    }
-});
-</script>
 {% endblock %}

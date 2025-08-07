@@ -1,0 +1,40 @@
+<!-- templates/partials/ui/modal.html -->
+<div id="{{ modal_id|default:'modal' }}"
+     class="fixed inset-0 bg-black bg-opacity-50 z-50 {% if not show_modal %}hidden{% endif %}"
+     x-data="{ show: {{ show_modal|yesno:'true,false' }} }"
+     x-show="show"
+     x-transition>
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-white rounded-lg max-w-{{ size|default:'md' }} w-full shadow-xl"
+             @click.away="show = false">
+            <!-- Header -->
+            {% if modal_title %}
+                <div class="flex items-center justify-between p-6 border-b border-gray-200">
+                    <h3 class="text-lg font-semibold text-gray-900">{{ modal_title }}</h3>
+                    <button @click="show = false"
+                            class="text-gray-400 hover:text-gray-600 transition">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            {% endif %}
+
+            <!-- Content -->
+            <div class="p-6">
+                {% if modal_content %}
+                    {{ modal_content|safe }}
+                {% else %}
+                    {% block modal_body %}{% endblock %}
+                {% endif %}
+            </div>
+
+            <!-- Footer -->
+            {% if modal_actions %}
+                <div class="flex justify-end space-x-3 p-6 border-t border-gray-200">
+                    {% for action in modal_actions %}
+                        {% include 'partials/ui/button.html' with button=action %}
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>

@@ -1,0 +1,40 @@
+<!-- templates/partials/content/timeline.html -->
+<div class="flow-root">
+    <ul class="-mb-8">
+        {% for item in timeline_items %}
+            <li>
+                <div class="relative pb-8">
+                    {% if not forloop.last %}
+                        <span class="absolute top-4 left-4 -ml-px h-full w-0.5 bg-gray-200"></span>
+                    {% endif %}
+
+                    <div class="relative flex space-x-3">
+                        <div>
+                            <span class="h-8 w-8 rounded-full bg-{{ item.color|default:'blue' }}-500 flex items-center justify-center ring-8 ring-white">
+                                <i class="{{ item.icon }} text-white text-sm"></i>
+                            </span>
+                        </div>
+
+                        <div class="min-w-0 flex-1 pt-1.5 flex justify-between space-x-4">
+                            <div>
+                                <p class="text-sm text-gray-500">
+                                    {{ item.title }}
+                                    {% if item.user %}
+                                        by <span class="font-medium text-gray-900">{{ item.user.get_full_name|default:item.user.username }}</span>
+                                    {% endif %}
+                                </p>
+                                {% if item.description %}
+                                    <p class="mt-1 text-sm text-gray-700">{{ item.description }}</p>
+                                {% endif %}
+                            </div>
+
+                            <div class="text-right text-sm whitespace-nowrap text-gray-500">
+                                <time datetime="{{ item.timestamp|date:'c' }}">{{ item.timestamp|timesince }} ago</time>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </li>
+        {% endfor %}
+    </ul>
+</div>

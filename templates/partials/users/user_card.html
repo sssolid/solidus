@@ -1,0 +1,48 @@
+<!-- templates/partials/users/user_card.html -->
+<div class="bg-white rounded-lg shadow p-6 hover:shadow-md transition-shadow">
+    <div class="flex items-center space-x-4">
+        {% include 'partials/users/user_avatar.html' with user=user size='lg' %}
+
+        <div class="flex-1 min-w-0">
+            <h3 class="text-lg font-semibold text-gray-900 truncate">
+                <a href="{% url 'accounts:user_detail' user.pk %}" class="hover:text-blue-600">
+                    {{ user.get_full_name|default:user.username }}
+                </a>
+            </h3>
+
+            <p class="text-sm text-gray-600 truncate">{{ user.email }}</p>
+
+            <div class="flex items-center space-x-2 mt-2">
+                {% include 'partials/users/role_badge.html' with user=user %}
+                {% include 'partials/status/badge.html' with status=user.is_active|yesno:'active,inactive' show_icon=True %}
+            </div>
+        </div>
+
+        {% if show_actions %}
+            <div class="flex-shrink-0">
+                {% include 'partials/ui/dropdown.html' with trigger_button=user_actions_button dropdown_items=user_actions %}
+            </div>
+        {% endif %}
+    </div>
+
+    {% if show_stats %}
+        <div class="mt-4 pt-4 border-t border-gray-200">
+            <div class="grid grid-cols-3 gap-4 text-center">
+                <div>
+                    <p class="text-lg font-semibold text-gray-900">{{ user.created_assets_count|default:0 }}</p>
+                    <p class="text-xs text-gray-500">Assets</p>
+                </div>
+                <div>
+                    <p class="text-lg font-semibold text-gray-900">{{ user.login_count|default:0 }}</p>
+                    <p class="text-xs text-gray-500">Logins</p>
+                </div>
+                <div>
+                    <p class="text-lg font-semibold text-gray-900">
+                        {% if user.last_login %}{{ user.last_login|timesince }}{% else %}Never{% endif %}
+                    </p>
+                    <p class="text-xs text-gray-500">Last Login</p>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>

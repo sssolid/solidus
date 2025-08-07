@@ -45,7 +45,7 @@ class AuditMiddleware(MiddlewareMixin):
             # Track access to sensitive views
             sensitive_views = ["customer_detail", "customer_pricing", "user_list"]
             if view_name in sensitive_views:
-                AuditLog.log_action(
+                AuditLog.objects.create_log(
                     user=request.user,
                     action="view",
                     metadata={
@@ -53,6 +53,7 @@ class AuditMiddleware(MiddlewareMixin):
                         "path": request.path,
                         "method": request.method,
                     },
+                    content_object=request.user,
                     request=request,
                 )
         except IntegrityError as exc:

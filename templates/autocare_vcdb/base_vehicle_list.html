@@ -1,0 +1,118 @@
+<!-- templates/autocare_vcdb/base_vehicle_list.html -->
+{% extends 'autocare_vcdb/base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}Base Vehicles{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'automotive:dashboard' %}">Dashboard</a></li>
+        <li class="breadcrumb-item active">Base Vehicles</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1><i class="bi bi-collection"></i> Base Vehicles</h1>
+        <p class="text-muted">Year/Make/Model combinations in the database</p>
+    </div>
+    <div class="col-md-4 text-end">
+        <form method="get" class="d-flex">
+            <input type="search" name="search" class="form-control me-2" placeholder="Search..."
+                   value="{{ request.GET.search }}">
+            <button type="submit" class="btn btn-outline-primary">Search</button>
+        </form>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Year</th>
+                                <th>Make</th>
+                                <th>Model</th>
+                                <th>Vehicle Type</th>
+                                <th>Vehicles</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for base_vehicle in base_vehicles %}
+                                <tr>
+                                    <td>{{ base_vehicle.year.year_id }}</td>
+                                    <td>{{ base_vehicle.make.make_name }}</td>
+                                    <td>{{ base_vehicle.model.model_name|default:"Unknown Model" }}</td>
+                                    <td>
+                                        <small class="text-muted">
+                                            {{ base_vehicle.model.vehicle_type.vehicle_type_name }}
+                                        </small>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-info">{{ base_vehicle.vehicle_count }}</span>
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'automotive:base_vehicle_detail' base_vehicle.base_vehicle_id %}"
+                                           class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-eye"></i> View
+                                        </a>
+                                    </td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="6" class="text-center text-muted py-4">
+                                        No base vehicles found.
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Pagination -->
+{% if page_obj.has_other_pages %}
+<div class="row mt-4">
+    <div class="col-12">
+        <nav aria-label="Base vehicle pagination">
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">Previous</a>
+                    </li>
+                {% endif %}
+
+                {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ num }}</span>
+                        </li>
+                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ num }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">{{ num }}</a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">Next</a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

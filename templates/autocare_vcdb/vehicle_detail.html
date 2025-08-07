@@ -1,0 +1,327 @@
+<!-- templates/autocare_vcdb/vehicle_detail.html -->
+{% extends 'autocare_vcdb/base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{{ vehicle.base_vehicle }} {{ vehicle.submodel }}{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'automotive:dashboard' %}">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'automotive:vehicle_list' %}">Vehicles</a></li>
+        <li class="breadcrumb-item active">{{ vehicle.base_vehicle }} {{ vehicle.submodel }}</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1>
+            <i class="bi bi-car-front"></i>
+            {{ vehicle.base_vehicle.year.year_id }} {{ vehicle.base_vehicle.make.make_name }}
+            {{ vehicle.base_vehicle.model.model_name|default:"Unknown Model" }}
+        </h1>
+        <h4 class="text-muted">{{ vehicle.submodel.sub_model_name }}</h4>
+        <p class="text-muted">
+            <i class="bi bi-hash"></i> Vehicle ID: {{ vehicle.vehicle_id }} |
+            <i class="bi bi-geo-alt"></i> Region: {{ vehicle.region.region_name|default:"Unknown" }} |
+            <i class="bi bi-calendar"></i> Added: {{ vehicle.publication_stage_date|date:"M d, Y" }}
+        </p>
+    </div>
+    <div class="col-md-4 text-end">
+        <div class="btn-group" role="group">
+            <a href="{% url 'automotive:vehicle_edit' vehicle.vehicle_id %}" class="btn btn-primary">
+                <i class="bi bi-pencil"></i> Edit
+            </a>
+            <a href="{% url 'automotive:vehicle_delete' vehicle.vehicle_id %}" class="btn btn-outline-danger">
+                <i class="bi bi-trash"></i> Delete
+            </a>
+            <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
+                <i class="bi bi-three-dots"></i>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li><a class="dropdown-item" href="{% url 'automotive:vehicle_compare' %}?vehicle_id={{ vehicle.vehicle_id }}">Compare</a></li>
+                <li><a class="dropdown-item" href="#" onclick="window.print()">Print</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item" href="{% url 'automotive:api_vehicle_summary' vehicle.vehicle_id %}">JSON Data</a></li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- Basic Information -->
+<div class="row mb-4">
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="bi bi-info-circle"></i> Basic Information</h5>
+            </div>
+            <div class="card-body">
+                <dl class="row">
+                    <dt class="col-sm-4">Vehicle ID:</dt>
+                    <dd class="col-sm-8">{{ vehicle.vehicle_id }}</dd>
+
+                    <dt class="col-sm-4">Year:</dt>
+                    <dd class="col-sm-8">{{ vehicle.base_vehicle.year.year_id }}</dd>
+
+                    <dt class="col-sm-4">Make:</dt>
+                    <dd class="col-sm-8">{{ vehicle.base_vehicle.make.make_name }}</dd>
+
+                    <dt class="col-sm-4">Model:</dt>
+                    <dd class="col-sm-8">{{ vehicle.base_vehicle.model.model_name|default:"Unknown Model" }}</dd>
+
+                    <dt class="col-sm-4">Submodel:</dt>
+                    <dd class="col-sm-8">{{ vehicle.submodel.sub_model_name }}</dd>
+
+                    <dt class="col-sm-4">Region:</dt>
+                    <dd class="col-sm-8">{{ vehicle.region.region_name|default:"Not specified" }}</dd>
+
+                    <dt class="col-sm-4">Source:</dt>
+                    <dd class="col-sm-8">{{ vehicle.source|default:"Not specified" }}</dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="bi bi-clipboard-data"></i> Publication Info</h5>
+            </div>
+            <div class="card-body">
+                <dl class="row">
+                    <dt class="col-sm-5">Publication Stage:</dt>
+                    <dd class="col-sm-7">
+                        <span class="badge bg-success">{{ vehicle.publication_stage.publication_stage_name }}</span>
+                    </dd>
+
+                    <dt class="col-sm-5">Stage Source:</dt>
+                    <dd class="col-sm-7">{{ vehicle.publication_stage_source }}</dd>
+
+                    <dt class="col-sm-5">Publication Date:</dt>
+                    <dd class="col-sm-7">{{ vehicle.publication_stage_date|date:"M d, Y H:i" }}</dd>
+
+                    <dt class="col-sm-5">Created:</dt>
+                    <dd class="col-sm-7">
+                        {{ vehicle.created_at|date:"M d, Y H:i" }}
+                        {% if vehicle.created_by %}
+                            <br><small class="text-muted">by {{ vehicle.created_by }}</small>
+                        {% endif %}
+                    </dd>
+
+                    <dt class="col-sm-5">Last Updated:</dt>
+                    <dd class="col-sm-7">
+                        {{ vehicle.updated_at|date:"M d, Y H:i" }}
+                        {% if vehicle.updated_by %}
+                            <br><small class="text-muted">by {{ vehicle.updated_by }}</small>
+                        {% endif %}
+                    </dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Engine Configurations -->
+{% if vehicle.engine_configs.all %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="bi bi-gear"></i> Engine Configurations</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Designation</th>
+                                <th>Displacement</th>
+                                <th>Configuration</th>
+                                <th>Fuel Type</th>
+                                <th>Aspiration</th>
+                                <th>Power Output</th>
+                                <th>Manufacturer</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for engine_config_rel in vehicle.engine_configs.all %}
+                                {% with engine=engine_config_rel.engine_config %}
+                                <tr>
+                                    <td>
+                                        <a href="{% url 'automotive:engine_config_detail' engine.engine_config_id %}">
+                                            {{ engine.engine_designation.engine_designation_name }}
+                                        </a>
+                                    </td>
+                                    <td>{{ engine.engine_base.liter }}L ({{ engine.engine_base.cc }}cc)</td>
+                                    <td>{{ engine.engine_base.cylinders }} cylinders, {{ engine.engine_base.block_type }}</td>
+                                    <td>{{ engine.fuel_type.fuel_type_name }}</td>
+                                    <td>{{ engine.aspiration.aspiration_name }}</td>
+                                    <td>
+                                        {% if engine.power_output %}
+                                            {{ engine.power_output.horse_power }} HP / {{ engine.power_output.kilowatt_power }} kW
+                                        {% else %}
+                                            N/A
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ engine.engine_mfr.mfr_name }}</td>
+                                </tr>
+                                {% endwith %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Transmissions -->
+{% if vehicle.transmissions.all %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="bi bi-gear-fill"></i> Transmissions</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Type</th>
+                                <th>Speeds</th>
+                                <th>Control Type</th>
+                                <th>Manufacturer Code</th>
+                                <th>Electronic Controlled</th>
+                                <th>Manufacturer</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for transmission_rel in vehicle.transmissions.all %}
+                                {% with trans=transmission_rel.transmission %}
+                                <tr>
+                                    <td>{{ trans.transmission_base.transmission_type.transmission_type_name }}</td>
+                                    <td>{{ trans.transmission_base.transmission_num_speeds.transmission_num_speeds }}</td>
+                                    <td>{{ trans.transmission_base.transmission_control_type.transmission_control_type_name }}</td>
+                                    <td>{{ trans.transmission_mfr_code.transmission_mfr_code }}</td>
+                                    <td>
+                                        {% if trans.transmission_elec_controlled.elec_controlled == "Yes" %}
+                                            <i class="bi bi-check-circle text-success"></i> Yes
+                                        {% else %}
+                                            <i class="bi bi-x-circle text-danger"></i> No
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ trans.transmission_mfr.mfr_name }}</td>
+                                </tr>
+                                {% endwith %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Other Configurations -->
+<div class="row">
+    <!-- Drive Types -->
+    {% if vehicle.drive_types.all %}
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h6><i class="bi bi-arrow-up-right-circle"></i> Drive Types</h6>
+            </div>
+            <div class="card-body">
+                {% for drive_type_rel in vehicle.drive_types.all %}
+                    <span class="badge bg-primary me-1">{{ drive_type_rel.drive_type.drive_type_name }}</span>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Body Style -->
+    {% if vehicle.body_style_configs.all %}
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h6><i class="bi bi-car-front-fill"></i> Body Style</h6>
+            </div>
+            <div class="card-body">
+                {% for body_config_rel in vehicle.body_style_configs.all %}
+                    {% with config=body_config_rel.body_style_config %}
+                    <span class="badge bg-info me-1">
+                        {{ config.body_type.body_type_name }} - {{ config.body_num_doors.body_num_doors }} doors
+                    </span>
+                    {% endwith %}
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Brake Configuration -->
+    {% if vehicle.brake_configs.all %}
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h6><i class="bi bi-stop-circle"></i> Brake Configuration</h6>
+            </div>
+            <div class="card-body">
+                {% for brake_config_rel in vehicle.brake_configs.all %}
+                    {% with config=brake_config_rel.brake_config %}
+                    <p class="mb-1">
+                        <strong>Front:</strong> {{ config.front_brake_type.brake_type_name }}<br>
+                        <strong>Rear:</strong> {{ config.rear_brake_type.brake_type_name }}<br>
+                        <strong>System:</strong> {{ config.brake_system.brake_system_name }}<br>
+                        <strong>ABS:</strong> {{ config.brake_abs.brake_abs_name }}
+                    </p>
+                    {% endwith %}
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Vehicle Classes -->
+    {% if vehicle.classes.all %}
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h6><i class="bi bi-tags"></i> Vehicle Classes</h6>
+            </div>
+            <div class="card-body">
+                {% for class_rel in vehicle.classes.all %}
+                    <span class="badge bg-secondary me-1">{{ class_rel.vehicle_class.class_name }}</span>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Navigation -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between">
+            <a href="{% url 'automotive:vehicle_list' %}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Back to List
+            </a>
+            <div class="btn-group">
+                {% comment %}
+                <!-- Previous/Next vehicle navigation could be added here -->
+                {% endcomment %}
+                <a href="{% url 'automotive:vehicle_compare' %}?vehicle_id={{ vehicle.vehicle_id }}" class="btn btn-info">
+                    <i class="bi bi-arrows-expand"></i> Compare
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

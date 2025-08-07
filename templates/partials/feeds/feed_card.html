@@ -1,0 +1,57 @@
+<!-- templates/partials/feeds/feed_card.html -->
+<div class="bg-white rounded-lg shadow p-6 hover:shadow-md transition-shadow">
+    <div class="flex items-start justify-between mb-4">
+        <div class="flex-1">
+            <h3 class="text-lg font-semibold text-gray-900 mb-1">
+                <a href="{% url 'feeds:detail' feed.pk %}" class="hover:text-blue-600">
+                    {{ feed.name }}
+                </a>
+            </h3>
+
+            <div class="flex items-center space-x-4 text-sm text-gray-500">
+                <span>{{ feed.get_feed_type_display }}</span>
+                <span>{{ feed.get_format_display }}</span>
+                {% if feed.customer %}
+                    <span>{{ feed.customer.get_full_name|default:feed.customer.username }}</span>
+                {% endif %}
+            </div>
+        </div>
+
+        {% include 'partials/status/badge.html' with status=feed.is_active|yesno:'active,inactive' show_icon=True %}
+    </div>
+
+    {% if feed.description %}
+        <p class="text-gray-600 text-sm mb-4 line-clamp-2">{{ feed.description }}</p>
+    {% endif %}
+
+    <!-- Stats -->
+    <div class="grid grid-cols-3 gap-4 mb-4 text-center">
+        <div>
+            <p class="text-lg font-semibold text-gray-900">{{ feed.generations_count|default:0 }}</p>
+            <p class="text-xs text-gray-500">Generations</p>
+        </div>
+        <div>
+            <p class="text-lg font-semibold text-gray-900">{{ feed.products_count|default:0 }}</p>
+            <p class="text-xs text-gray-500">Products</p>
+        </div>
+        <div>
+            <p class="text-lg font-semibold text-gray-900">
+                {% if feed.last_generated %}{{ feed.last_generated|timesince }}{% else %}Never{% endif %}
+            </p>
+            <p class="text-xs text-gray-500">Last Generated</p>
+        </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="flex space-x-2">
+        <a href="{% url 'feeds:generate' feed.pk %}"
+           class="flex-1 bg-blue-600 text-white text-center py-2 px-4 rounded-md hover:bg-blue-700 transition text-sm">
+            <i class="fas fa-play mr-2"></i>Generate
+        </a>
+
+        <a href="{% url 'feeds:detail' feed.pk %}"
+           class="flex-1 border border-gray-300 text-gray-700 text-center py-2 px-4 rounded-md hover:bg-gray-50 transition text-sm">
+            <i class="fas fa-cog mr-2"></i>Configure
+        </a>
+    </div>
+</div>

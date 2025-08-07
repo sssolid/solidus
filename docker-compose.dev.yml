@@ -59,7 +59,7 @@ services:
       - /app/.venv                       # Exclude venv (use container's)
       - /app/node_modules                # Exclude node_modules if present
       - ./media:/app/media               # Persistent media
-      - static_data:/app/static          # Persistent static files
+      - ./static:/app/static          # Persistent static files
       # Exclude Python cache for better performance
       - /app/src/**/__pycache__
       - /app/**/*.pyc

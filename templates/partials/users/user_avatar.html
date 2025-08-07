@@ -1,0 +1,10 @@
+<!-- templates/partials/users/user_avatar.html -->
+{% if user.profile_image %}
+    <img src="{{ user.profile_image.url }}"
+         alt="{{ user.get_full_name|default:user.username }}"
+         class="{% if size == 'xs' %}h-6 w-6{% elif size == 'sm' %}h-8 w-8{% elif size == 'lg' %}h-12 w-12{% elif size == 'xl' %}h-16 w-16{% else %}h-10 w-10{% endif %} rounded-full object-cover">
+{% else %}
+    <div class="{% if size == 'xs' %}h-6 w-6 text-xs{% elif size == 'sm' %}h-8 w-8 text-sm{% elif size == 'lg' %}h-12 w-12 text-lg{% elif size == 'xl' %}h-16 w-16 text-xl{% else %}h-10 w-10 text-base{% endif %} rounded-full bg-gray-300 flex items-center justify-center text-gray-600 font-medium">
+        {{ user.get_full_name.0|default:user.username.0|upper }}
+    </div>
+{% endif %}

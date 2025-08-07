@@ -1,0 +1,20 @@
+<!-- templates/partials/ui/button_classes.html -->
+inline-flex items-center px-{% if button.size == 'xs' %}2{% elif button.size == 'sm' %}3{% elif button.size == 'lg' %}6{% elif button.size == 'xl' %}8{% else %}4{% endif %} py-{% if button.size == 'xs' %}1{% elif button.size == 'sm' %}1.5{% elif button.size == 'lg' %}3{% elif button.size == 'xl' %}4{% else %}2{% endif %} border border-transparent text-{% if button.size == 'xs' %}xs{% elif button.size == 'sm' %}sm{% elif button.size == 'lg' %}base{% elif button.size == 'xl' %}lg{% else %}sm{% endif %} font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 transition
+{% if button.variant == 'primary' %}
+    bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500
+{% elif button.variant == 'secondary' %}
+    bg-gray-600 text-white hover:bg-gray-700 focus:ring-gray-500
+{% elif button.variant == 'success' %}
+    bg-green-600 text-white hover:bg-green-700 focus:ring-green-500
+{% elif button.variant == 'danger' %}
+    bg-red-600 text-white hover:bg-red-700 focus:ring-red-500
+{% elif button.variant == 'warning' %}
+    bg-yellow-600 text-white hover:bg-yellow-700 focus:ring-yellow-500
+{% elif button.variant == 'outline' %}
+    border-gray-300 text-gray-700 bg-white hover:bg-gray-50 focus:ring-blue-500
+{% elif button.variant == 'ghost' %}
+    text-gray-700 bg-transparent hover:bg-gray-100 focus:ring-blue-500
+{% else %}
+    bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500
+{% endif %}
+{% if button.disabled %} opacity-50 cursor-not-allowed{% endif %}

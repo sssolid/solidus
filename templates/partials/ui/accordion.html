@@ -1,0 +1,20 @@
+<!-- templates/partials/ui/accordion.html -->
+<div class="space-y-2">
+    {% for item in accordion_items %}
+        <div class="border border-gray-200 rounded-lg" x-data="{ open: {{ item.open|yesno:'true,false' }} }">
+            <button @click="open = !open"
+                    class="w-full px-4 py-3 text-left flex items-center justify-between hover:bg-gray-50 rounded-lg">
+                <span class="font-medium text-gray-900">{{ item.title }}</span>
+                <i class="fas fa-chevron-down transition-transform" :class="{ 'rotate-180': open }"></i>
+            </button>
+
+            <div x-show="open" x-transition class="px-4 pb-3">
+                {% if item.template %}
+                    {% include item.template with item_data=item.data %}
+                {% else %}
+                    {{ item.content|safe }}
+                {% endif %}
+            </div>
+        </div>
+    {% endfor %}
+</div>

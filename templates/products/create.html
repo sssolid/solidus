@@ -1,385 +1,51 @@
-<!-- templates/products/create.html -->
-{% extends 'base.html' %}
+<!-- templates/products/create.html - COMPLETE REFACTORING -->
+{% extends "base.html" %}
 {% load widget_tweaks %}
 
 {% block title %}Create Product - Solidus{% endblock %}
 
 {% block content %}
-<div class="px-4 sm:px-6 lg:px-8 py-8">
-    <!-- Header -->
-    <div class="sm:flex sm:items-center">
-        <div class="sm:flex-auto">
-            <h1 class="text-2xl font-bold text-gray-900">Create Product</h1>
-            <p class="mt-2 text-sm text-gray-700">
-                Add a new product to your catalog with all necessary details.
-            </p>
+    {% include 'partials/content/list_header.html' with title="Create Product" subtitle="Add a new product to your catalog" %}
+
+    <form method="post" class="space-y-8">
+        {% csrf_token %}
+
+        <!-- Basic Information -->
+        {% include 'partials/ui/card.html' with card_header=True card_title="Basic Information" %}
+        <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+            {% include 'partials/forms/field.html' with field=form.name field_class='sm:col-span-2' %}
+            {% include 'partials/forms/field.html' with field=form.part_number %}
+            {% include 'partials/forms/field.html' with field=form.brand field_type='select' %}
+            {% include 'partials/forms/field.html' with field=form.description field_type='textarea' field_class='sm:col-span-2' %}
         </div>
-        <div class="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
-            <a href="{% url 'products:list' %}"
-               class="inline-flex items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 sm:w-auto">
-                <i class="fas fa-arrow-left mr-2"></i>
-                Back to Products
-            </a>
+
+        <!-- Categories and Classification -->
+        {% include 'partials/ui/card.html' with card_header=True card_title="Categories and Classification" %}
+        <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+            {% include 'partials/forms/field.html' with field=form.categories field_type='checkbox' field_class='sm:col-span-2' %}
+            {% include 'partials/forms/tags_input.html' with field=form.tags field_class='sm:col-span-2' %}
         </div>
-    </div>
 
-    <!-- Form -->
-    <div class="mt-8 bg-white shadow rounded-lg">
-        <form method="POST" enctype="multipart/form-data">
-            {% csrf_token %}
+        <!-- Physical Properties -->
+        {% include 'partials/ui/card.html' with card_header=True card_title="Physical Properties" %}
+        <div class="grid grid-cols-1 gap-6 sm:grid-cols-3">
+            {% include 'partials/forms/field.html' with field=form.weight %}
+            {% include 'partials/forms/field.html' with field=form.length %}
+            {% include 'partials/forms/field.html' with field=form.width %}
+            {% include 'partials/forms/field.html' with field=form.height %}
+            {% include 'partials/forms/field.html' with field=form.weight_unit field_type='select' %}
+            {% include 'partials/forms/field.html' with field=form.dimension_unit field_type='select' %}
+        </div>
 
-            <!-- Form Header -->
-            <div class="px-4 py-5 sm:px-6 border-b border-gray-200">
-                <h3 class="text-lg font-medium text-gray-900">Product Information</h3>
-                <p class="mt-1 text-sm text-gray-500">Fill out the details below to create a new product.</p>
-            </div>
+        <!-- Pricing and Availability -->
+        {% include 'partials/ui/card.html' with card_header=True card_title="Pricing and Availability" %}
+        <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+            {% include 'partials/forms/field.html' with field=form.base_price %}
+            {% include 'partials/forms/field.html' with field=form.cost %}
+            {% include 'partials/forms/field.html' with field=form.stock_quantity %}
+            {% include 'partials/forms/field.html' with field=form.status field_type='select' %}
+        </div>
 
-            <div class="px-4 py-5 sm:p-6">
-                <!-- Basic Information -->
-                <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                    <div>
-                        <label for="{{ form.sku.id_for_label }}" class="block text-sm font-medium text-gray-700">
-                            SKU <span class="text-red-500">*</span>
-                        </label>
-                        <div class="mt-1">
-                            {{ form.sku|add_class:"mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" }}
-                        </div>
-                        {% if form.sku.errors %}
-                            <p class="mt-2 text-sm text-red-600">{{ form.sku.errors.0 }}</p>
-                        {% endif %}
-                    </div>
-
-                    <div>
-                        <label for="{{ form.brand.id_for_label }}" class="block text-sm font-medium text-gray-700">
-                            Brand
-                        </label>
-                        <div class="mt-1">
-                            {{ form.brand|add_class:"mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" }}
-                        </div>
-                        {% if form.brand.errors %}
-                            <p class="mt-2 text-sm text-red-600">{{ form.brand.errors.0 }}</p>
-                        {% endif %}
-                    </div>
-                </div>
-
-                <div class="mt-6">
-                    <label for="{{ form.name.id_for_label }}" class="block text-sm font-medium text-gray-700">
-                        Product Name <span class="text-red-500">*</span>
-                    </label>
-                    <div class="mt-1">
-                        {{ form.name|add_class:"mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" }}
-                    </div>
-                    {% if form.name.errors %}
-                        <p class="mt-2 text-sm text-red-600">{{ form.name.errors.0 }}</p>
-                    {% endif %}
-                </div>
-
-                <div class="mt-6">
-                    <label for="{{ form.description.id_for_label }}" class="block text-sm font-medium text-gray-700">
-                        Description
-                    </label>
-                    <div class="mt-1">
-                        {{ form.description|add_class:"mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" }}
-                    </div>
-                    {% if form.description.errors %}
-                        <p class="mt-2 text-sm text-red-600">{{ form.description.errors.0 }}</p>
-                    {% endif %}
-                </div>
-
-                <!-- Categories -->
-                <div class="mt-6">
-                    <label class="block text-sm font-medium text-gray-700">Categories</label>
-                    <div class="mt-2 space-y-2">
-                        {% for choice in form.categories %}
-                            <div class="flex items-center">
-                                {{ choice.tag }}
-                                <label for="{{ choice.id_for_label }}" class="ml-2 text-sm text-gray-700">
-                                    {{ choice.choice_label }}
-                                </label>
-                            </div>
-                        {% endfor %}
-                    </div>
-                    {% if form.categories.errors %}
-                        <p class="mt-2 text-sm text-red-600">{{ form.categories.errors.0 }}</p>
-                    {% endif %}
-                </div>
-
-                <!-- Physical Properties -->
-                <div class="mt-8">
-                    <h4 class="text-base font-medium text-gray-900 mb-4">Physical Properties</h4>
-                    <div class="grid grid-cols-1 gap-6 sm:grid-cols-3">
-                        <div>
-                            <label for="{{ form.weight.id_for_label }}" class="block text-sm font-medium text-gray-700">
-                                Weight (lbs)
-                            </label>
-                            <div class="mt-1">
-                                {{ form.weight|add_class:"mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" }}
-                            </div>
-                            {% if form.weight.errors %}
-                                <p class="mt-2 text-sm text-red-600">{{ form.weight.errors.0 }}</p>
-                            {% endif %}
-                        </div>
-
-                        <div>
-                            <label for="{{ form.dimensions.id_for_label }}" class="block text-sm font-medium text-gray-700">
-                                Dimensions
-                            </label>
-                            <div class="mt-1">
-                                {{ form.dimensions|add_class:"mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" }}
-                            </div>
-                            {% if form.dimensions.errors %}
-                                <p class="mt-2 text-sm text-red-600">{{ form.dimensions.errors.0 }}</p>
-                            {% endif %}
-                        </div>
-
-                        <div>
-                            <label for="{{ form.material.id_for_label }}" class="block text-sm font-medium text-gray-700">
-                                Material
-                            </label>
-                            <div class="mt-1">
-                                {{ form.material|add_class:"mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" }}
-                            </div>
-                            {% if form.material.errors %}
-                                <p class="mt-2 text-sm text-red-600">{{ form.material.errors.0 }}</p>
-                            {% endif %}
-                        </div>
-                    </div>
-
-                    <div class="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2">
-                        <div>
-                            <label for="{{ form.color.id_for_label }}" class="block text-sm font-medium text-gray-700">
-                                Color
-                            </label>
-                            <div class="mt-1">
-                                {{ form.color|add_class:"mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" }}
-                            </div>
-                            {% if form.color.errors %}
-                                <p class="mt-2 text-sm text-red-600">{{ form.color.errors.0 }}</p>
-                            {% endif %}
-                        </div>
-
-                        <div>
-                            <label for="{{ form.finish.id_for_label }}" class="block text-sm font-medium text-gray-700">
-                                Finish
-                            </label>
-                            <div class="mt-1">
-                                {{ form.finish|add_class:"mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" }}
-                            </div>
-                            {% if form.finish.errors %}
-                                <p class="mt-2 text-sm text-red-600">{{ form.finish.errors.0 }}</p>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Part Numbers -->
-                <div class="mt-8">
-                    <h4 class="text-base font-medium text-gray-900 mb-4">Part Numbers</h4>
-                    <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                        <div>
-                            <label for="{{ form.part_numbers.id_for_label }}" class="block text-sm font-medium text-gray-700">
-                                Part Numbers
-                            </label>
-                            <div class="mt-1">
-                                {{ form.part_numbers|add_class:"mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" }}
-                            </div>
-                            <p class="mt-2 text-sm text-gray-500">Enter one part number per line</p>
-                            {% if form.part_numbers.errors %}
-                                <p class="mt-2 text-sm text-red-600">{{ form.part_numbers.errors.0 }}</p>
-                            {% endif %}
-                        </div>
-
-                        <div>
-                            <label for="{{ form.oem_numbers.id_for_label }}" class="block text-sm font-medium text-gray-700">
-                                OEM Numbers
-                            </label>
-                            <div class="mt-1">
-                                {{ form.oem_numbers|add_class:"mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" }}
-                            </div>
-                            <p class="mt-2 text-sm text-gray-500">Enter one OEM number per line</p>
-                            {% if form.oem_numbers.errors %}
-                                <p class="mt-2 text-sm text-red-600">{{ form.oem_numbers.errors.0 }}</p>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Pricing -->
-                <div class="mt-8">
-                    <h4 class="text-base font-medium text-gray-900 mb-4">Pricing</h4>
-                    <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                        <div>
-                            <label for="{{ form.msrp.id_for_label }}" class="block text-sm font-medium text-gray-700">
-                                MSRP
-                            </label>
-                            <div class="mt-1 relative rounded-md shadow-sm">
-                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <span class="text-gray-500 sm:text-sm">$</span>
-                                </div>
-                                {{ form.msrp|add_class:"mt-1 block w-full pl-7 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" }}
-                            </div>
-                            {% if form.msrp.errors %}
-                                <p class="mt-2 text-sm text-red-600">{{ form.msrp.errors.0 }}</p>
-                            {% endif %}
-                        </div>
-
-                        <div>
-                            <label for="{{ form.map_price.id_for_label }}" class="block text-sm font-medium text-gray-700">
-                                MAP Price
-                            </label>
-                            <div class="mt-1 relative rounded-md shadow-sm">
-                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <span class="text-gray-500 sm:text-sm">$</span>
-                                </div>
-                                {{ form.map_price|add_class:"mt-1 block w-full pl-7 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" }}
-                            </div>
-                            {% if form.map_price.errors %}
-                                <p class="mt-2 text-sm text-red-600">{{ form.map_price.errors.0 }}</p>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Status and Dates -->
-                <div class="mt-8">
-                    <h4 class="text-base font-medium text-gray-900 mb-4">Status & Dates</h4>
-
-                    <div class="flex items-center space-x-6 mb-6">
-                        <div class="flex items-center">
-                            {{ form.is_active }}
-                            <label for="{{ form.is_active.id_for_label }}" class="ml-2 text-sm text-gray-700">
-                                Active Product
-                            </label>
-                        </div>
-
-                        <div class="flex items-center">
-                            {{ form.is_featured }}
-                            <label for="{{ form.is_featured.id_for_label }}" class="ml-2 text-sm text-gray-700">
-                                Featured Product
-                            </label>
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                        <div>
-                            <label for="{{ form.launch_date.id_for_label }}" class="block text-sm font-medium text-gray-700">
-                                Launch Date
-                            </label>
-                            <div class="mt-1">
-                                {{ form.launch_date|add_class:"mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" }}
-                            </div>
-                            {% if form.launch_date.errors %}
-                                <p class="mt-2 text-sm text-red-600">{{ form.launch_date.errors.0 }}</p>
-                            {% endif %}
-                        </div>
-
-                        <div>
-                            <label for="{{ form.discontinue_date.id_for_label }}" class="block text-sm font-medium text-gray-700">
-                                Discontinue Date
-                            </label>
-                            <div class="mt-1">
-                                {{ form.discontinue_date|add_class:"mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" }}
-                            </div>
-                            {% if form.discontinue_date.errors %}
-                                <p class="mt-2 text-sm text-red-600">{{ form.discontinue_date.errors.0 }}</p>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
-
-                <!-- SEO -->
-                <div class="mt-8">
-                    <h4 class="text-base font-medium text-gray-900 mb-4">SEO & Marketing</h4>
-
-                    <div class="space-y-6">
-                        <div>
-                            <label for="{{ form.meta_title.id_for_label }}" class="block text-sm font-medium text-gray-700">
-                                Meta Title
-                            </label>
-                            <div class="mt-1">
-                                {{ form.meta_title|add_class:"mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" }}
-                            </div>
-                            <p class="mt-2 text-sm text-gray-500">Maximum 150 characters</p>
-                            {% if form.meta_title.errors %}
-                                <p class="mt-2 text-sm text-red-600">{{ form.meta_title.errors.0 }}</p>
-                            {% endif %}
-                        </div>
-
-                        <div>
-                            <label for="{{ form.meta_description.id_for_label }}" class="block text-sm font-medium text-gray-700">
-                                Meta Description
-                            </label>
-                            <div class="mt-1">
-                                {{ form.meta_description|add_class:"mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" }}
-                            </div>
-                            <p class="mt-2 text-sm text-gray-500">Maximum 300 characters</p>
-                            {% if form.meta_description.errors %}
-                                <p class="mt-2 text-sm text-red-600">{{ form.meta_description.errors.0 }}</p>
-                            {% endif %}
-                        </div>
-
-                        <div>
-                            <label for="{{ form.tags.id_for_label }}" class="block text-sm font-medium text-gray-700">
-                                Tags
-                            </label>
-                            <div class="mt-1">
-                                {{ form.tags|add_class:"mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" }}
-                            </div>
-                            <p class="mt-2 text-sm text-gray-500">Enter tags separated by commas</p>
-                            {% if form.tags.errors %}
-                                <p class="mt-2 text-sm text-red-600">{{ form.tags.errors.0 }}</p>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Form Actions -->
-            <div class="px-4 py-3 bg-gray-50 text-right sm:px-6 rounded-b-lg">
-                <div class="flex justify-end space-x-3">
-                    <a href="{% url 'products:list' %}"
-                       class="inline-flex justify-center py-2 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                        Cancel
-                    </a>
-                    <button type="submit"
-                            class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                        <i class="fas fa-save mr-2"></i>
-                        Create Product
-                    </button>
-                </div>
-            </div>
-        </form>
-    </div>
-</div>
-
-<script>
-// Auto-generate slug from name
-document.getElementById('{{ form.name.id_for_label }}').addEventListener('input', function() {
-    // This would be used if we had a slug field
-});
-
-// Character counters for meta fields
-function addCharacterCounter(fieldId, maxLength) {
-    const field = document.getElementById(fieldId);
-    if (field) {
-        const counter = document.createElement('span');
-        counter.className = 'text-xs text-gray-500';
-        counter.id = fieldId + '_counter';
-
-        function updateCounter() {
-            const remaining = maxLength - field.value.length;
-            counter.textContent = `${field.value.length}/${maxLength} characters`;
-            counter.className = remaining < 0 ? 'text-xs text-red-500' : 'text-xs text-gray-500';
-        }
-
-        field.addEventListener('input', updateCounter);
-        field.parentNode.appendChild(counter);
-        updateCounter();
-    }
-}
-
-// Add character counters
-addCharacterCounter('{{ form.meta_title.id_for_label }}', 150);
-addCharacterCounter('{{ form.meta_description.id_for_label }}', 300);
-</script>
+        {% include 'partials/forms/form_actions.html' with submit_text='Create Product' submit_icon='fas fa-plus' cancel_url='products:list' secondary_action.text='Save as Draft' secondary_action.onclick='saveDraft()' %}
+    </form>
 {% endblock %}

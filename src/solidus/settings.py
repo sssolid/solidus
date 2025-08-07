@@ -42,7 +42,8 @@ THIRD_PARTY_APPS = [
 
 LOCAL_APPS = [
     'accounts',  # Must be first due to custom User model
-    'autocare',
+    'autocare_pcadb',
+    'autocare_vcdb',
     'core',
     'products',
     'assets',
@@ -52,6 +53,16 @@ LOCAL_APPS = [
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
+
+# Add automotive-specific settings
+VCDB_SETTINGS = {
+    'ENABLE_IMPORT_EXPORT': True,
+    'ENABLE_BULK_OPERATIONS': True,
+    'MAX_COMPARISON_VEHICLES': 5,
+    'DEFAULT_PAGINATION_SIZE': 25,
+    'CACHE_TIMEOUT': 300,  # 5 minutes
+    'ENABLE_STATISTICS_CACHING': True,
+}
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -81,6 +92,8 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'core.context_processors.site_context',
+                'core.context_processors.navigation_context',
+                'core.context_processors.ui_context',
             ],
         },
     },
@@ -159,9 +172,9 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 STATIC_URL = '/static/'
-STATIC_ROOT = BASE_DIR / 'static'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [
-    # BASE_DIR / 'static',
+    BASE_DIR / 'static',
 ]
 
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
@@ -232,6 +245,11 @@ LOGGING = {
             'level': 'DEBUG',
             'propagate': False,
         },
+        'autocare_vcdb': {
+            'handlers': ['console', 'file'],
+            'level': 'INFO',
+            'propagate': True,
+        }
     },
 }
 

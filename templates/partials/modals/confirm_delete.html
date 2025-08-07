@@ -1,0 +1,23 @@
+<!-- templates/partials/modals/confirm_delete.html -->
+{% include 'partials/ui/modal.html' with modal_id='confirm-delete-modal' modal_title='Confirm Deletion' size='sm' %}
+<div class="text-center">
+    <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
+        <i class="fas fa-exclamation-triangle text-red-600"></i>
+    </div>
+
+    <h3 class="text-lg font-medium text-gray-900 mb-2">Delete {{ item_type }}?</h3>
+    <p class="text-sm text-gray-500 mb-6">
+        Are you sure you want to delete "{{ item_name }}"? This action cannot be undone.
+    </p>
+
+    <div class="flex space-x-3 justify-center">
+        <button @click="show = false"
+                class="bg-white py-2 px-4 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
+            Cancel
+        </button>
+        <button onclick="confirmDelete()"
+                class="bg-red-600 py-2 px-4 border border-transparent rounded-md text-sm font-medium text-white hover:bg-red-700">
+            Delete
+        </button>
+    </div>
+</div>

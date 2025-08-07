@@ -1,0 +1,25 @@
+<!-- templates/partials/forms/form_actions.html -->
+<div class="flex items-center justify-end space-x-4 pt-6 border-t border-gray-200">
+    {% if cancel_url %}
+        <a href="{{ cancel_url }}"
+           class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+            Cancel
+        </a>
+    {% endif %}
+
+    {% if secondary_action %}
+        <button type="button"
+                {% if secondary_action.onclick %}onclick="{{ secondary_action.onclick }}"{% endif %}
+                class="py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+            {% if secondary_action.icon %}<i class="{{ secondary_action.icon }} mr-2"></i>{% endif %}
+            {{ secondary_action.text }}
+        </button>
+    {% endif %}
+
+    <button type="submit"
+            {% if submit_onclick %}onclick="{{ submit_onclick }}"{% endif %}
+            class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+        {% if submit_icon %}<i class="{{ submit_icon }} mr-2"></i>{% endif %}
+        {{ submit_text|default:'Save' }}
+    </button>
+</div>

@@ -1,0 +1,47 @@
+<!-- templates/partials/feeds/generation_status.html -->
+<div class="bg-white rounded-lg border p-4">
+    <div class="flex items-center justify-between mb-3">
+        <h4 class="font-medium text-gray-900">Generation #{{ generation.id }}</h4>
+        {% include 'partials/status/badge.html' with status=generation.status show_icon=True %}
+    </div>
+
+    {% if generation.status == 'running' and generation.progress is not None %}
+        <div class="mb-3">
+            {% include 'partials/ui/progress_bar.html' with percentage=generation.progress height='2' %}
+            <div class="flex justify-between text-xs text-gray-500 mt-1">
+                <span>{{ generation.progress }}% complete</span>
+                <span>{{ generation.processed_items|default:0 }} / {{ generation.total_items|default:0 }} items</span>
+            </div>
+        </div>
+    {% endif %}
+
+    <div class="space-y-2 text-sm">
+        <div class="flex justify-between">
+            <span class="text-gray-600">Started:</span>
+            <span class="text-gray-900">{{ generation.started_at|date:"M d, Y H:i" }}</span>
+        </div>
+
+        {% if generation.completed_at %}
+            <div class="flex justify-between">
+                <span class="text-gray-600">Completed:</span>
+                <span class="text-gray-900">{{ generation.completed_at|date:"M d, Y H:i" }}</span>
+            </div>
+        {% endif %}
+
+        {% if generation.file_size %}
+            <div class="flex justify-between">
+                <span class="text-gray-600">File Size:</span>
+                <span class="text-gray-900">{{ generation.file_size_human }}</span>
+            </div>
+        {% endif %}
+
+        {% if generation.download_url %}
+            <div class="pt-2 border-t border-gray-100">
+                <a href="{{ generation.download_url }}"
+                   class="inline-flex items-center text-blue-600 hover:text-blue-700 text-sm">
+                    <i class="fas fa-download mr-2"></i>Download Feed
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>

@@ -1,0 +1,12 @@
+<!-- templates/partials/users/user_info.html -->
+<div class="flex items-center space-x-3">
+    {% include 'partials/users/user_avatar.html' with user=user size='sm' %}
+    <div class="min-w-0 flex-1">
+        <p class="text-sm font-medium text-white truncate">
+            {{ user.get_full_name|default:user.username }}
+        </p>
+        <p class="text-xs text-gray-400 truncate">
+            {% include 'partials/users/role_badge.html' with user=user size='xs' %}
+        </p>
+    </div>
+</div>

@@ -1,0 +1,38 @@
+<!-- templates/partials/ui/card.html -->
+<div class="bg-white rounded-lg shadow {% if hover %}hover:shadow-md transition-shadow{% endif %} {% if card_class %}{{ card_class }}{% endif %}">
+    {% if card_header %}
+        <div class="px-6 py-4 border-b border-gray-200">
+            <div class="flex items-center justify-between">
+                <div>
+                    {% if card_title %}
+                        <h3 class="text-lg font-semibold text-gray-900">{{ card_title }}</h3>
+                    {% endif %}
+                    {% if card_subtitle %}
+                        <p class="text-sm text-gray-500">{{ card_subtitle }}</p>
+                    {% endif %}
+                </div>
+                {% if card_actions %}
+                    <div class="flex space-x-2">
+                        {% for action in card_actions %}
+                            {% include 'partials/ui/button.html' with button=action size='sm' %}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    {% endif %}
+
+    <div class="{% if card_padding %}{{ card_padding }}{% else %}p-6{% endif %}">
+        {% if card_content %}
+            {{ card_content|safe }}
+        {% else %}
+            {% block card_body %}{% endblock %}
+        {% endif %}
+    </div>
+
+    {% if card_footer %}
+        <div class="px-6 py-4 border-t border-gray-200 bg-gray-50 rounded-b-lg">
+            {{ card_footer|safe }}
+        </div>
+    {% endif %}
+</div>

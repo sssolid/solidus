@@ -1,0 +1,63 @@
+<!-- templates/partials/content/search_filter.html -->
+<div class="bg-white p-4 rounded-lg shadow-sm border mb-6">
+    <form method="GET"
+          {% if use_htmx %}
+          hx-get="{{ request.path }}"
+          hx-target="#{{ target_id|default:'results' }}"
+          hx-trigger="change, search"
+          {% endif %}
+          class="grid grid-cols-1 md:grid-cols-{{ grid_cols|default:'4' }} gap-4">
+
+        <!-- Search field -->
+        {% if show_search %}
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Search</label>
+                <input type="text"
+                       name="search"
+                       value="{{ request.GET.search }}"
+                       placeholder="{{ search_placeholder|default:'Search...' }}"
+                       class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+            </div>
+        {% endif %}
+
+        <!-- Filter fields -->
+        {% for filter_field in filter_fields %}
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">{{ filter_field.label }}</label>
+                {% if filter_field.type == 'select' %}
+                    <select name="{{ filter_field.name }}"
+                            class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        <option value="">{{ filter_field.empty_label|default:'All' }}</option>
+                        {% for option in filter_field.options %}
+                            <option value="{{ option.value }}"
+                                    {% if option.value == filter_field.selected %}selected{% endif %}>
+                                {{ option.label }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                {% elif filter_field.type == 'date' %}
+                    <input type="date"
+                           name="{{ filter_field.name }}"
+                           value="{{ filter_field.value }}"
+                           class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                {% else %}
+                    <input type="text"
+                           name="{{ filter_field.name }}"
+                           value="{{ filter_field.value }}"
+                           placeholder="{{ filter_field.placeholder }}"
+                           class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                {% endif %}
+            </div>
+        {% endfor %}
+
+        <!-- Submit button for non-HTMX forms -->
+        {% if not use_htmx %}
+            <div class="flex items-end">
+                <button type="submit"
+                        class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
+                    Filter
+                </button>
+            </div>
+        {% endif %}
+    </form>
+</div>

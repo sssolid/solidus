@@ -1,0 +1,87 @@
+<!-- templates/partials/media/asset_card.html -->
+<div class="bg-white rounded-lg shadow hover:shadow-md transition-shadow group">
+    <!-- Asset Preview -->
+    <div class="aspect-w-16 aspect-h-9 bg-gray-200 rounded-t-lg overflow-hidden">
+        {% if asset.is_image %}
+            {% include 'partials/media/image_preview.html' with image_url=asset.thumbnail_url alt_text=asset.title height='48' show_overlay=True view_url=asset.get_absolute_url download_url=asset.file.url %}
+        {% elif asset.is_video %}
+            {% include 'partials/media/video_preview.html' with video_url=asset.file.url height='48' title=asset.title %}
+        {% else %}
+            <div class="w-full h-48 flex items-center justify-center">
+                {% include 'partials/media/file_icon.html' with file_type=asset.file_type size='20' icon_size='4xl' %}
+            </div>
+        {% endif %}
+
+        <!-- Selection checkbox -->
+        {% if show_checkbox %}
+            <div class="absolute top-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <input type="checkbox"
+                       class="item-checkbox h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                       value="{{ asset.id }}">
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Asset Info -->
+    <div class="p-4">
+        <h3 class="text-sm font-semibold text-gray-900 mb-1 truncate">
+            <a href="{{ asset.get_absolute_url }}" class="hover:text-blue-600">
+                {{ asset.title }}
+            </a>
+        </h3>
+
+        <div class="flex items-center justify-between text-xs text-gray-500 mb-2">
+            <span>{{ asset.file_size_human }}</span>
+            <span>{{ asset.file_type|upper }}</span>
+        </div>
+
+        {% if asset.description %}
+            <p class="text-xs text-gray-600 mb-2 line-clamp-2">{{ asset.description|truncatewords:15 }}</p>
+        {% endif %}
+
+        {% if asset.tags.all %}
+            <div class="flex flex-wrap gap-1 mb-2">
+                {% for tag in asset.tags.all|slice:":3" %}
+                    <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
+                        {{ tag.name }}
+                    </span>
+                {% endfor %}
+                {% if asset.tags.count > 3 %}
+                    <span class="text-xs text-gray-400">+{{ asset.tags.count|add:"-3" }}</span>
+                {% endif %}
+            </div>
+        {% endif %}
+
+        <div class="flex items-center justify-between">
+            {% include 'partials/status/badge.html' with status=asset.status show_icon=True %}
+
+            <div class="flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <a href="{{ asset.get_absolute_url }}"
+                   class="text-gray-400 hover:text-blue-600 text-sm" title="View">
+                    <i class="fas fa-eye"></i>
+                </a>
+                <a href="{{ asset.file.url }}"
+                   class="text-gray-400 hover:text-blue-600 text-sm" title="Download">
+                    <i class="fas fa-download"></i>
+                </a>
+                {% if asset.can_edit %}
+                    <a href="{% url 'assets:edit' asset.pk %}"
+                       class="text-gray-400 hover:text-blue-600 text-sm" title="Edit">
+                        <i class="fas fa-edit"></i>
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if show_meta %}
+            <div class="mt-2 pt-2 border-t border-gray-100 text-xs text-gray-500">
+                <div class="flex justify-between">
+                    <span>Created {{ asset.created_at|date:"M d, Y" }}</span>
+                    {% if asset.created_by %}
+                        <span>by {{ asset.created_by.get_full_name|default:asset.created_by.username }}</span>
+                    {% endif %}
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>

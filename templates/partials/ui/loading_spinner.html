@@ -1,0 +1,7 @@
+<!-- templates/partials/ui/loading_spinner.html -->
+<div class="flex items-center justify-center {% if spinner_class %}{{ spinner_class }}{% else %}p-4{% endif %}">
+    <div class="animate-spin rounded-full h-{{ size|default:'8' }} w-{{ size|default:'8' }} border-b-2 border-{{ color|default:'blue' }}-600"></div>
+    {% if text %}
+        <span class="ml-2 text-sm text-gray-600">{{ text }}</span>
+    {% endif %}
+</div>

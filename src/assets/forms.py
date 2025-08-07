@@ -346,6 +346,55 @@ class AssetSearchForm(forms.Form):
     )
 
 
+class AssetFilterForm(forms.Form):
+    """Form for asset filtering - used with search_filter partial"""
+
+    search = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={
+            'placeholder': 'Search assets...',
+            'data-auto-submit': 'true',
+            'class': 'block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500'
+        })
+    )
+
+    category = forms.ModelChoiceField(
+        queryset=AssetCategory.objects.filter(is_active=True),
+        required=False,
+        empty_label='All Categories',
+        widget=forms.Select(attrs={
+            'data-auto-submit': 'true',
+            'class': 'block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500'
+        })
+    )
+
+    status = forms.ChoiceField(
+        choices=[('', 'All Status')] + Asset.STATUS_CHOICES,
+        required=False,
+        widget=forms.Select(attrs={
+            'data-auto-submit': 'true',
+            'class': 'block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500'
+        })
+    )
+
+    sort = forms.ChoiceField(
+        choices=[
+            ('created_at', 'Newest First'),
+            ('-created_at', 'Oldest First'),
+            ('title', 'Title A-Z'),
+            ('-title', 'Title Z-A'),
+            ('file_size', 'Smallest First'),
+            ('-file_size', 'Largest First'),
+        ],
+        required=False,
+        initial='created_at',
+        widget=forms.Select(attrs={
+            'data-auto-submit': 'true',
+            'class': 'block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500'
+        })
+    )
+
+
 class AssetTagForm(forms.Form):
     """Form for bulk tagging assets"""
 

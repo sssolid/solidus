@@ -1,0 +1,276 @@
+<!-- templates/autocare_vcdb/dashboard.html -->
+{% extends 'autocare_vcdb/base.html' %}
+{% load static %}
+{% load i18n %}
+{% load vcdb_tags %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item active">Dashboard</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1><i class="bi bi-speedometer2"></i> Automotive Dashboard</h1>
+        <p class="text-muted">Overview of the automotive database</p>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <h5 class="card-title">Total Vehicles</h5>
+                        <h2>{{ stats.total_vehicles|floatformat:0 }}</h2>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-car-front fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <h5 class="card-title">Makes</h5>
+                        <h2>{{ stats.total_makes }}</h2>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-building fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <h5 class="card-title">Models</h5>
+                        <h2>{{ stats.total_models }}</h2>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-collection fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card bg-warning text-white">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <h5 class="card-title">Years</h5>
+                        <h2>{{ stats.total_years }}</h2>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-calendar fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Popular Makes -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="bi bi-trophy"></i> Popular Makes</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Make</th>
+                                <th>Vehicles</th>
+                                <th>Percentage</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for make in popular_makes %}
+                                <tr>
+                                    <td>{{ make.make_name }}</td>
+                                    <td>{{ make.vehicle_count|floatformat:0 }}</td>
+                                    <td>
+                                        {% widthratio make.vehicle_count stats.total_vehicles 100 as percentage %}
+                                        <div class="progress" style="height: 20px;">
+                                            <div class="progress-bar" role="progressbar"
+                                                 style="width: {{ percentage }}%">
+                                                {{ percentage }}%
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="3" class="text-muted">No data available</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Years -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="bi bi-calendar-event"></i> Recent Years</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Year</th>
+                                <th>Vehicles</th>
+                                <th>Distribution</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for year in recent_years %}
+                                <tr>
+                                    <td>{{ year.year_id }}</td>
+                                    <td>{{ year.vehicle_count|floatformat:0 }}</td>
+                                    <td>
+                                        {% widthratio year.vehicle_count stats.total_vehicles 100 as percentage %}
+                                        <div class="progress" style="height: 20px;">
+                                            <div class="progress-bar bg-info" role="progressbar"
+                                                 style="width: {{ percentage }}%">
+                                                {{ percentage }}%
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="3" class="text-muted">No data available</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Vehicles -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5><i class="bi bi-clock-history"></i> Recent Vehicles</h5>
+                <a href="{% url 'automotive:vehicle_list' %}" class="btn btn-sm btn-outline-primary">
+                    View All <i class="bi bi-arrow-right"></i>
+                </a>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Vehicle ID</th>
+                                <th>Year</th>
+                                <th>Make</th>
+                                <th>Model</th>
+                                <th>Submodel</th>
+                                <th>Region</th>
+                                <th>Added</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for vehicle in stats.recent_vehicles %}
+                                <tr>
+                                    <td>
+                                        <a href="{% url 'automotive:vehicle_detail' vehicle.vehicle_id %}">
+                                            #{{ vehicle.vehicle_id }}
+                                        </a>
+                                    </td>
+                                    <td>{{ vehicle.base_vehicle.year.year_id }}</td>
+                                    <td>{{ vehicle.base_vehicle.make.make_name }}</td>
+                                    <td>{{ vehicle.base_vehicle.model.model_name|default:"Unknown" }}</td>
+                                    <td>{{ vehicle.submodel.sub_model_name }}</td>
+                                    <td>{{ vehicle.region.region_name|default:"Unknown" }}</td>
+                                    <td>
+                                        <small class="text-muted">
+                                            {{ vehicle.publication_stage_date|date:"M d, Y H:i" }}
+                                        </small>
+                                    </td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="7" class="text-muted text-center">No recent vehicles</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="bi bi-lightning"></i> Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <a href="{% url 'automotive:vehicle_create' %}" class="btn btn-primary w-100">
+                            <i class="bi bi-plus-circle"></i><br>
+                            Add Vehicle
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a href="{% url 'automotive:advanced_search' %}" class="btn btn-success w-100">
+                            <i class="bi bi-search"></i><br>
+                            Advanced Search
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a href="{% url 'automotive:stats' %}" class="btn btn-info w-100">
+                            <i class="bi bi-graph-up"></i><br>
+                            View Statistics
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <button type="button" class="btn btn-warning w-100"
+                                hx-post="{% url 'automotive:refresh_cache' %}"
+                                hx-confirm="Are you sure you want to refresh the cache?">
+                            <i class="bi bi-arrow-clockwise"></i><br>
+                            Refresh Cache
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

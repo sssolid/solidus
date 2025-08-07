@@ -1,0 +1,25 @@
+{
+  "name": "frontend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build:css": "tailwindcss -i ./input.css -o ../static/css/tailwind.css --minify",
+    "build:js": "esbuild index.js --bundle --minify --outfile=../static/js/bundle.js",
+    "build": "npm run build:css && npm run build:js",
+    "watch": "concurrently \"npm run build:css -- --watch\" \"npm run build:js -- --watch\""
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "alpinejs": "^3.14.9",
+    "autoprefixer": "^10.4.21",
+    "esbuild": "^0.25.8",
+    "@fortawesome/fontawesome-free": "^7.0.0",
+    "htmx.org": "^2.0.6",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^3.4.17"
+  }
+}

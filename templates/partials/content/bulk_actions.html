@@ -1,0 +1,59 @@
+<!-- templates/partials/content/bulk_actions.html -->
+<div id="bulk-actions-bar" class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6 hidden">
+    <div class="flex items-center justify-between">
+        <div class="flex items-center">
+            <span class="text-sm text-blue-800">
+                <span id="selected-count">0</span> items selected
+            </span>
+        </div>
+
+        <div class="flex space-x-2">
+            {% for action in bulk_actions %}
+                <button type="button"
+                        onclick="{{ action.onclick|default:'handleBulkAction(\"'|add:action.action|add:'\")' }}"
+                        class="{% include 'partials/ui/button_classes.html' with button=action size='sm' %}">
+                    {% if action.icon %}<i class="{{ action.icon }} mr-2"></i>{% endif %}
+                    {{ action.text }}
+                </button>
+            {% endfor %}
+
+            <button type="button"
+                    onclick="clearSelection()"
+                    class="text-gray-500 hover:text-gray-700 text-sm">
+                Clear
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+function handleBulkAction(action) {
+    const selectedItems = Array.from(document.querySelectorAll('.item-checkbox:checked')).map(cb => cb.value);
+    if (selectedItems.length === 0) {
+        alert('Please select items first.');
+        return;
+    }
+
+    // Handle specific actions
+    switch(action) {
+        case 'delete':
+            if (confirm(`Are you sure you want to delete ${selectedItems.length} items?`)) {
+                // Implementation depends on your delete endpoint
+                console.log('Deleting items:', selectedItems);
+            }
+            break;
+        case 'download':
+            // Implementation depends on your download endpoint
+            console.log('Downloading items:', selectedItems);
+            break;
+        default:
+            console.log('Bulk action:', action, selectedItems);
+    }
+}
+
+function clearSelection() {
+    document.querySelectorAll('.item-checkbox').forEach(cb => cb.checked = false);
+    document.getElementById('select-all').checked = false;
+    document.getElementById('bulk-actions-bar').classList.add('hidden');
+}
+</script>

@@ -1,0 +1,73 @@
+<!-- templates/partials/media/asset_list_item.html -->
+<div class="bg-white rounded-lg shadow p-4 flex items-center space-x-4 hover:shadow-md transition-shadow">
+    <!-- Selection -->
+    {% if show_checkbox %}
+        <input type="checkbox"
+               class="item-checkbox h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+               value="{{ asset.id }}">
+    {% endif %}
+
+    <!-- Thumbnail -->
+    <div class="flex-shrink-0 w-16 h-16">
+        {% if asset.is_image %}
+            <img src="{{ asset.thumbnail_url }}"
+                 alt="{{ asset.title }}"
+                 class="w-16 h-16 object-cover rounded">
+        {% else %}
+            {% include 'partials/media/file_icon.html' with file_type=asset.file_type size='16' icon_size='xl' %}
+        {% endif %}
+    </div>
+
+    <!-- Info -->
+    <div class="flex-1 min-w-0">
+        <h3 class="text-sm font-semibold text-gray-900 truncate">
+            <a href="{{ asset.get_absolute_url }}" class="hover:text-blue-600">
+                {{ asset.title }}
+            </a>
+        </h3>
+
+        {% if asset.description %}
+            <p class="text-sm text-gray-600 truncate">{{ asset.description|truncatewords:20 }}</p>
+        {% endif %}
+
+        <div class="flex items-center space-x-4 mt-1">
+            <span class="text-xs text-gray-500">{{ asset.file_size_human }}</span>
+            <span class="text-xs text-gray-500">{{ asset.file_type|upper }}</span>
+            <span class="text-xs text-gray-500">{{ asset.created_at|date:"M d, Y" }}</span>
+        </div>
+    </div>
+
+    <!-- Tags -->
+    {% if asset.tags.all %}
+        <div class="flex flex-wrap gap-1 max-w-xs">
+            {% for tag in asset.tags.all|slice:":3" %}
+                <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
+                    {{ tag.name }}
+                </span>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <!-- Status -->
+    <div class="flex-shrink-0">
+        {% include 'partials/status/badge.html' with status=asset.status show_icon=True %}
+    </div>
+
+    <!-- Actions -->
+    <div class="flex-shrink-0 flex space-x-2">
+        <a href="{{ asset.get_absolute_url }}"
+           class="text-gray-400 hover:text-blue-600" title="View">
+            <i class="fas fa-eye"></i>
+        </a>
+        <a href="{{ asset.file.url }}"
+           class="text-gray-400 hover:text-blue-600" title="Download">
+            <i class="fas fa-download"></i>
+        </a>
+        {% if asset.can_edit %}
+            <a href="{% url 'assets:edit' asset.pk %}"
+               class="text-gray-400 hover:text-blue-600" title="Edit">
+                <i class="fas fa-edit"></i>
+            </a>
+        {% endif %}
+    </div>
+</div>

@@ -1,0 +1,309 @@
+<!-- templates/autocare/vcdb/stats.html -->
+{% extends 'autocare/vcdb/base.html' %}
+{% load static %}
+{% load i18n %}
+{% load vcdb_tags %}
+
+{% block title %}Statistics{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'automotive:dashboard' %}">Dashboard</a></li>
+        <li class="breadcrumb-item active">Statistics</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="stats-page">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1><i class="bi bi-graph-up"></i> Automotive Statistics</h1>
+            <p class="text-muted">Detailed analytics and insights from the automotive database</p>
+        </div>
+        <div class="col-md-4 text-end">
+            <button type="button" class="btn btn-outline-primary" id="refresh-stats-btn">
+                <i class="bi bi-arrow-clockwise"></i> Refresh Data
+            </button>
+        </div>
+    </div>
+
+    <!-- Overview Cards -->
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card text-white bg-primary">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <div class="stat-number" id="total-vehicles">{{ vehicles_by_year.0.vehicle_count|default:0|floatformat:0 }}</div>
+                            <div class="stat-label">Total Vehicles</div>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="bi bi-car-front stats-icon"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card text-white bg-success">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <div class="stat-number" id="total-makes">{{ top_makes|length }}</div>
+                            <div class="stat-label">Active Makes</div>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="bi bi-building stats-icon"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card text-white bg-info">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <div class="stat-number">{{ engine_stats.total_configs|floatformat:0 }}</div>
+                            <div class="stat-label">Engine Configs</div>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="bi bi-gear stats-icon"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card text-white bg-warning">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <div class="stat-number">{{ regional_stats|length }}</div>
+                            <div class="stat-label">Regions</div>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="bi bi-globe stats-icon"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="row mb-4">
+        <!-- Vehicles by Year Chart -->
+        <div class="col-lg-8 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="bi bi-graph-up"></i> Vehicles by Year Trend</h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="vehicles-by-year-chart"
+                                data-chart-data="{{ vehicles_by_year|safe }}"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Top Makes Distribution -->
+        <div class="col-lg-4 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="bi bi-pie-chart"></i> Make Distribution</h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="make-distribution-chart"
+                                data-chart-data="{{ top_makes|safe }}"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Engine Statistics -->
+    <div class="row mb-4">
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="bi bi-gear-fill"></i> Engine Configurations</h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="engine-stats-chart"
+                                data-chart-data="{{ engine_stats.cylinder_counts|safe }}"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Fuel Type Distribution -->
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="bi bi-fuel-pump"></i> Fuel Types</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Fuel Type</th>
+                                    <th>Count</th>
+                                    <th>Percentage</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for fuel in engine_stats.fuel_types %}
+                                    <tr>
+                                        <td>{{ fuel.fuel_type_name }}</td>
+                                        <td>{{ fuel.count|floatformat:0 }}</td>
+                                        <td>
+                                            {% widthratio fuel.count engine_stats.total_configs 100 as percentage %}
+                                            <div class="progress" style="height: 15px;">
+                                                <div class="progress-bar" role="progressbar"
+                                                     style="width: {{ percentage }}%">
+                                                    {{ percentage }}%
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Makes and Regional Statistics -->
+    <div class="row mb-4">
+        <!-- Top Makes by Vehicle Count -->
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="bi bi-trophy"></i> Top Vehicle Makes</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Rank</th>
+                                    <th>Make</th>
+                                    <th>Vehicles</th>
+                                    <th>Market Share</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for make in top_makes %}
+                                    <tr>
+                                        <td>
+                                            <span class="badge bg-primary">#{{ forloop.counter }}</span>
+                                        </td>
+                                        <td>{{ make.make_name }}</td>
+                                        <td>{{ make.vehicle_count|floatformat:0 }}</td>
+                                        <td>
+                                            {% if vehicles_by_year.0.vehicle_count %}
+                                                {% widthratio make.vehicle_count vehicles_by_year.0.vehicle_count 100 as percentage %}
+                                                {{ percentage }}%
+                                            {% else %}
+                                                N/A
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Regional Distribution -->
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="bi bi-geo-alt"></i> Regional Distribution</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Region</th>
+                                    <th>Vehicles</th>
+                                    <th>Distribution</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for region in regional_stats %}
+                                    <tr>
+                                        <td>{{ region.region_name|default:"Unknown" }}</td>
+                                        <td>{{ region.vehicle_count|floatformat:0 }}</td>
+                                        <td>
+                                            {% if vehicles_by_year.0.vehicle_count %}
+                                                {% widthratio region.vehicle_count vehicles_by_year.0.vehicle_count 100 as percentage %}
+                                                <div class="progress" style="height: 20px;">
+                                                    <div class="progress-bar bg-info" role="progressbar"
+                                                         style="width: {{ percentage }}%">
+                                                        {{ percentage }}%
+                                                    </div>
+                                                </div>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Export Options -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="bi bi-download"></i> Export Statistics</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">Export current statistics data in various formats:</p>
+                    <div class="btn-group" role="group">
+                        <a href="{% url 'automotive:export_vehicles_csv' %}" class="btn btn-outline-primary export-btn" data-format="csv">
+                            <i class="bi bi-file-earmark-text"></i> CSV Report
+                        </a>
+                        <button type="button" class="btn btn-outline-success export-btn" data-format="excel">
+                            <i class="bi bi-file-earmark-spreadsheet"></i> Excel Report
+                        </button>
+                        <button type="button" class="btn btn-outline-info export-btn" data-format="pdf">
+                            <i class="bi bi-file-earmark-pdf"></i> PDF Report
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Charts will be initialized by automotive.js
+    console.log('Statistics page loaded');
+});
+</script>
+{% endblock %}

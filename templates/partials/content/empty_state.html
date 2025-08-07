@@ -1,0 +1,30 @@
+<!-- templates/partials/content/empty_state.html -->
+<div class="text-center py-12">
+    <div class="mx-auto h-24 w-24 text-gray-400 mb-4">
+        <i class="{{ icon|default:'fas fa-inbox' }} text-6xl"></i>
+    </div>
+
+    <h3 class="text-lg font-medium text-gray-900 mb-2">
+        {{ title|default:'No items found' }}
+    </h3>
+
+    <p class="text-gray-500 mb-6 max-w-sm mx-auto">
+        {{ message|default:'There are no items to display at this time.' }}
+    </p>
+
+    {% if action_url %}
+        <a href="{% if action_url_name %}{% url action_url_name %}{% else %}{{ action_url }}{% endif %}"
+           class="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500">
+            {% if action_icon %}<i class="{{ action_icon }} mr-2"></i>{% endif %}
+            {{ action_text|default:'Add Item' }}
+        </a>
+    {% endif %}
+
+    {% if secondary_action_url %}
+        <a href="{{ secondary_action_url }}"
+           class="inline-flex items-center rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 ml-3">
+            {% if secondary_action_icon %}<i class="{{ secondary_action_icon }} mr-2"></i>{% endif %}
+            {{ secondary_action_text }}
+        </a>
+    {% endif %}
+</div>

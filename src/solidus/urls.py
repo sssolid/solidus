@@ -22,8 +22,12 @@ urlpatterns = [
     path("feeds/", include("feeds.urls", namespace="feeds")),
     path("audit/", include("audit.urls", namespace="audit")),
 
+    path('pcadb/', include('autocare_pcadb.urls', namespace='pcadb')),
+    path('vcdb/', include('autocare_vcdb.urls', namespace='vcdb')),
+
     # API endpoints
     path("api/v1/", include("api.urls", namespace="api")),
+    path("api/v1/", include("autocare_vcdb.api_urls")),
 ]
 
 # Serve media files in development

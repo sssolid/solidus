@@ -1,0 +1,83 @@
+<!-- templates/partials/forms/file_input.html -->
+<div class="file-upload-container">
+    <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors"
+         x-data="{ dragover: false }"
+         @dragover.prevent="dragover = true"
+         @dragleave.prevent="dragover = false"
+         @drop.prevent="dragover = false; handleFileDrop($event)"
+         :class="{ 'border-blue-400 bg-blue-50': dragover }"
+         onclick="document.getElementById('{{ field.id_for_label }}').click()">
+
+        <div class="mx-auto h-12 w-12 text-gray-400 mb-4">
+            <i class="fas fa-cloud-upload-alt text-4xl"></i>
+        </div>
+
+        <div class="text-sm text-gray-600">
+            <span class="font-medium text-blue-600 hover:text-blue-500 cursor-pointer">
+                Click to upload
+            </span>
+            or drag and drop
+        </div>
+
+        <p class="text-xs text-gray-500 mt-2">
+            {% if file_types %}{{ file_types }}{% else %}PNG, JPG, PDF up to 10MB{% endif %}
+        </p>
+    </div>
+
+    {{ field|add_class:"hidden" }}
+
+    <div id="file-preview-{{ field.id_for_label }}" class="mt-4 hidden">
+        <div class="flex items-center p-3 bg-gray-50 rounded-md">
+            <i class="fas fa-file text-gray-400 mr-3"></i>
+            <div class="flex-1">
+                <p class="text-sm font-medium text-gray-900" id="file-name-{{ field.id_for_label }}"></p>
+                <p class="text-xs text-gray-500" id="file-size-{{ field.id_for_label }}"></p>
+            </div>
+            <button type="button"
+                    onclick="clearFile('{{ field.id_for_label }}')"
+                    class="text-red-500 hover:text-red-700">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+function handleFileDrop(event) {
+    const files = event.dataTransfer.files;
+    const input = document.getElementById('{{ field.id_for_label }}');
+    if (files.length > 0) {
+        input.files = files;
+        showFilePreview('{{ field.id_for_label }}', files[0]);
+    }
+}
+
+function clearFile(fieldId) {
+    document.getElementById(fieldId).value = '';
+    document.getElementById('file-preview-' + fieldId).classList.add('hidden');
+}
+
+function showFilePreview(fieldId, file) {
+    const preview = document.getElementById('file-preview-' + fieldId);
+    const fileName = document.getElementById('file-name-' + fieldId);
+    const fileSize = document.getElementById('file-size-' + fieldId);
+
+    fileName.textContent = file.name;
+    fileSize.textContent = formatFileSize(file.size);
+    preview.classList.remove('hidden');
+}
+
+function formatFileSize(bytes) {
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    if (bytes === 0) return '0 Bytes';
+    const i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)));
+    return Math.round(bytes / Math.pow(1024, i) * 100) / 100 + ' ' + sizes[i];
+}
+
+// Auto-show preview when file selected via click
+document.getElementById('{{ field.id_for_label }}').addEventListener('change', function(e) {
+    if (e.target.files.length > 0) {
+        showFilePreview('{{ field.id_for_label }}', e.target.files[0]);
+    }
+});
+</script>

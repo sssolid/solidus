@@ -1,0 +1,11 @@
+<!-- templates/partials/ui/progress_bar.html -->
+<div class="w-full bg-gray-200 rounded-full h-{{ height|default:'2.5' }}">
+    <div class="bg-{{ color|default:'blue' }}-600 h-{{ height|default:'2.5' }} rounded-full transition-all duration-300"
+         style="width: {{ percentage|default:'0' }}%">
+        {% if show_text %}
+            <span class="flex items-center justify-center h-full text-xs font-medium text-white">
+                {{ percentage|default:'0' }}%
+            </span>
+        {% endif %}
+    </div>
+</div>

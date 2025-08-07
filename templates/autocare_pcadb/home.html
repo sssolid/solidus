@@ -1,0 +1,82 @@
+{% extends 'autocare_pcadb/base.html' %}
+
+{% block title %}Dashboard - Parts Management{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1>Parts Management Dashboard</h1>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-3">
+        <div class="card text-white bg-primary">
+            <div class="card-body">
+                <h5 class="card-title">Total Parts</h5>
+                <p class="card-text display-6">{{ total_parts }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-success">
+            <div class="card-body">
+                <h5 class="card-title">Categories</h5>
+                <p class="card-text display-6">{{ total_categories }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-info">
+            <div class="card-body">
+                <h5 class="card-title">Attributes</h5>
+                <p class="card-text display-6">{{ total_attributes }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-warning">
+            <div class="card-body">
+                <h5 class="card-title">Quick Actions</h5>
+                <a href="{% url 'parts:part-create' %}" class="btn btn-light btn-sm">Add Part</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-5">
+    <div class="col-12">
+        <h3>Recent Changes</h3>
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Change ID</th>
+                        <th>Request ID</th>
+                        <th>Reason</th>
+                        <th>Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for change in recent_changes %}
+                    <tr>
+                        <td>{{ change.change_id }}</td>
+                        <td>{{ change.request_id }}</td>
+                        <td>{{ change.change_reason }}</td>
+                        <td>{{ change.rev_date|date:"M d, Y" }}</td>
+                        <td>
+                            <a href="{% url 'parts:change-detail' change.pk %}" class="btn btn-sm btn-outline-primary">View</a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center">No recent changes</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

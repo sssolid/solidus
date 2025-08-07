@@ -8,11 +8,13 @@ from django.db import models
 from django.db.models import Count, Q
 from django.http import FileResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.template.loader import render_to_string
 from django.urls import reverse
 from django.views import View
 from django.views.decorators.http import require_POST
 from django.views.generic import CreateView, DetailView, ListView, UpdateView
 
+from core.mixins import PartialTemplateContextMixin
 from .forms import (
     AssetCollectionForm,
     AssetForm,
@@ -188,7 +190,7 @@ def asset_download(request, pk):
 
 
 # ----- Asset management (employee/admin) -----
-class AssetListView(EmployeeRequiredMixin, ListView):
+class AssetListView(PartialTemplateContextMixin, EmployeeRequiredMixin, ListView):
     """Asset list view for management"""
 
     model = Asset
@@ -222,11 +224,49 @@ class AssetListView(EmployeeRequiredMixin, ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["search_form"] = AssetSearchForm(self.request.GET)
-        context["total_assets"] = Asset.objects.count()
-        context["total_size"] = (
-            Asset.objects.aggregate(total=models.Sum("file_size"))["total"] or 0
-        )
+
+        # Header actions
+        header_actions = [
+            {
+                'text': 'Upload Assets',
+                'url': 'assets:create',
+                'icon': 'fas fa-plus',
+                'variant': 'primary',
+            },
+            {
+                'text': 'Bulk Upload',
+                'url': 'assets:bulk_upload',
+                'icon': 'fas fa-upload',
+                'variant': 'secondary',
+            }
+        ]
+
+        # Search/filter context
+        filter_form = AssetFilterForm(self.request.GET)
+
+        # View mode (grid/list)
+        view_mode = self.request.GET.get('view', 'grid')
+
+        # Bulk actions
+        bulk_actions = [
+            {'text': 'Delete Selected', 'action': 'delete', 'variant': 'danger'},
+            {'text': 'Add to Collection', 'action': 'add_to_collection', 'variant': 'secondary'},
+            {'text': 'Download Selected', 'action': 'download', 'variant': 'outline'},
+        ]
+
+        context.update({
+            # Partial template contexts
+            'header_actions': header_actions,
+            'filter_context': self.get_search_filter_context(filter_form),
+            'empty_state_context': self.get_empty_state_context(
+                icon='fas fa-images',
+                action_url='assets:create',
+                action_text='Upload Asset'
+            ),
+            'bulk_actions': bulk_actions,
+            'view_mode': view_mode,
+        })
+
         return context
 
 
@@ -593,3 +633,46 @@ def bulk_tag_assets(request):
         return JsonResponse(
             {"error": "Invalid form data", "errors": form.errors}, status=400
         )
+
+
+@login_required
+def asset_card_htmx(request, asset_id):
+    """HTMX endpoint for updating individual asset cards"""
+    asset = get_object_or_404(Asset, id=asset_id)
+
+    if request.method == 'DELETE':
+        asset.delete()
+        return JsonResponse({'success': True})
+
+    # Update asset and return updated card
+    html = render_to_string('partials/media/asset_card.html', {'asset': asset}, request)
+    return JsonResponse({'html': html})
+
+
+@login_required
+def search_assets_htmx(request):
+    """HTMX endpoint for asset search/filtering"""
+    form = AssetFilterForm(request.GET)
+    assets = Asset.objects.all()
+
+    if form.is_valid():
+        # Apply filters
+        if form.cleaned_data.get('search'):
+            assets = assets.filter(title__icontains=form.cleaned_data['search'])
+        if form.cleaned_data.get('category'):
+            assets = assets.filter(category=form.cleaned_data['category'])
+
+    view_mode = request.GET.get('view', 'grid')
+
+    # Render appropriate partial based on view mode
+    if view_mode == 'grid':
+        template = 'partials/content/asset_grid.html'
+    else:
+        template = 'partials/content/asset_list.html'
+
+    html = render_to_string(template, {
+        'assets': assets,
+        'view_mode': view_mode,
+    }, request)
+
+    return JsonResponse({'html': html})

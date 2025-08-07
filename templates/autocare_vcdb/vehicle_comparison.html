@@ -1,0 +1,456 @@
+<!-- templates/autocare_vcdb/vehicle_comparison.html -->
+{% extends 'autocare_vcdb/base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}Vehicle Comparison{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'automotive:dashboard' %}">Dashboard</a></li>
+        <li class="breadcrumb-item active">Vehicle Comparison</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1><i class="bi bi-arrows-expand"></i> Vehicle Comparison</h1>
+        <p class="text-muted">Compare specifications and features across multiple vehicles</p>
+    </div>
+    <div class="col-md-4 text-end">
+        <button type="button" class="btn btn-outline-secondary" onclick="window.print()">
+            <i class="bi bi-printer"></i> Print Comparison
+        </button>
+    </div>
+</div>
+
+{% if vehicles %}
+    <!-- Comparison Table -->
+    <div class="card">
+        <div class="card-header">
+            <h5>Comparing {{ vehicles|length }} Vehicle{{ vehicles|length|pluralize }}</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table comparison-table">
+                    <thead>
+                        <tr>
+                            <th class="comparison-row-header">Specification</th>
+                            {% for vehicle in vehicles %}
+                                <th class="text-center">
+                                    <div class="vehicle-header">
+                                        <h6 class="mb-1">
+                                            {{ vehicle.base_vehicle.year.year_id }} {{ vehicle.base_vehicle.make.make_name }}
+                                        </h6>
+                                        <p class="mb-1">{{ vehicle.base_vehicle.model.model_name|default:"Unknown Model" }}</p>
+                                        <small class="text-muted">{{ vehicle.submodel.sub_model_name }}</small>
+                                        <br>
+                                        <small class="badge bg-secondary">#{{ vehicle.vehicle_id }}</small>
+                                    </div>
+                                </th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Basic Information -->
+                        <tr>
+                            <td class="comparison-row-header">Year</td>
+                            {% for vehicle in vehicles %}
+                                <td class="text-center">{{ vehicle.base_vehicle.year.year_id }}</td>
+                            {% endfor %}
+                        </tr>
+
+                        <tr>
+                            <td class="comparison-row-header">Make</td>
+                            {% for vehicle in vehicles %}
+                                <td class="text-center">{{ vehicle.base_vehicle.make.make_name }}</td>
+                            {% endfor %}
+                        </tr>
+
+                        <tr>
+                            <td class="comparison-row-header">Model</td>
+                            {% for vehicle in vehicles %}
+                                <td class="text-center">{{ vehicle.base_vehicle.model.model_name|default:"Unknown" }}</td>
+                            {% endfor %}
+                        </tr>
+
+                        <tr>
+                            <td class="comparison-row-header">Submodel</td>
+                            {% for vehicle in vehicles %}
+                                <td class="text-center">{{ vehicle.submodel.sub_model_name }}</td>
+                            {% endfor %}
+                        </tr>
+
+                        <tr>
+                            <td class="comparison-row-header">Region</td>
+                            {% for vehicle in vehicles %}
+                                <td class="text-center">{{ vehicle.region.region_name|default:"N/A" }}</td>
+                            {% endfor %}
+                        </tr>
+
+                        <!-- Engine Information -->
+                        <tr class="table-secondary">
+                            <td class="comparison-row-header"><strong>Engine</strong></td>
+                            {% for vehicle in vehicles %}
+                                <td class="text-center"><strong>Engine Specifications</strong></td>
+                            {% endfor %}
+                        </tr>
+
+                        <tr>
+                            <td class="comparison-row-header">Displacement</td>
+                            {% for vehicle in vehicles %}
+                                <td class="text-center">
+                                    {% if vehicle.engine_configs.first %}
+                                        {% with engine=vehicle.engine_configs.first.engine_config %}
+                                            {{ engine.engine_base.liter }}L ({{ engine.engine_base.cc }}cc)
+                                        {% endwith %}
+                                    {% else %}
+                                        <span class="text-muted">N/A</span>
+                                    {% endif %}
+                                </td>
+                            {% endfor %}
+                        </tr>
+
+                        <tr>
+                            <td class="comparison-row-header">Cylinders</td>
+                            {% for vehicle in vehicles %}
+                                <td class="text-center">
+                                    {% if vehicle.engine_configs.first %}
+                                        {% with engine=vehicle.engine_configs.first.engine_config %}
+                                            {{ engine.engine_base.cylinders }} cylinders
+                                        {% endwith %}
+                                    {% else %}
+                                        <span class="text-muted">N/A</span>
+                                    {% endif %}
+                                </td>
+                            {% endfor %}
+                        </tr>
+
+                        <tr>
+                            <td class="comparison-row-header">Fuel Type</td>
+                            {% for vehicle in vehicles %}
+                                <td class="text-center">
+                                    {% if vehicle.engine_configs.first %}
+                                        {% with engine=vehicle.engine_configs.first.engine_config %}
+                                            {{ engine.fuel_type.fuel_type_name }}
+                                        {% endwith %}
+                                    {% else %}
+                                        <span class="text-muted">N/A</span>
+                                    {% endif %}
+                                </td>
+                            {% endfor %}
+                        </tr>
+
+                        <tr>
+                            <td class="comparison-row-header">Aspiration</td>
+                            {% for vehicle in vehicles %}
+                                <td class="text-center">
+                                    {% if vehicle.engine_configs.first %}
+                                        {% with engine=vehicle.engine_configs.first.engine_config %}
+                                            {{ engine.aspiration.aspiration_name }}
+                                        {% endwith %}
+                                    {% else %}
+                                        <span class="text-muted">N/A</span>
+                                    {% endif %}
+                                </td>
+                            {% endfor %}
+                        </tr>
+
+                        <tr>
+                            <td class="comparison-row-header">Power Output</td>
+                            {% for vehicle in vehicles %}
+                                <td class="text-center">
+                                    {% if vehicle.engine_configs.first %}
+                                        {% with engine=vehicle.engine_configs.first.engine_config %}
+                                            {% if engine.power_output %}
+                                                <span class="comparison-highlight">
+                                                    {{ engine.power_output.horse_power }} HP<br>
+                                                    {{ engine.power_output.kilowatt_power }} kW
+                                                </span>
+                                            {% else %}
+                                                <span class="text-muted">N/A</span>
+                                            {% endif %}
+                                        {% endwith %}
+                                    {% else %}
+                                        <span class="text-muted">N/A</span>
+                                    {% endif %}
+                                </td>
+                            {% endfor %}
+                        </tr>
+
+                        <!-- Transmission Information -->
+                        <tr class="table-secondary">
+                            <td class="comparison-row-header"><strong>Transmission</strong></td>
+                            {% for vehicle in vehicles %}
+                                <td class="text-center"><strong>Transmission Details</strong></td>
+                            {% endfor %}
+                        </tr>
+
+                        <tr>
+                            <td class="comparison-row-header">Type</td>
+                            {% for vehicle in vehicles %}
+                                <td class="text-center">
+                                    {% if vehicle.transmissions.first %}
+                                        {% with trans=vehicle.transmissions.first.transmission %}
+                                            {{ trans.transmission_base.transmission_type.transmission_type_name }}
+                                        {% endwith %}
+                                    {% else %}
+                                        <span class="text-muted">N/A</span>
+                                    {% endif %}
+                                </td>
+                            {% endfor %}
+                        </tr>
+
+                        <tr>
+                            <td class="comparison-row-header">Speeds</td>
+                            {% for vehicle in vehicles %}
+                                <td class="text-center">
+                                    {% if vehicle.transmissions.first %}
+                                        {% with trans=vehicle.transmissions.first.transmission %}
+                                            {{ trans.transmission_base.transmission_num_speeds.transmission_num_speeds }}
+                                        {% endwith %}
+                                    {% else %}
+                                        <span class="text-muted">N/A</span>
+                                    {% endif %}
+                                </td>
+                            {% endfor %}
+                        </tr>
+
+                        <tr>
+                            <td class="comparison-row-header">Electronic Control</td>
+                            {% for vehicle in vehicles %}
+                                <td class="text-center">
+                                    {% if vehicle.transmissions.first %}
+                                        {% with trans=vehicle.transmissions.first.transmission %}
+                                            {% if trans.transmission_elec_controlled.elec_controlled == "Yes" %}
+                                                <i class="bi bi-check-circle text-success"></i> Yes
+                                            {% else %}
+                                                <i class="bi bi-x-circle text-danger"></i> No
+                                            {% endif %}
+                                        {% endwith %}
+                                    {% else %}
+                                        <span class="text-muted">N/A</span>
+                                    {% endif %}
+                                </td>
+                            {% endfor %}
+                        </tr>
+
+                        <!-- Drivetrain Information -->
+                        <tr class="table-secondary">
+                            <td class="comparison-row-header"><strong>Drivetrain</strong></td>
+                            {% for vehicle in vehicles %}
+                                <td class="text-center"><strong>Drive System</strong></td>
+                            {% endfor %}
+                        </tr>
+
+                        <tr>
+                            <td class="comparison-row-header">Drive Type</td>
+                            {% for vehicle in vehicles %}
+                                <td class="text-center">
+                                    {% if vehicle.drive_types.first %}
+                                        <span class="badge bg-info">
+                                            {{ vehicle.drive_types.first.drive_type.drive_type_name }}
+                                        </span>
+                                    {% else %}
+                                        <span class="text-muted">N/A</span>
+                                    {% endif %}
+                                </td>
+                            {% endfor %}
+                        </tr>
+
+                        <!-- Body Style Information -->
+                        <tr class="table-secondary">
+                            <td class="comparison-row-header"><strong>Body Style</strong></td>
+                            {% for vehicle in vehicles %}
+                                <td class="text-center"><strong>Body Configuration</strong></td>
+                            {% endfor %}
+                        </tr>
+
+                        <tr>
+                            <td class="comparison-row-header">Body Type</td>
+                            {% for vehicle in vehicles %}
+                                <td class="text-center">
+                                    {% if vehicle.body_style_configs.first %}
+                                        {% with config=vehicle.body_style_configs.first.body_style_config %}
+                                            {{ config.body_type.body_type_name }}
+                                        {% endwith %}
+                                    {% else %}
+                                        <span class="text-muted">N/A</span>
+                                    {% endif %}
+                                </td>
+                            {% endfor %}
+                        </tr>
+
+                        <tr>
+                            <td class="comparison-row-header">Doors</td>
+                            {% for vehicle in vehicles %}
+                                <td class="text-center">
+                                    {% if vehicle.body_style_configs.first %}
+                                        {% with config=vehicle.body_style_configs.first.body_style_config %}
+                                            {{ config.body_num_doors.body_num_doors }} doors
+                                        {% endwith %}
+                                    {% else %}
+                                        <span class="text-muted">N/A</span>
+                                    {% endif %}
+                                </td>
+                            {% endfor %}
+                        </tr>
+
+                        <!-- Publication Information -->
+                        <tr class="table-secondary">
+                            <td class="comparison-row-header"><strong>Publication Info</strong></td>
+                            {% for vehicle in vehicles %}
+                                <td class="text-center"><strong>Database Info</strong></td>
+                            {% endfor %}
+                        </tr>
+
+                        <tr>
+                            <td class="comparison-row-header">Publication Stage</td>
+                            {% for vehicle in vehicles %}
+                                <td class="text-center">
+                                    <span class="badge bg-success">
+                                        {{ vehicle.publication_stage.publication_stage_name }}
+                                    </span>
+                                </td>
+                            {% endfor %}
+                        </tr>
+
+                        <tr>
+                            <td class="comparison-row-header">Added Date</td>
+                            {% for vehicle in vehicles %}
+                                <td class="text-center">
+                                    <small>{{ vehicle.publication_stage_date|date:"M d, Y" }}</small>
+                                </td>
+                            {% endfor %}
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card-footer">
+            <div class="row">
+                <div class="col-md-6">
+                    <small class="text-muted">
+                        <i class="bi bi-info-circle"></i>
+                        Highlighted values indicate significant differences between vehicles.
+                    </small>
+                </div>
+                <div class="col-md-6 text-end">
+                    <div class="btn-group btn-group-sm">
+                        {% for vehicle in vehicles %}
+                            <a href="{% url 'automotive:vehicle_detail' vehicle.vehicle_id %}"
+                               class="btn btn-outline-primary">
+                                View #{{ vehicle.vehicle_id }}
+                            </a>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row mt-4">
+        <div class="col-lg-4">
+            <div class="card bg-light">
+                <div class="card-body text-center">
+                    <i class="bi bi-speedometer2 text-primary" style="font-size: 2rem;"></i>
+                    <h6 class="mt-2">Performance</h6>
+                    <p class="small text-muted">
+                        Power output ranges from
+                        {% for vehicle in vehicles %}
+                            {% if vehicle.engine_configs.first %}
+                                {% with engine=vehicle.engine_configs.first.engine_config %}
+                                    {% if engine.power_output %}
+                                        {{ engine.power_output.horse_power }} HP{% if not forloop.last %} to {% endif %}
+                                    {% endif %}
+                                {% endwith %}
+                            {% endif %}
+                        {% endfor %}
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card bg-light">
+                <div class="card-body text-center">
+                    <i class="bi bi-fuel-pump text-success" style="font-size: 2rem;"></i>
+                    <h6 class="mt-2">Fuel Economy</h6>
+                    <p class="small text-muted">
+                        Multiple fuel types represented in comparison
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card bg-light">
+                <div class="card-body text-center">
+                    <i class="bi bi-gear text-info" style="font-size: 2rem;"></i>
+                    <h6 class="mt-2">Configuration</h6>
+                    <p class="small text-muted">
+                        Diverse engine and transmission options
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% else %}
+    <!-- No Vehicles Selected -->
+    <div class="card">
+        <div class="card-body text-center py-5">
+            <i class="bi bi-arrows-expand" style="font-size: 4rem; color: #ccc;"></i>
+            <h3 class="mt-3">No Vehicles to Compare</h3>
+            <p class="text-muted">Select 2-5 vehicles from search results or vehicle listings to compare them side by side.</p>
+
+            <div class="mt-4">
+                <a href="{% url 'automotive:vehicle_list' %}" class="btn btn-primary me-2">
+                    <i class="bi bi-car-front"></i> Browse Vehicles
+                </a>
+                <a href="{% url 'automotive:advanced_search' %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-search"></i> Advanced Search
+                </a>
+            </div>
+        </div>
+    </div>
+{% endif %}
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Highlight differences in comparison table
+    const table = document.querySelector('.comparison-table');
+    if (table) {
+        highlightDifferences(table);
+    }
+});
+
+function highlightDifferences(table) {
+    const rows = table.querySelectorAll('tbody tr:not(.table-secondary)');
+
+    rows.forEach(row => {
+        const cells = row.querySelectorAll('td:not(.comparison-row-header)');
+        if (cells.length > 1) {
+            const values = Array.from(cells).map(cell => cell.textContent.trim());
+            const uniqueValues = [...new Set(values)];
+
+            // If all values are different, highlight them
+            if (uniqueValues.length === values.length && uniqueValues.length > 1) {
+                cells.forEach(cell => {
+                    if (!cell.querySelector('.text-muted')) {
+                        cell.classList.add('comparison-highlight');
+                    }
+                });
+            }
+        }
+    });
+}
+</script>
+{% endblock %}

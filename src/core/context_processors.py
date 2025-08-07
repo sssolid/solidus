@@ -52,10 +52,44 @@ def site_context(request):
 
 
 def navigation_context(request):
-    """
-    Add navigation-specific context
-    """
+    """Global navigation context for all templates"""
+    if not request.user.is_authenticated:
+        return {}
+
+    # Employee navigation items
+    employee_nav = [
+        {'name': 'Products', 'url': 'products:list', 'icon': 'fas fa-box', 'namespace': 'products'},
+        {'name': 'Assets', 'url': 'assets:list', 'icon': 'fas fa-images', 'namespace': 'assets'},
+        {'name': 'Data Feeds', 'url': 'feeds:list', 'icon': 'fas fa-rss', 'namespace': 'feeds'},
+        {'name': 'Users', 'url': 'accounts:user_list', 'icon': 'fas fa-users', 'namespace': 'accounts'},
+        {'name': 'Settings', 'url': 'core:system_settings', 'icon': 'fas fa-cog', 'namespace': 'core'},
+    ]
+
+    # Customer navigation items
+    customer_nav = [
+        {'name': 'Product Catalog', 'url': 'products:catalog', 'icon': 'fas fa-shopping-bag'},
+        {'name': 'Browse Assets', 'url': 'assets:browse', 'icon': 'fas fa-images'},
+    ]
+
     return {
-        'current_app': request.resolver_match.app_name if request.resolver_match else '',
-        'current_url_name': request.resolver_match.url_name if request.resolver_match else '',
+        'navigation_items': employee_nav if request.user.is_employee else customer_nav,
+        'current_namespace': getattr(request.resolver_match, 'namespace', ''),
+    }
+
+
+def ui_context(request):
+    """UI-related context for templates"""
+    return {
+        'modal_sizes': {
+            'sm': 'sm',
+            'md': 'md',
+            'lg': 'lg',
+            'xl': 'xl',
+        },
+        'button_variants': {
+            'primary': 'bg-blue-600 hover:bg-blue-700 text-white',
+            'secondary': 'bg-gray-600 hover:bg-gray-700 text-white',
+            'outline': 'border border-gray-300 text-gray-700 hover:bg-gray-50',
+            'danger': 'bg-red-600 hover:bg-red-700 text-white',
+        }
     }

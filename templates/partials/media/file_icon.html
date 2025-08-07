@@ -1,0 +1,22 @@
+<!-- templates/partials/media/file_icon.html -->
+<div class="flex items-center justify-center w-{{ size|default:'16' }} h-{{ size|default:'16' }} bg-gray-100 rounded">
+    {% if file_type == 'pdf' %}
+        <i class="fas fa-file-pdf text-red-500 text-{{ icon_size|default:'2xl' }}"></i>
+    {% elif file_type == 'doc' or file_type == 'docx' %}
+        <i class="fas fa-file-word text-blue-500 text-{{ icon_size|default:'2xl' }}"></i>
+    {% elif file_type == 'xls' or file_type == 'xlsx' %}
+        <i class="fas fa-file-excel text-green-500 text-{{ icon_size|default:'2xl' }}"></i>
+    {% elif file_type == 'ppt' or file_type == 'pptx' %}
+        <i class="fas fa-file-powerpoint text-orange-500 text-{{ icon_size|default:'2xl' }}"></i>
+    {% elif file_type == 'zip' or file_type == 'rar' or file_type == '7z' %}
+        <i class="fas fa-file-archive text-purple-500 text-{{ icon_size|default:'2xl' }}"></i>
+    {% elif file_type == 'mp3' or file_type == 'wav' or file_type == 'flac' %}
+        <i class="fas fa-file-audio text-pink-500 text-{{ icon_size|default:'2xl' }}"></i>
+    {% elif file_type == 'mp4' or file_type == 'avi' or file_type == 'mov' %}
+        <i class="fas fa-file-video text-indigo-500 text-{{ icon_size|default:'2xl' }}"></i>
+    {% elif file_type == 'txt' or file_type == 'md' %}
+        <i class="fas fa-file-alt text-gray-500 text-{{ icon_size|default:'2xl' }}"></i>
+    {% else %}
+        <i class="fas fa-file text-gray-400 text-{{ icon_size|default:'2xl' }}"></i>
+    {% endif %}
+</div>

@@ -1,0 +1,17 @@
+<!-- templates/partials/status/task_status.html -->
+<div class="flex items-center space-x-3">
+    {% include 'partials/status/badge.html' with status=task.status show_icon=True %}
+
+    {% if task.progress is not None %}
+        <div class="flex-1 max-w-xs">
+            {% include 'partials/ui/progress_bar.html' with percentage=task.progress height='2' %}
+        </div>
+        <span class="text-sm text-gray-500">{{ task.progress }}%</span>
+    {% endif %}
+
+    {% if task.started_at %}
+        <span class="text-xs text-gray-500">
+            Started {{ task.started_at|timesince }} ago
+        </span>
+    {% endif %}
+</div>

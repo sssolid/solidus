@@ -1,0 +1,120 @@
+<!-- templates/autocare_vcdb/engine_config_list.html -->
+{% extends 'autocare_vcdb/base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}Engine Configurations{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'automotive:dashboard' %}">Dashboard</a></li>
+        <li class="breadcrumb-item active">Engine Configurations</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1><i class="bi bi-gear"></i> Engine Configurations</h1>
+        <p class="text-muted">Browse available engine specifications and configurations</p>
+    </div>
+    <div class="col-md-4 text-end">
+        <div class="btn-group">
+            <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
+                <i class="bi bi-funnel"></i> Filter
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li><a class="dropdown-item" href="?fuel_type=gasoline">Gasoline Engines</a></li>
+                <li><a class="dropdown-item" href="?fuel_type=diesel">Diesel Engines</a></li>
+                <li><a class="dropdown-item" href="?cylinders=4">4-Cylinder</a></li>
+                <li><a class="dropdown-item" href="?cylinders=6">6-Cylinder</a></li>
+                <li><a class="dropdown-item" href="?cylinders=8">8-Cylinder</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item" href="{% url 'automotive:engine_config_list' %}">Show All</a></li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h6>Engine Configurations ({{ engine_configs|length }})</h6>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Designation</th>
+                                <th>Displacement</th>
+                                <th>Configuration</th>
+                                <th>Fuel Type</th>
+                                <th>Aspiration</th>
+                                <th>Power Output</th>
+                                <th>Manufacturer</th>
+                                <th>Used In</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for engine in engine_configs %}
+                                <tr>
+                                    <td>
+                                        <a href="{% url 'automotive:engine_config_detail' engine.engine_config_id %}">
+                                            {{ engine.engine_designation.engine_designation_name }}
+                                        </a>
+                                    </td>
+                                    <td>
+                                        <span class="engine-spec">
+                                            {{ engine.engine_base.liter }}L<br>
+                                            <small class="text-muted">{{ engine.engine_base.cc }}cc</small>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {{ engine.engine_base.cylinders }} cylinders<br>
+                                        <small class="text-muted">{{ engine.engine_base.block_type }} block</small>
+                                    </td>
+                                    <td>{{ engine.fuel_type.fuel_type_name }}</td>
+                                    <td>{{ engine.aspiration.aspiration_name }}</td>
+                                    <td>
+                                        {% if engine.power_output %}
+                                            <span class="performance-spec">
+                                                {{ engine.power_output.horse_power }} HP<br>
+                                                <small>{{ engine.power_output.kilowatt_power }} kW</small>
+                                            </span>
+                                        {% else %}
+                                            <small class="text-muted">N/A</small>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ engine.engine_mfr.mfr_name }}</td>
+                                    <td>
+                                        <small class="text-muted">
+                                            {{ engine.vehicles.count }} vehicle{{ engine.vehicles.count|pluralize }}
+                                        </small>
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'automotive:engine_config_detail' engine.engine_config_id %}"
+                                           class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="9" class="text-center text-muted py-4">
+                                        No engine configurations found.
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

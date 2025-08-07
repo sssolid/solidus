@@ -107,6 +107,62 @@ class Country(AuditedModel):
         return f"{self.name} ({self.code_2})"
 
 
+class Category(AuditedModel):
+    """Product categories with hierarchy"""
+
+    # Based on pcdb CategoryID
+    id = models.PositiveIntegerField(primary_key=True)
+    name = models.CharField(max_length=100)
+    slug = models.SlugField(max_length=100, unique=True)
+    parent = models.ForeignKey(
+        "self", null=True, blank=True, on_delete=models.CASCADE, related_name="children"
+    )
+    description = models.TextField(blank=True)
+    image = models.ImageField(upload_to="categories/", null=True, blank=True)
+    sort_order = models.IntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+
+    # SEO fields
+    meta_title = models.CharField(max_length=150, blank=True)
+    meta_description = models.TextField(blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "product_categories"
+        ordering = ["sort_order", "name"]
+        verbose_name_plural = "Categories"
+        indexes = [
+            models.Index(fields=["id"]),
+            models.Index(fields=["slug"]),
+            models.Index(fields=["parent"]),
+        ]
+
+    def __str__(self):
+        if self.parent:
+            return f"{self.parent} > {self.name}"
+        return self.name
+
+    def get_ancestors(self):
+        """Get all parent categories"""
+        ancestors = []
+        parent = self.parent
+        while parent:
+            ancestors.append(parent)
+            parent = parent.parent
+        return ancestors[::-1]
+
+    def get_descendants(self):
+        """Get all child categories recursively"""
+        descendants = []
+        children = self.children.filter(is_active=True)
+        for child in children:
+            descendants.append(child)
+            descendants.extend(child.get_descendants())
+        return descendants
+
+
 class Product(AuditedModel):
     """Main product model with automotive fitment support"""
 
@@ -272,7 +328,7 @@ class ProductOrigin(AuditedModel):
     assembled_in = models.CharField(max_length=100, blank=True)
 
     class Meta:
-        db_table = "product_origin"
+        db_table = "product_origins"
         ordering = ["country_of_origin"]
         verbose_name_plural = "Product Origins"
 
@@ -347,7 +403,7 @@ class SpecificationType(AuditedModel):
     sort_order = models.PositiveIntegerField(default=0)
 
     class Meta:
-        db_table = 'specification_types'
+        db_table = 'product_specification_types'
         ordering = ['category__sort_order', 'sort_order', 'name']
 
     def __str__(self):
@@ -363,7 +419,7 @@ class SpecificationCategory(AuditedModel):
     is_active = models.BooleanField(default=True)
 
     class Meta:
-        db_table = 'specification_categories'
+        db_table = 'product_specification_categories'
         ordering = ['sort_order', 'name']
         verbose_name_plural = 'Specification Categories'
 
@@ -484,7 +540,7 @@ class FeatureCategory(AuditedModel):
     is_active = models.BooleanField(default=True)
 
     class Meta:
-        db_table = 'feature_categories'
+        db_table = 'product_feature_categories'
         ordering = ['sort_order', 'name']
         verbose_name_plural = 'Feature Categories'
 
@@ -533,7 +589,7 @@ class InterchangeType(models.Model):
     is_active = models.BooleanField(default=True)
 
     class Meta:
-        db_table = 'interchange_types'
+        db_table = 'product_interchange_types'
         ordering = ['name']
 
     def __str__(self):

@@ -1,0 +1,27 @@
+<!-- templates/accounts/user_list.html - COMPLETE REFACTORING -->
+{% extends "base.html" %}
+{% load widget_tweaks %}
+
+{% block title %}Users - Solidus{% endblock %}
+
+{% block content %}
+    {% include 'partials/content/list_header.html' with title="Users" subtitle="Manage user accounts and permissions" stats=user_stats actions=header_actions %}
+
+    {% include 'partials/content/stats_cards.html' with stats=user_statistics cols=4 %}
+
+    {% include 'partials/content/search_filter.html' with show_search=True search_placeholder="Search users..." filter_fields=filter_form.visible_fields use_htmx=True target_id="users-container" grid_cols=3 %}
+
+    <div id="users-container">
+        {% if users %}
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {% for user in users %}
+                    {% include 'partials/users/user_card.html' with user=user show_actions=True show_stats=True %}
+                {% endfor %}
+            </div>
+        {% else %}
+            {% include 'partials/content/empty_state.html' with icon="fas fa-users" title="No users found" message="Create user accounts to get started" action_url_name="accounts:create_user" action_text="Add User" action_icon="fas fa-plus" %}
+        {% endif %}
+    </div>
+
+    {% include 'partials/pagination.html' %}
+{% endblock %}

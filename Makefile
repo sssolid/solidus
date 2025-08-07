@@ -351,6 +351,12 @@ dev-build:
 	@echo "🏗️ Building development containers..."
 	docker compose -f docker-compose.dev.yml build
 
+.PHONY: dev-frontend
+dev-frontend:
+	@echo "🏗️ Building frontend js/css..."
+	cd frontend && npm run build
+	cp frontend/node_modules/@fortawesome/fontawesome-free/webfonts/* static/webfonts/
+
 .PHONY: dev-logs
 dev-logs:
 	@echo "📋 Development server logs (Ctrl+C to exit):"
@@ -389,6 +395,17 @@ dev-reset:
 	docker compose -f docker-compose.dev.yml build
 	$(MAKE) dev
 	@echo "✅ Development environment reset!"
+
+.PHONY: dev-clean-reset
+dev-clean-reset:
+	@echo "🗑️  Performing a full development clean reset..."
+	docker compose -f docker-compose.dev.yml down -v
+	docker compose -f docker-compose.dev.yml build
+	$(LOCAL_DJANGO) makemigrations
+	${MAKE} dev-frontend
+	$(LOCAL_DJANGO) reset_migrations
+	$(MAKE) dev
+	@echo "✅ Full development environment clean and rebuild complete!"
 
 # File watching and hot reload status
 .PHONY: dev-status
@@ -494,6 +511,9 @@ dev-help:
 	@echo "  make dev-makemigrations - Create migrations"
 	@echo "  make dev-shell        - Django shell"
 	@echo ""
+	@echo " Frontend"
+	@echo "  make dev-frontend     - Frontend (js/css)"
+	@echo ""
 	@echo "🧪 Testing:"
 	@echo "  make dev-test         - Run tests"
 	@echo "  make test-hotreload   - Verify hot reload"
@@ -501,6 +521,7 @@ dev-help:
 	@echo "🔧 Troubleshooting:"
 	@echo "  make dev-restart      - Restart web server"
 	@echo "  make dev-reset        - Full reset"
+	@echo "  make dev-clean-reset  - Full clean reset"
 	@echo "  make dev-logs         - View detailed logs"
 
 # Allow passing additional arguments to specific commands

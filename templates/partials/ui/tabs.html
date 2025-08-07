@@ -1,0 +1,36 @@
+<!-- templates/partials/ui/tabs.html -->
+<div x-data="{ activeTab: '{{ active_tab|default:tabs.0.id }}' }">
+    <!-- Tab Navigation -->
+    <div class="border-b border-gray-200">
+        <nav class="-mb-px flex space-x-8">
+            {% for tab in tabs %}
+                <button @click="activeTab = '{{ tab.id }}'"
+                        :class="activeTab === '{{ tab.id }}' ?
+                               'border-blue-500 text-blue-600' :
+                               'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                        class="whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
+                    {% if tab.icon %}<i class="{{ tab.icon }} mr-2"></i>{% endif %}
+                    {{ tab.name }}
+                    {% if tab.count %}
+                        <span class="ml-2 bg-gray-100 text-gray-900 py-0.5 px-2.5 rounded-full text-xs">
+                            {{ tab.count }}
+                        </span>
+                    {% endif %}
+                </button>
+            {% endfor %}
+        </nav>
+    </div>
+
+    <!-- Tab Content -->
+    <div class="mt-6">
+        {% for tab in tabs %}
+            <div x-show="activeTab === '{{ tab.id }}'" x-transition>
+                {% if tab.template %}
+                    {% include tab.template with tab_data=tab.data %}
+                {% else %}
+                    {{ tab.content|safe }}
+                {% endif %}
+            </div>
+        {% endfor %}
+    </div>
+</div>
