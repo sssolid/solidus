@@ -166,6 +166,23 @@ services:
     networks:
       - solidus_network
 
+  autocare:
+    image: mysql:5.7
+    container_name: autocare_mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: AutoRootPass567890!
+      MYSQL_USER: autocare
+      MYSQL_PASSWORD: AutocarePass098765!
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./autocare/init:/init
+      - ./autocare/scripts:/docker-entrypoint-initdb.d
+      - autocare_data:/var/lib/mysql
+    networks:
+      - solidus_network
+
   mailhog:
     image: mailhog/mailhog
     container_name: solidus_mailhog
@@ -194,6 +211,7 @@ volumes:
   postgres_data:
   redis_data:
   static_data:
+  autocare_data:
 
 networks:
   solidus_network:

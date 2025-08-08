@@ -38,6 +38,7 @@ THIRD_PARTY_APPS = [
     'corsheaders',
     'rest_framework',
     'django_filters',
+    'compressor'
 ]
 
 LOCAL_APPS = [
@@ -65,6 +66,7 @@ VCDB_SETTINGS = {
 }
 
 MIDDLEWARE = [
+    'django.middleware.gzip.GZipMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'corsheaders.middleware.CorsMiddleware',
@@ -116,6 +118,16 @@ DATABASES = {
         },
     }
 }
+
+# Autocare Database Configuration
+AUTOCARE_DB_NAME_PCADB=config('AUTOCARE_DB_NAME_PCADB', default='pcadb')
+AUTOCARE_DB_NAME_QDB=config('AUTOCARE_DB_NAME_QDB', default='qdb')
+AUTOCARE_DB_NAME_VCDB=config('AUTOCARE_DB_NAME_VCDB', default='vcdb')
+AUTOCARE_DB_ROOT_PASSWORD=config('AUTOCARE_DB_ROOT_PASSWORD', 'AutoRootPass567890!')
+AUTOCARE_DB_USER=config('AUTOCARE_DB_USER', 'autocare')
+AUTOCARE_DB_PASSWORD=config('AUTOCARE_DB_PASSWORD', 'AutocarePass098765!')
+AUTOCARE_DB_HOST=config('AUTOCARE_DB_HOST', 'localhost')
+AUTOCARE_DB_PORT=config('AUTOCARE_DB_PORT', 3306)
 
 # Redis Configuration
 REDIS_HOST = config('REDIS_HOST', default='localhost')
@@ -178,6 +190,12 @@ STATICFILES_DIRS = [
 ]
 
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+COMPRESS_ENABLED = not DEBUG  # Disable compression in development
+COMPRESS_OFFLINE = True  # Enables offline compression for production
+COMPRESS_CSS_HASHING_METHOD = 'content'  # This ensures CSS is hashed correctly
+COMPRESS_JS_FILTERS = ['compressor.filters.jsmin.JSMinFilter']
+COMPRESS_CSS_FILTERS = ['compressor.filters.cssmin.CSSMinFilter']
 
 # Media files
 MEDIA_URL = '/media/'

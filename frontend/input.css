@@ -1,3 +1,8 @@
+/* Import FontAwesome CSS */
+@import '@fortawesome/fontawesome-free/css/all.css';
+@import '../static/css/app.css';
+@import '../static/css/partial-components.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

@@ -2,7 +2,7 @@ from django.contrib import admin
 from autocare_pcadb.models import *
 
 
-@admin.register(ACESCodedValue)
+@admin.register(ACESCodedValues)
 class ACESCodedValueAdmin(admin.ModelAdmin):
     list_display = ['element', 'attribute', 'coded_value', 'code_description']
     list_filter = ['element', 'attribute']
@@ -17,21 +17,21 @@ class AliasAdmin(admin.ModelAdmin):
     list_per_page = 50
 
 
-@admin.register(Category)
+@admin.register(Categories)
 class CategoryAdmin(admin.ModelAdmin):
     list_display = ['category_id', 'category_name']
     search_fields = ['category_name']
     list_per_page = 50
 
 
-@admin.register(Subcategory)
+@admin.register(Subcategories)
 class SubcategoryAdmin(admin.ModelAdmin):
     list_display = ['sub_category_id', 'sub_category_name']
     search_fields = ['sub_category_name']
     list_per_page = 50
 
 
-@admin.register(Position)
+@admin.register(Positions)
 class PositionAdmin(admin.ModelAdmin):
     list_display = ['position_id', 'position']
     search_fields = ['position']
@@ -56,7 +56,7 @@ class PartsDescriptionAdmin(admin.ModelAdmin):
     get_short_description.short_description = 'Description'
 
 
-@admin.register(Part)
+@admin.register(Parts)
 class PartAdmin(admin.ModelAdmin):
     list_display = ['part_terminology_id', 'part_terminology_name', 'parts_description', 'rev_date']
     list_filter = ['rev_date']
@@ -81,7 +81,7 @@ class MetaDataAdmin(admin.ModelAdmin):
     list_per_page = 50
 
 
-@admin.register(MetaUOMCode)
+@admin.register(MetaUOMCodes)
 class MetaUOMCodeAdmin(admin.ModelAdmin):
     list_display = ['meta_uom_id', 'uom_code', 'uom_description', 'measurement_group']
     list_filter = ['measurement_group']
@@ -90,7 +90,7 @@ class MetaUOMCodeAdmin(admin.ModelAdmin):
     list_per_page = 50
 
 
-@admin.register(PartAttribute)
+@admin.register(PartAttributes)
 class PartAttributeAdmin(admin.ModelAdmin):
     list_display = ['pa_id', 'pa_name', 'get_short_description']
     search_fields = ['pa_name', 'pa_description']
@@ -135,7 +135,7 @@ class PIESCodeAdmin(admin.ModelAdmin):
     get_short_description.short_description = 'Description'
 
 
-@admin.register(Change)
+@admin.register(Changes)
 class ChangeAdmin(admin.ModelAdmin):
     list_display = ['change_id', 'request_id', 'change_reason', 'rev_date']
     list_filter = ['change_reason', 'rev_date']
@@ -145,7 +145,7 @@ class ChangeAdmin(admin.ModelAdmin):
     list_per_page = 50
 
 
-@admin.register(ChangeDetail)
+@admin.register(ChangeDetails)
 class ChangeDetailAdmin(admin.ModelAdmin):
     list_display = ['change_detail_id', 'change', 'table_name', 'column_name', 'get_short_before', 'get_short_after']
     list_filter = ['change_attribute_state', 'table_name']
@@ -167,9 +167,9 @@ class ChangeDetailAdmin(admin.ModelAdmin):
 
 
 # Register remaining models with basic admin
-admin.site.register(ChangeReason)
-admin.site.register(ChangeTableName)
-admin.site.register(ChangeAttributeState)
+admin.site.register(ChangeReasons)
+admin.site.register(ChangeTableNames)
+admin.site.register(ChangeAttributeStates)
 admin.site.register(MetaUOMCodeAssignment)
 admin.site.register(PartPosition)
 admin.site.register(PartCategory)
@@ -177,7 +177,7 @@ admin.site.register(PartsToAlias)
 admin.site.register(PartsToUse)
 admin.site.register(PartsRelationship)
 admin.site.register(PartsSupersession)
-admin.site.register(ValidValue)
+admin.site.register(ValidValues)
 admin.site.register(ValidValueAssignment)
 admin.site.register(PIESExpiGroup)
 admin.site.register(PIESExpiCode)
@@ -187,6 +187,6 @@ admin.site.register(Style)
 admin.site.register(PartAttributeStyle)
 admin.site.register(PartTypeStyle)
 admin.site.register(CodeMaster)
-admin.site.register(PCdbChange)
-admin.site.register(RetiredTerm)
+admin.site.register(PCdbChanges)
+admin.site.register(RetiredTerms)
 admin.site.register(Version)

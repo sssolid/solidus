@@ -6,7 +6,7 @@ class PartForm(forms.ModelForm):
     """Form for creating/editing parts"""
 
     class Meta:
-        model = Part
+        model = Parts
         fields = ['part_terminology_name', 'parts_description', 'rev_date']
         widgets = {
             'part_terminology_name': forms.TextInput(attrs={
@@ -30,7 +30,7 @@ class CategoryForm(forms.ModelForm):
     """Form for creating/editing categories"""
 
     class Meta:
-        model = Category
+        model = Categories
         fields = ['category_name']
         widgets = {
             'category_name': forms.TextInput(attrs={
@@ -44,7 +44,7 @@ class PartAttributeForm(forms.ModelForm):
     """Form for creating/editing part attributes"""
 
     class Meta:
-        model = PartAttribute
+        model = PartAttributes
         fields = ['pa_name', 'pa_description']
         widgets = {
             'pa_name': forms.TextInput(attrs={
@@ -73,7 +73,7 @@ class SearchForm(forms.Form):
         })
     )
     category = forms.ModelChoiceField(
-        queryset=Category.objects.all(),
+        queryset=Categories.objects.all(),
         required=False,
         empty_label="All Categories",
         widget=forms.Select(attrs={'class': 'form-control'})
@@ -94,6 +94,6 @@ class PartAttributeAssignmentForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['part'].queryset = Part.objects.all()
-        self.fields['part_attribute'].queryset = PartAttribute.objects.all()
+        self.fields['part'].queryset = Parts.objects.all()
+        self.fields['part_attribute'].queryset = PartAttributes.objects.all()
         self.fields['meta_data'].queryset = MetaData.objects.all()

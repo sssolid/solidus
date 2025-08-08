@@ -12,10 +12,10 @@ from autocare_pcadb.forms import *
 def home(request):
     """Home view with dashboard"""
     context = {
-        'total_parts': Part.objects.count(),
-        'total_categories': Category.objects.count(),
-        'total_attributes': PartAttribute.objects.count(),
-        'recent_changes': Change.objects.select_related('change_reason').order_by('-rev_date')[:10],
+        'total_parts': Parts.objects.count(),
+        'total_categories': Categories.objects.count(),
+        'total_attributes': PartAttributes.objects.count(),
+        'recent_changes': Changes.objects.select_related('change_reason').order_by('-rev_date')[:10],
     }
     return render(request, 'parts/home.html', context)
 
@@ -23,7 +23,7 @@ def home(request):
 @login_required
 def part_list(request):
     """List all parts with search and filtering"""
-    parts = Part.objects.select_related('parts_description').order_by('part_terminology_name')
+    parts = Parts.objects.select_related('parts_description').order_by('part_terminology_name')
 
     # Search functionality
     search_query = request.GET.get('search', '')
@@ -46,7 +46,7 @@ def part_list(request):
     context = {
         'page_obj': page_obj,
         'search_query': search_query,
-        'categories': Category.objects.all(),
+        'categories': Categories.objects.all(),
         'selected_category': category_id,
     }
     return render(request, 'parts/part_list.html', context)
@@ -55,7 +55,7 @@ def part_list(request):
 @login_required
 def part_detail(request, pk):
     """Detail view for a specific part"""
-    part = get_object_or_404(Part, pk=pk)
+    part = get_object_or_404(Parts, pk=pk)
 
     # Get related data
     attributes = PartAttributeAssignment.objects.filter(part=part).select_related(
@@ -97,7 +97,7 @@ def part_create(request):
 @login_required
 def part_edit(request, pk):
     """Edit an existing part"""
-    part = get_object_or_404(Part, pk=pk)
+    part = get_object_or_404(Parts, pk=pk)
 
     if request.method == 'POST':
         form = PartForm(request.POST, instance=part)
@@ -114,7 +114,7 @@ def part_edit(request, pk):
 @login_required
 def category_list(request):
     """List all categories"""
-    categories = Category.objects.all()
+    categories = Categories.objects.all()
 
     context = {
         'categories': categories,
@@ -125,7 +125,7 @@ def category_list(request):
 @login_required
 def attribute_list(request):
     """List all part attributes"""
-    attributes = PartAttribute.objects.all()
+    attributes = PartAttributes.objects.all()
 
     context = {
         'attributes': attributes,
@@ -136,7 +136,7 @@ def attribute_list(request):
 @login_required
 def change_log(request):
     """View change log"""
-    changes = Change.objects.select_related('change_reason').order_by('-rev_date', '-change_id')
+    changes = Changes.objects.select_related('change_reason').order_by('-rev_date', '-change_id')
 
     # Pagination
     paginator = Paginator(changes, 50)
@@ -152,8 +152,8 @@ def change_log(request):
 @login_required
 def change_detail(request, pk):
     """Detail view for a specific change"""
-    change = get_object_or_404(Change, pk=pk)
-    change_details = ChangeDetail.objects.filter(change=change).select_related(
+    change = get_object_or_404(Changes, pk=pk)
+    change_details = ChangeDetails.objects.filter(change=change).select_related(
         'change_attribute_state', 'table_name'
     )
 
@@ -171,11 +171,11 @@ def search_parts_htmx(request):
     search_query = request.GET.get('search', '')
 
     if search_query:
-        parts = Part.objects.filter(
+        parts = Parts.objects.filter(
             part_terminology_name__icontains=search_query
         ).select_related('parts_description')[:10]
     else:
-        parts = Part.objects.none()
+        parts = Parts.objects.none()
 
     return render(request, 'parts/partials/part_search_results.html', {'parts': parts})
 
@@ -187,8 +187,8 @@ def get_subcategories_htmx(request):
 
     if category_id:
         # This would need a relationship between Category and Subcategory in a real implementation
-        subcategories = Subcategory.objects.all()  # Simplified for now
+        subcategories = Subcategories.objects.all()  # Simplified for now
     else:
-        subcategories = Subcategory.objects.none()
+        subcategories = Subcategories.objects.none()
 
     return render(request, 'parts/partials/subcategory_options.html', {'subcategories': subcategories})

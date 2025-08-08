@@ -1,15 +1,17 @@
 <!-- templates/base.html -->
+{% load static compress %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     {% include 'partials/base/meta.html' %}
     <title>{% block title %}Solidus{% endblock %}</title>
-    {% load static %}
-    <link href="{% static 'css/tailwind.css' %}" rel="stylesheet">
-    <link href="{% static 'css/app.css' %}" rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'css/font-awesome.css' %}">
+    {% compress js %}
     <script src="{% static 'js/bundle.js' %}" defer></script>
+    {% endcompress %}
+    {% compress css %}
+    <link href="{% static 'css/bundle.css' %}" rel="stylesheet">
     {% block extra_css %}{% endblock %}
+    {% endcompress %}
 </head>
 <body class="bg-gray-50">
     <div class="flex h-screen">
@@ -37,7 +39,8 @@
     {% include 'partials/base/messages.html' %}
 
     <!-- JavaScript -->
-    <script src="{% static 'js/partial-components.js' %}"></script>
+    {% compress js %}
     {% block extra_js %}{% endblock %}
+    {% endcompress %}
 </body>
 </html>

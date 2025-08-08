@@ -4,436 +4,464 @@
 {% block title %}Account Settings{% endblock %}
 
 {% block content %}
-<div class="container mx-auto px-4 py-6">
-    <!-- Breadcrumbs -->
-    <nav class="mb-6">
-        <ol class="flex items-center space-x-2 text-sm text-gray-500">
-            <li><a href="{% url 'core:dashboard' %}" class="hover:text-blue-600">Dashboard</a></li>
-            <li>/</li>
-            <li><a href="{% url 'accounts:profile' %}" class="hover:text-blue-600">My Profile</a></li>
-            <li>/</li>
-            <li>Settings</li>
-        </ol>
-    </nav>
+    <div class="container mx-auto px-4 py-6">
+        <!-- Breadcrumbs -->
+        <nav class="mb-6">
+            <ol class="flex items-center space-x-2 text-sm text-gray-500">
+                <li><a href="{% url 'core:dashboard' %}" class="hover:text-blue-600">Dashboard</a></li>
+                <li>/</li>
+                <li><a href="{% url 'accounts:profile' %}" class="hover:text-blue-600">My Profile</a></li>
+                <li>/</li>
+                <li>Settings</li>
+            </ol>
+        </nav>
 
-    <div class="max-w-4xl mx-auto">
-        <!-- Header -->
-        <div class="mb-8">
-            <h1 class="text-2xl font-bold text-gray-900">Account Settings</h1>
-            <p class="mt-1 text-sm text-gray-600">Manage your account preferences and security settings.</p>
-        </div>
-
-        <!-- Settings Navigation -->
-        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
-            <!-- Sidebar Navigation -->
-            <div class="lg:col-span-1">
-                <nav class="space-y-1" x-data="{ activeTab: 'profile' }">
-                    <button @click="activeTab = 'profile'"
-                            :class="activeTab === 'profile' ? 'bg-blue-50 border-blue-500 text-blue-700' : 'border-transparent text-gray-600 hover:bg-gray-50 hover:text-gray-900'"
-                            class="w-full text-left group border-l-4 px-3 py-2 text-sm font-medium">
-                        <div class="flex items-center">
-                            <svg class="flex-shrink-0 -ml-1 mr-3 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                            </svg>
-                            Profile
-                        </div>
-                    </button>
-
-                    <button @click="activeTab = 'notifications'"
-                            :class="activeTab === 'notifications' ? 'bg-blue-50 border-blue-500 text-blue-700' : 'border-transparent text-gray-600 hover:bg-gray-50 hover:text-gray-900'"
-                            class="w-full text-left group border-l-4 px-3 py-2 text-sm font-medium">
-                        <div class="flex items-center">
-                            <svg class="flex-shrink-0 -ml-1 mr-3 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5v-5zM11 13h4V9l-4-4v4H7a2 2 0 00-2 2v2h6z"></path>
-                            </svg>
-                            Notifications
-                        </div>
-                    </button>
-
-                    <button @click="activeTab = 'security'"
-                            :class="activeTab === 'security' ? 'bg-blue-50 border-blue-500 text-blue-700' : 'border-transparent text-gray-600 hover:bg-gray-50 hover:text-gray-900'"
-                            class="w-full text-left group border-l-4 px-3 py-2 text-sm font-medium">
-                        <div class="flex items-center">
-                            <svg class="flex-shrink-0 -ml-1 mr-3 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
-                            </svg>
-                            Security
-                        </div>
-                    </button>
-
-                    <button @click="activeTab = 'preferences'"
-                            :class="activeTab === 'preferences' ? 'bg-blue-50 border-blue-500 text-blue-700' : 'border-transparent text-gray-600 hover:bg-gray-50 hover:text-gray-900'"
-                            class="w-full text-left group border-l-4 px-3 py-2 text-sm font-medium">
-                        <div class="flex items-center">
-                            <svg class="flex-shrink-0 -ml-1 mr-3 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                            </svg>
-                            Preferences
-                        </div>
-                    </button>
-
-                    {% if request.user.is_staff %}
-                    <button @click="activeTab = 'admin'"
-                            :class="activeTab === 'admin' ? 'bg-blue-50 border-blue-500 text-blue-700' : 'border-transparent text-gray-600 hover:bg-gray-50 hover:text-gray-900'"
-                            class="w-full text-left group border-l-4 px-3 py-2 text-sm font-medium">
-                        <div class="flex items-center">
-                            <svg class="flex-shrink-0 -ml-1 mr-3 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
-                            </svg>
-                            Admin
-                        </div>
-                    </button>
-                    {% endif %}
-                </nav>
+        <div class="max-w-4xl mx-auto">
+            <!-- Header -->
+            <div class="mb-8">
+                <h1 class="text-2xl font-bold text-gray-900">Account Settings</h1>
+                <p class="mt-1 text-sm text-gray-600">Manage your account preferences and security settings.</p>
             </div>
 
-            <!-- Settings Content -->
-            <div class="lg:col-span-3" x-data="{ activeTab: 'profile' }">
-                <!-- Profile Settings -->
-                <div x-show="activeTab === 'profile'" class="bg-white rounded-lg shadow-sm border p-6">
-                    <div class="flex items-center justify-between mb-6">
-                        <div>
-                            <h2 class="text-lg font-medium text-gray-900">Profile Information</h2>
-                            <p class="mt-1 text-sm text-gray-600">Update your personal information and profile photo.</p>
-                        </div>
-                        <a href="{% url 'accounts:profile_edit' %}"
-                           class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-                            Edit Profile
-                        </a>
-                    </div>
+            <!-- Settings Navigation -->
+            <div class="grid grid-cols-1 lg:grid-cols-4 gap-6" x-data="{ activeTab: 'profile' }">
+                <!-- Sidebar Navigation -->
+                <div class="lg:col-span-1">
+                    <nav class="space-y-1">
+                        <button @click="activeTab = 'profile'"
+                                :class="activeTab === 'profile' ? 'bg-blue-50 border-blue-500 text-blue-700' : 'border-transparent text-gray-600 hover:bg-gray-50 hover:text-gray-900'"
+                                class="w-full text-left group border-l-4 px-3 py-2 text-sm font-medium">
+                            <div class="flex items-center">
+                                <svg class="flex-shrink-0 -ml-1 mr-3 h-5 w-5" fill="none" stroke="currentColor"
+                                     viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                          d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                                </svg>
+                                Profile
+                            </div>
+                        </button>
 
-                    <div class="space-y-6">
-                        <div class="flex items-center space-x-4">
-                            {% if request.user.avatar %}
-                                <img src="{{ request.user.avatar.url }}" alt="Profile photo"
-                                     class="w-16 h-16 rounded-full object-cover">
-                            {% else %}
-                                <div class="w-16 h-16 rounded-full bg-gray-300 flex items-center justify-center">
-                                    <span class="text-gray-600 text-xl font-semibold">
-                                        {{ request.user.get_full_name|default:request.user.username|first|upper }}
-                                    </span>
+                        <button @click="activeTab = 'notifications'"
+                                :class="activeTab === 'notifications' ? 'bg-blue-50 border-blue-500 text-blue-700' : 'border-transparent text-gray-600 hover:bg-gray-50 hover:text-gray-900'"
+                                class="w-full text-left group border-l-4 px-3 py-2 text-sm font-medium">
+                            <div class="flex items-center">
+                                <svg class="flex-shrink-0 -ml-1 mr-3 h-5 w-5" fill="none" stroke="currentColor"
+                                     viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                          d="M15 17h5l-5 5v-5zM11 13h4V9l-4-4v4H7a2 2 0 00-2 2v2h6z"></path>
+                                </svg>
+                                Notifications
+                            </div>
+                        </button>
+
+                        <button @click="activeTab = 'security'"
+                                :class="activeTab === 'security' ? 'bg-blue-50 border-blue-500 text-blue-700' : 'border-transparent text-gray-600 hover:bg-gray-50 hover:text-gray-900'"
+                                class="w-full text-left group border-l-4 px-3 py-2 text-sm font-medium">
+                            <div class="flex items-center">
+                                <svg class="flex-shrink-0 -ml-1 mr-3 h-5 w-5" fill="none" stroke="currentColor"
+                                     viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                          d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                                </svg>
+                                Security
+                            </div>
+                        </button>
+
+                        <button @click="activeTab = 'preferences'"
+                                :class="activeTab === 'preferences' ? 'bg-blue-50 border-blue-500 text-blue-700' : 'border-transparent text-gray-600 hover:bg-gray-50 hover:text-gray-900'"
+                                class="w-full text-left group border-l-4 px-3 py-2 text-sm font-medium">
+                            <div class="flex items-center">
+                                <svg class="flex-shrink-0 -ml-1 mr-3 h-5 w-5" fill="none" stroke="currentColor"
+                                     viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                          d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                          d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                </svg>
+                                Preferences
+                            </div>
+                        </button>
+
+                        {% if request.user.is_staff %}
+                            <button @click="activeTab = 'admin'"
+                                    :class="activeTab === 'admin' ? 'bg-blue-50 border-blue-500 text-blue-700' : 'border-transparent text-gray-600 hover:bg-gray-50 hover:text-gray-900'"
+                                    class="w-full text-left group border-l-4 px-3 py-2 text-sm font-medium">
+                                <div class="flex items-center">
+                                    <svg class="flex-shrink-0 -ml-1 mr-3 h-5 w-5" fill="none" stroke="currentColor"
+                                         viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                              d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                                    </svg>
+                                    Admin
                                 </div>
-                            {% endif %}
-                            <div>
-                                <h3 class="text-lg font-medium text-gray-900">
-                                    {{ request.user.get_full_name|default:request.user.username }}
-                                </h3>
-                                <p class="text-sm text-gray-600">{{ request.user.email }}</p>
-                            </div>
-                        </div>
-
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                <dt class="text-sm font-medium text-gray-500">Phone</dt>
-                                <dd class="mt-1 text-sm text-gray-900">{{ request.user.phone|default:"Not provided" }}</dd>
-                            </div>
-                            <div>
-                                <dt class="text-sm font-medium text-gray-500">Company</dt>
-                                <dd class="mt-1 text-sm text-gray-900">{{ request.user.company|default:"Not provided" }}</dd>
-                            </div>
-                            <div>
-                                <dt class="text-sm font-medium text-gray-500">Member Since</dt>
-                                <dd class="mt-1 text-sm text-gray-900">{{ request.user.date_joined|date:"F d, Y" }}</dd>
-                            </div>
-                            <div>
-                                <dt class="text-sm font-medium text-gray-500">Last Login</dt>
-                                <dd class="mt-1 text-sm text-gray-900">
-                                    {% if request.user.last_login %}
-                                        {{ request.user.last_login|timesince }} ago
-                                    {% else %}
-                                        Never
-                                    {% endif %}
-                                </dd>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Notification Settings -->
-                <div x-show="activeTab === 'notifications'" class="bg-white rounded-lg shadow-sm border p-6">
-                    <div class="mb-6">
-                        <h2 class="text-lg font-medium text-gray-900">Notification Preferences</h2>
-                        <p class="mt-1 text-sm text-gray-600">Choose how you'd like to receive notifications.</p>
-                    </div>
-
-{#                    # TODO: create accounts:update_notifications view#}
-{#                    <form hx-post="{% url 'accounts:update_notifications' %}"#}
-{#                          hx-swap="none"#}
-{#                          class="space-y-6">#}
-                    <form hx-post=""
-                          hx-swap="none"
-                          class="space-y-6">
-                        {% csrf_token %}
-
-                        <div class="space-y-4">
-                            <h3 class="text-md font-medium text-gray-900">Email Notifications</h3>
-
-                            <div class="space-y-3">
-                                <div class="flex items-start">
-                                    <div class="flex items-center h-5">
-                                        <input type="checkbox" name="email_notifications" {% if user.email_notifications %}checked{% endif %}
-                                               class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
-                                    </div>
-                                    <div class="ml-3 text-sm">
-                                        <label class="font-medium text-gray-700">Account Activity</label>
-                                        <p class="text-gray-500">Receive emails when there's activity on your account.</p>
-                                    </div>
-                                </div>
-
-                                <div class="flex items-start">
-                                    <div class="flex items-center h-5">
-                                        <input type="checkbox" name="marketing_emails" {% if user.marketing_emails %}checked{% endif %}
-                                               class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
-                                    </div>
-                                    <div class="ml-3 text-sm">
-                                        <label class="font-medium text-gray-700">Marketing & Promotions</label>
-                                        <p class="text-gray-500">Receive newsletters and promotional offers.</p>
-                                    </div>
-                                </div>
-
-                                <div class="flex items-start">
-                                    <div class="flex items-center h-5">
-                                        <input type="checkbox" name="security_alerts" {% if user.security_alerts %}checked{% endif %}
-                                               class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
-                                    </div>
-                                    <div class="ml-3 text-sm">
-                                        <label class="font-medium text-gray-700">Security Alerts</label>
-                                        <p class="text-gray-500">Important security notifications about your account.</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="space-y-4 pt-6 border-t border-gray-200">
-                            <h3 class="text-md font-medium text-gray-900">Push Notifications</h3>
-
-                            <div class="space-y-3">
-                                <div class="flex items-start">
-                                    <div class="flex items-center h-5">
-                                        <input type="checkbox" name="browser_notifications" {% if user.browser_notifications %}checked{% endif %}
-                                               class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
-                                    </div>
-                                    <div class="ml-3 text-sm">
-                                        <label class="font-medium text-gray-700">Browser Notifications</label>
-                                        <p class="text-gray-500">Show notifications in your browser.</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="flex justify-end pt-6 border-t border-gray-200">
-                            <button type="submit"
-                                    class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700">
-                                Save Preferences
                             </button>
-                        </div>
-                    </form>
+                        {% endif %}
+                    </nav>
                 </div>
 
-                <!-- Security Settings -->
-                <div x-show="activeTab === 'security'" class="bg-white rounded-lg shadow-sm border p-6">
-                    <div class="mb-6">
-                        <h2 class="text-lg font-medium text-gray-900">Security Settings</h2>
-                        <p class="mt-1 text-sm text-gray-600">Manage your password and account security.</p>
-                    </div>
-
-                    <div class="space-y-6">
-                        <!-- Password -->
-                        <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
-{#                            # TODO: user.password_changed_at does not exist#}
-{#                            <div>#}
-{#                                <h3 class="text-sm font-medium text-gray-900">Password</h3>#}
-{#                                <p class="text-sm text-gray-600">Last changed {{ user.password_changed_at|default:"Never"|timesince }} ago</p>#}
-{#                            </div>#}
-                            <a href="{% url 'accounts:password_change' %}"
+                <!-- Settings Content -->
+                <div class="lg:col-span-3">
+                    <!-- Profile Settings -->
+                    <div x-show="activeTab === 'profile'" class="bg-white rounded-lg shadow-sm border p-6">
+                        <div class="flex items-center justify-between mb-6">
+                            <div>
+                                <h2 class="text-lg font-medium text-gray-900">Profile Information</h2>
+                                <p class="mt-1 text-sm text-gray-600">Update your personal information and profile
+                                    photo.</p>
+                            </div>
+                            <a href="{% url 'accounts:profile_edit' %}"
                                class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-                                Change Password
+                                Edit Profile
                             </a>
                         </div>
 
-{#                        # TODO: implement user two factor authentication#}
-                        <!-- Two-Factor Authentication -->
-{#                        <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg">#}
-{#                            <div>#}
-{#                                <h3 class="text-sm font-medium text-gray-900">Two-Factor Authentication</h3>#}
-{#                                <p class="text-sm text-gray-600">Add extra security to your account</p>#}
-{#                            </div>#}
-{#                            {% if user.has_2fa %}#}
-{#                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">#}
-{#                                    Enabled#}
-{#                                </span>#}
-{#                            {% else %}#}
-{#                                <button hx-get="{% url 'accounts:setup_2fa' %}"#}
-{#                                        hx-target="#modal-content"#}
-{#                                        hx-swap="innerHTML"#}
-{#                                        class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">#}
-{#                                    Enable 2FA#}
-{#                                </button>#}
-{#                            {% endif %}#}
-{#                        </div>#}
+                        <div class="space-y-6">
+                            <div class="flex items-center space-x-4">
+                                {% if request.user.avatar %}
+                                    <img src="{{ request.user.avatar.url }}" alt="Profile photo"
+                                         class="w-16 h-16 rounded-full object-cover">
+                                {% else %}
+                                    <div class="w-16 h-16 rounded-full bg-gray-300 flex items-center justify-center">
+                                    <span class="text-gray-600 text-xl font-semibold">
+                                        {{ request.user.get_full_name|default:request.user.username|first|upper }}
+                                    </span>
+                                    </div>
+                                {% endif %}
+                                <div>
+                                    <h3 class="text-lg font-medium text-gray-900">
+                                        {{ request.user.get_full_name|default:request.user.username }}
+                                    </h3>
+                                    <p class="text-sm text-gray-600">{{ request.user.email }}</p>
+                                </div>
+                            </div>
 
-{#                        # TODO: implement active sessions#}
-                        <!-- Active Sessions -->
-{#                        <div class="p-4 border border-gray-200 rounded-lg">#}
-{#                            <div class="flex items-center justify-between mb-4">#}
-{#                                <div>#}
-{#                                    <h3 class="text-sm font-medium text-gray-900">Active Sessions</h3>#}
-{#                                    <p class="text-sm text-gray-600">Manage devices that are signed in to your account</p>#}
-{#                                </div>#}
-{#                                <button hx-get="{% url 'accounts:active_sessions' %}"#}
-{#                                        hx-target="#sessions-list"#}
-{#                                        hx-swap="innerHTML"#}
-{#                                        class="text-sm text-blue-600 hover:text-blue-800">#}
-{#                                    View All#}
-{#                                </button>#}
-{#                            </div>#}
-{#                            <div id="sessions-list" class="space-y-2">#}
-{#                                <div class="flex items-center justify-between text-sm">#}
-{#                                    <div>#}
-{#                                        <p class="font-medium text-gray-900">Current session</p>#}
-{#                                        <p class="text-gray-600">{{ request.META.HTTP_USER_AGENT|truncatechars:50 }}</p>#}
-{#                                    </div>#}
-{#                                    <span class="text-green-600">Active now</span>#}
-{#                                </div>#}
-{#                            </div>#}
-{#                        </div>#}
-
-{#                        # TODO: implement user data export#}
-                        <!-- Download Data -->
-{#                        <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg">#}
-{#                            <div>#}
-{#                                <h3 class="text-sm font-medium text-gray-900">Download Your Data</h3>#}
-{#                                <p class="text-sm text-gray-600">Get a copy of your account data</p>#}
-{#                            </div>#}
-{#                            <button hx-post="{% url 'accounts:export_data' %}"#}
-{#                                    hx-confirm="Request data export? You'll receive an email when it's ready."#}
-{#                                    class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">#}
-{#                                Request Export#}
-{#                            </button>#}
-{#                        </div>#}
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <dt class="text-sm font-medium text-gray-500">Phone</dt>
+                                    <dd class="mt-1 text-sm text-gray-900">{{ request.user.phone|default:"Not provided" }}</dd>
+                                </div>
+                                <div>
+                                    <dt class="text-sm font-medium text-gray-500">Company</dt>
+                                    <dd class="mt-1 text-sm text-gray-900">{{ request.user.company|default:"Not provided" }}</dd>
+                                </div>
+                                <div>
+                                    <dt class="text-sm font-medium text-gray-500">Member Since</dt>
+                                    <dd class="mt-1 text-sm text-gray-900">{{ request.user.date_joined|date:"F d, Y" }}</dd>
+                                </div>
+                                <div>
+                                    <dt class="text-sm font-medium text-gray-500">Last Login</dt>
+                                    <dd class="mt-1 text-sm text-gray-900">
+                                        {% if request.user.last_login %}
+                                            {{ request.user.last_login|timesince }} ago
+                                        {% else %}
+                                            Never
+                                        {% endif %}
+                                    </dd>
+                                </div>
+                            </div>
+                        </div>
                     </div>
+
+                    <!-- Notification Settings -->
+                    <div x-show="activeTab === 'notifications'" class="bg-white rounded-lg shadow-sm border p-6">
+                        <div class="mb-6">
+                            <h2 class="text-lg font-medium text-gray-900">Notification Preferences</h2>
+                            <p class="mt-1 text-sm text-gray-600">Choose how you'd like to receive notifications.</p>
+                        </div>
+
+                        {#                    # TODO: create accounts:update_notifications view#}
+                        {#                    <form hx-post="{% url 'accounts:update_notifications' %}"#}
+                        {#                          hx-swap="none"#}
+                        {#                          class="space-y-6">#}
+                        <form hx-post=""
+                              hx-swap="none"
+                              class="space-y-6">
+                            {% csrf_token %}
+
+                            <div class="space-y-4">
+                                <h3 class="text-md font-medium text-gray-900">Email Notifications</h3>
+
+                                <div class="space-y-3">
+                                    <div class="flex items-start">
+                                        <div class="flex items-center h-5">
+                                            <input type="checkbox" name="email_notifications"
+                                                   {% if user.email_notifications %}checked{% endif %}
+                                                   class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                        </div>
+                                        <div class="ml-3 text-sm">
+                                            <label class="font-medium text-gray-700">Account Activity</label>
+                                            <p class="text-gray-500">Receive emails when there's activity on your
+                                                account.</p>
+                                        </div>
+                                    </div>
+
+                                    <div class="flex items-start">
+                                        <div class="flex items-center h-5">
+                                            <input type="checkbox" name="marketing_emails"
+                                                   {% if user.marketing_emails %}checked{% endif %}
+                                                   class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                        </div>
+                                        <div class="ml-3 text-sm">
+                                            <label class="font-medium text-gray-700">Marketing & Promotions</label>
+                                            <p class="text-gray-500">Receive newsletters and promotional offers.</p>
+                                        </div>
+                                    </div>
+
+                                    <div class="flex items-start">
+                                        <div class="flex items-center h-5">
+                                            <input type="checkbox" name="security_alerts"
+                                                   {% if user.security_alerts %}checked{% endif %}
+                                                   class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                        </div>
+                                        <div class="ml-3 text-sm">
+                                            <label class="font-medium text-gray-700">Security Alerts</label>
+                                            <p class="text-gray-500">Important security notifications about your
+                                                account.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="space-y-4 pt-6 border-t border-gray-200">
+                                <h3 class="text-md font-medium text-gray-900">Push Notifications</h3>
+
+                                <div class="space-y-3">
+                                    <div class="flex items-start">
+                                        <div class="flex items-center h-5">
+                                            <input type="checkbox" name="browser_notifications"
+                                                   {% if user.browser_notifications %}checked{% endif %}
+                                                   class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                        </div>
+                                        <div class="ml-3 text-sm">
+                                            <label class="font-medium text-gray-700">Browser Notifications</label>
+                                            <p class="text-gray-500">Show notifications in your browser.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="flex justify-end pt-6 border-t border-gray-200">
+                                <button type="submit"
+                                        class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700">
+                                    Save Preferences
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Security Settings -->
+                    <div x-show="activeTab === 'security'" class="bg-white rounded-lg shadow-sm border p-6">
+                        <div class="mb-6">
+                            <h2 class="text-lg font-medium text-gray-900">Security Settings</h2>
+                            <p class="mt-1 text-sm text-gray-600">Manage your password and account security.</p>
+                        </div>
+
+                        <div class="space-y-6">
+                            <!-- Password -->
+                            <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+                                {#                            # TODO: user.password_changed_at does not exist#}
+                                {#                            <div>#}
+                                {#                                <h3 class="text-sm font-medium text-gray-900">Password</h3>#}
+                                {#                                <p class="text-sm text-gray-600">Last changed {{ user.password_changed_at|default:"Never"|timesince }} ago</p>#}
+                                {#                            </div>#}
+                                <a href="{% url 'accounts:password_change' %}"
+                                   class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                                    Change Password
+                                </a>
+                            </div>
+
+                            {#                        # TODO: implement user two factor authentication#}
+                            <!-- Two-Factor Authentication -->
+                            {#                        <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg">#}
+                            {#                            <div>#}
+                            {#                                <h3 class="text-sm font-medium text-gray-900">Two-Factor Authentication</h3>#}
+                            {#                                <p class="text-sm text-gray-600">Add extra security to your account</p>#}
+                            {#                            </div>#}
+                            {#                            {% if user.has_2fa %}#}
+                            {#                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">#}
+                            {#                                    Enabled#}
+                            {#                                </span>#}
+                            {#                            {% else %}#}
+                            {#                                <button hx-get="{% url 'accounts:setup_2fa' %}"#}
+                            {#                                        hx-target="#modal-content"#}
+                            {#                                        hx-swap="innerHTML"#}
+                            {#                                        class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">#}
+                            {#                                    Enable 2FA#}
+                            {#                                </button>#}
+                            {#                            {% endif %}#}
+                            {#                        </div>#}
+
+                            {#                        # TODO: implement active sessions#}
+                            <!-- Active Sessions -->
+                            {#                        <div class="p-4 border border-gray-200 rounded-lg">#}
+                            {#                            <div class="flex items-center justify-between mb-4">#}
+                            {#                                <div>#}
+                            {#                                    <h3 class="text-sm font-medium text-gray-900">Active Sessions</h3>#}
+                            {#                                    <p class="text-sm text-gray-600">Manage devices that are signed in to your account</p>#}
+                            {#                                </div>#}
+                            {#                                <button hx-get="{% url 'accounts:active_sessions' %}"#}
+                            {#                                        hx-target="#sessions-list"#}
+                            {#                                        hx-swap="innerHTML"#}
+                            {#                                        class="text-sm text-blue-600 hover:text-blue-800">#}
+                            {#                                    View All#}
+                            {#                                </button>#}
+                            {#                            </div>#}
+                            {#                            <div id="sessions-list" class="space-y-2">#}
+                            {#                                <div class="flex items-center justify-between text-sm">#}
+                            {#                                    <div>#}
+                            {#                                        <p class="font-medium text-gray-900">Current session</p>#}
+                            {#                                        <p class="text-gray-600">{{ request.META.HTTP_USER_AGENT|truncatechars:50 }}</p>#}
+                            {#                                    </div>#}
+                            {#                                    <span class="text-green-600">Active now</span>#}
+                            {#                                </div>#}
+                            {#                            </div>#}
+                            {#                        </div>#}
+
+                            {#                        # TODO: implement user data export#}
+                            <!-- Download Data -->
+                            {#                        <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg">#}
+                            {#                            <div>#}
+                            {#                                <h3 class="text-sm font-medium text-gray-900">Download Your Data</h3>#}
+                            {#                                <p class="text-sm text-gray-600">Get a copy of your account data</p>#}
+                            {#                            </div>#}
+                            {#                            <button hx-post="{% url 'accounts:export_data' %}"#}
+                            {#                                    hx-confirm="Request data export? You'll receive an email when it's ready."#}
+                            {#                                    class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">#}
+                            {#                                Request Export#}
+                            {#                            </button>#}
+                            {#                        </div>#}
+                        </div>
+                    </div>
+
+                    <!-- Preferences -->
+                    <div x-show="activeTab === 'preferences'" class="bg-white rounded-lg shadow-sm border p-6">
+                        <div class="mb-6">
+                            <h2 class="text-lg font-medium text-gray-900">Account Preferences</h2>
+                            <p class="mt-1 text-sm text-gray-600">Customize your experience.</p>
+                        </div>
+
+                        {#                    # TODO: implement accounts:update_preferences#}
+                        {#                    <form hx-post="{% url 'accounts:update_preferences' %}"#}
+                        {#                          hx-swap="none"#}
+                        {#                          class="space-y-6">#}
+                        <form hx-post=""
+                              hx-swap="none"
+                              class="space-y-6">
+                            {% csrf_token %}
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Time Zone</label>
+                                    <select name="timezone"
+                                            class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                        <option value="UTC">UTC</option>
+                                        <option value="US/Eastern"
+                                                {% if user.timezone == 'US/Eastern' %}selected{% endif %}>Eastern Time
+                                        </option>
+                                        <option value="US/Central"
+                                                {% if user.timezone == 'US/Central' %}selected{% endif %}>Central Time
+                                        </option>
+                                        <option value="US/Mountain"
+                                                {% if user.timezone == 'US/Mountain' %}selected{% endif %}>Mountain Time
+                                        </option>
+                                        <option value="US/Pacific"
+                                                {% if user.timezone == 'US/Pacific' %}selected{% endif %}>Pacific Time
+                                        </option>
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Language</label>
+                                    <select name="language"
+                                            class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                        <option value="en">English</option>
+                                        <option value="es">Español</option>
+                                        <option value="fr">Français</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="space-y-4">
+                                <h3 class="text-md font-medium text-gray-900">Display Preferences</h3>
+
+                                <div class="flex items-start">
+                                    <div class="flex items-center h-5">
+                                        <input type="checkbox" name="dark_mode"
+                                               {% if user.dark_mode %}checked{% endif %}
+                                               class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                    </div>
+                                    <div class="ml-3 text-sm">
+                                        <label class="font-medium text-gray-700">Dark Mode</label>
+                                        <p class="text-gray-500">Use dark theme across the application.</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="flex justify-end pt-6 border-t border-gray-200">
+                                <button type="submit"
+                                        class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700">
+                                    Save Preferences
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Admin Settings -->
+                    {% if request.user.is_staff %}
+                        <div x-show="activeTab === 'admin'" class="bg-white rounded-lg shadow-sm border p-6">
+                            <div class="mb-6">
+                                <h2 class="text-lg font-medium text-gray-900">Admin Settings</h2>
+                                <p class="mt-1 text-sm text-gray-600">Administrative preferences and tools.</p>
+                            </div>
+
+                            <div class="space-y-6">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div class="p-4 border border-gray-200 rounded-lg">
+                                        <h3 class="text-sm font-medium text-gray-900 mb-2">Quick Actions</h3>
+                                        <div class="space-y-2">
+                                            <a href="/admin/" class="block text-sm text-blue-600 hover:text-blue-800">Django
+                                                Admin</a>
+                                            <a href="" class="block text-sm text-blue-600 hover:text-blue-800">Audit
+                                                Dashboard</a>
+                                            <a href="{% url 'accounts:user_list' %}"
+                                               class="block text-sm text-blue-600 hover:text-blue-800">Manage Users</a>
+                                        </div>
+                                    </div>
+
+                                    <div class="p-4 border border-gray-200 rounded-lg">
+                                        <h3 class="text-sm font-medium text-gray-900 mb-2">System Info</h3>
+                                        <div class="space-y-1 text-sm text-gray-600">
+                                            <p>Total Users: {{ admin_stats.total_users }}</p>
+                                            <p>Active Sessions: {{ admin_stats.active_sessions }}</p>
+                                            <p>Storage Used: {{ admin_stats.storage_used }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
                 </div>
-
-                <!-- Preferences -->
-                <div x-show="activeTab === 'preferences'" class="bg-white rounded-lg shadow-sm border p-6">
-                    <div class="mb-6">
-                        <h2 class="text-lg font-medium text-gray-900">Account Preferences</h2>
-                        <p class="mt-1 text-sm text-gray-600">Customize your experience.</p>
-                    </div>
-
-{#                    # TODO: implement accounts:update_preferences#}
-{#                    <form hx-post="{% url 'accounts:update_preferences' %}"#}
-{#                          hx-swap="none"#}
-{#                          class="space-y-6">#}
-                    <form hx-post=""
-                          hx-swap="none"
-                          class="space-y-6">
-                        {% csrf_token %}
-
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Time Zone</label>
-                                <select name="timezone"
-                                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
-                                    <option value="UTC">UTC</option>
-                                    <option value="US/Eastern" {% if user.timezone == 'US/Eastern' %}selected{% endif %}>Eastern Time</option>
-                                    <option value="US/Central" {% if user.timezone == 'US/Central' %}selected{% endif %}>Central Time</option>
-                                    <option value="US/Mountain" {% if user.timezone == 'US/Mountain' %}selected{% endif %}>Mountain Time</option>
-                                    <option value="US/Pacific" {% if user.timezone == 'US/Pacific' %}selected{% endif %}>Pacific Time</option>
-                                </select>
-                            </div>
-
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Language</label>
-                                <select name="language"
-                                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
-                                    <option value="en">English</option>
-                                    <option value="es">Español</option>
-                                    <option value="fr">Français</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="space-y-4">
-                            <h3 class="text-md font-medium text-gray-900">Display Preferences</h3>
-
-                            <div class="flex items-start">
-                                <div class="flex items-center h-5">
-                                    <input type="checkbox" name="dark_mode" {% if user.dark_mode %}checked{% endif %}
-                                           class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
-                                </div>
-                                <div class="ml-3 text-sm">
-                                    <label class="font-medium text-gray-700">Dark Mode</label>
-                                    <p class="text-gray-500">Use dark theme across the application.</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="flex justify-end pt-6 border-t border-gray-200">
-                            <button type="submit"
-                                    class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700">
-                                Save Preferences
-                            </button>
-                        </div>
-                    </form>
-                </div>
-
-                <!-- Admin Settings -->
-                {% if request.user.is_staff %}
-                <div x-show="activeTab === 'admin'" class="bg-white rounded-lg shadow-sm border p-6">
-                    <div class="mb-6">
-                        <h2 class="text-lg font-medium text-gray-900">Admin Settings</h2>
-                        <p class="mt-1 text-sm text-gray-600">Administrative preferences and tools.</p>
-                    </div>
-
-                    <div class="space-y-6">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div class="p-4 border border-gray-200 rounded-lg">
-                                <h3 class="text-sm font-medium text-gray-900 mb-2">Quick Actions</h3>
-                                <div class="space-y-2">
-                                    <a href="/admin/" class="block text-sm text-blue-600 hover:text-blue-800">Django Admin</a>
-                                    <a href="" class="block text-sm text-blue-600 hover:text-blue-800">Audit Dashboard</a>
-                                    <a href="{% url 'accounts:user_list' %}" class="block text-sm text-blue-600 hover:text-blue-800">Manage Users</a>
-                                </div>
-                            </div>
-
-                            <div class="p-4 border border-gray-200 rounded-lg">
-                                <h3 class="text-sm font-medium text-gray-900 mb-2">System Info</h3>
-                                <div class="space-y-1 text-sm text-gray-600">
-                                    <p>Total Users: {{ admin_stats.total_users }}</p>
-                                    <p>Active Sessions: {{ admin_stats.active_sessions }}</p>
-                                    <p>Storage Used: {{ admin_stats.storage_used }}</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                {% endif %}
             </div>
         </div>
     </div>
-</div>
 
-<!-- Modal for 2FA setup -->
-<div id="modal-content"></div>
+    <!-- Modal for 2FA setup -->
+    <div id="modal-content"></div>
 
-<script src="{% static 'js/bundle.js' %}"></script>
+    <script>
+        // Handle form submissions
+        document.body.addEventListener('htmx:afterRequest', function (event) {
+            if (event.detail.successful) {
+                // Show success notification
+                const notification = document.createElement('div');
+                notification.className = 'fixed top-4 right-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded z-50';
+                notification.textContent = 'Settings updated successfully!';
+                document.body.appendChild(notification);
 
-<script>
-// Handle form submissions
-document.body.addEventListener('htmx:afterRequest', function(event) {
-    if (event.detail.successful) {
-        // Show success notification
-        const notification = document.createElement('div');
-        notification.className = 'fixed top-4 right-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded z-50';
-        notification.textContent = 'Settings updated successfully!';
-        document.body.appendChild(notification);
-
-        setTimeout(() => {
-            notification.remove();
-        }, 3000);
-    }
-});
-</script>
+                setTimeout(() => {
+                    notification.remove();
+                }, 3000);
+            }
+        });
+    </script>
 {% endblock %}
