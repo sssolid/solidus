@@ -27,7 +27,7 @@ class ACESCodedValues(models.Model):
 
 class Alias(models.Model):
     """Part aliases for alternative naming"""
-    alias_id = models.AutoField(primary_key=True, verbose_name="Alias ID", db_column="AliasID")
+    alias_id = models.IntegerField(primary_key=True, verbose_name="Alias ID", db_column="AliasID")
     alias_name = models.CharField(max_length=100, verbose_name="Alias Name", db_column="AliasName")
 
     class Meta:
@@ -45,7 +45,7 @@ class Alias(models.Model):
 
 class Categories(models.Model):
     """Product categories"""
-    category_id = models.AutoField(primary_key=True, verbose_name="Category ID", db_column="CategoryID")
+    category_id = models.IntegerField(primary_key=True, verbose_name="Category ID", db_column="CategoryID")
     category_name = models.CharField(max_length=100, verbose_name="Category Name", db_column="CategoryName")
 
     class Meta:
@@ -63,7 +63,7 @@ class Categories(models.Model):
 
 class Subcategories(models.Model):
     """Product subcategories"""
-    sub_category_id = models.AutoField(primary_key=True, verbose_name="Subcategory ID", db_column="SubCategoryID")
+    sub_category_id = models.IntegerField(primary_key=True, verbose_name="Subcategory ID", db_column="SubCategoryID")
     sub_category_name = models.CharField(max_length=100, verbose_name="Subcategory Name", db_column="SubCategoryName")
 
     class Meta:
@@ -81,7 +81,7 @@ class Subcategories(models.Model):
 
 class Positions(models.Model):
     """Part positions"""
-    position_id = models.AutoField(primary_key=True, verbose_name="Position ID", db_column="PositionID")
+    position_id = models.IntegerField(primary_key=True, verbose_name="Position ID", db_column="PositionID")
     position = models.CharField(max_length=100, verbose_name="Position", db_column="Position")
 
     class Meta:
@@ -99,7 +99,7 @@ class Positions(models.Model):
 
 class Use(models.Model):
     """Part usage descriptions"""
-    use_id = models.AutoField(primary_key=True, verbose_name="Use ID", db_column="UseID")
+    use_id = models.IntegerField(primary_key=True, verbose_name="Use ID", db_column="UseID")
     use_description = models.CharField(max_length=100, verbose_name="Use Description", db_column="UseDescription")
 
     class Meta:
@@ -117,7 +117,7 @@ class Use(models.Model):
 
 class PartsDescription(models.Model):
     """Detailed descriptions for parts"""
-    parts_description_id = models.AutoField(primary_key=True, verbose_name="Parts Description ID", db_column="PartsDescriptionID")
+    parts_description_id = models.IntegerField(primary_key=True, verbose_name="Parts Description ID", db_column="PartsDescriptionID")
     parts_description = models.CharField(max_length=500, verbose_name="Parts Description", db_column="PartsDescription")
 
     class Meta:
@@ -135,7 +135,7 @@ class PartsDescription(models.Model):
 
 class Parts(models.Model):
     """Main parts/terminology table"""
-    part_terminology_id = models.AutoField(primary_key=True, verbose_name="Part Terminology ID", db_column="PartTerminologyID")
+    part_terminology_id = models.IntegerField(primary_key=True, verbose_name="Part Terminology ID", db_column="PartTerminologyID")
     part_terminology_name = models.CharField(max_length=256, verbose_name="Part Terminology Name", db_column="PartTerminologyName")
     parts_description = models.ForeignKey(
         PartsDescription,
@@ -166,7 +166,7 @@ class Parts(models.Model):
 
 class MeasurementGroup(models.Model):
     """Groups for measurement units"""
-    measurement_group_id = models.AutoField(primary_key=True, verbose_name="Measurement Group ID", db_column="MeasurementGroupID")
+    measurement_group_id = models.IntegerField(primary_key=True, verbose_name="Measurement Group ID", db_column="MeasurementGroupID")
     measurement_group_name = models.CharField(max_length=80, null=True, blank=True, verbose_name="Measurement Group Name", db_column="MeasurementGroupName")
 
     class Meta:
@@ -184,7 +184,7 @@ class MeasurementGroup(models.Model):
 
 class MetaData(models.Model):
     """Metadata definitions for part attributes"""
-    meta_id = models.AutoField(primary_key=True, verbose_name="Meta ID", db_column="MetaID")
+    meta_id = models.IntegerField(primary_key=True, verbose_name="Meta ID", db_column="MetaID")
     meta_name = models.CharField(max_length=80, null=True, blank=True, verbose_name="Meta Name", db_column="MetaName")
     meta_description = models.CharField(max_length=512, null=True, blank=True, verbose_name="Meta Description", db_column="MetaDescr")
     meta_format = models.CharField(max_length=10, null=True, blank=True, verbose_name="Meta Format", db_column="MetaFormat")
@@ -208,7 +208,7 @@ class MetaData(models.Model):
 
 class MetaUOMCodes(models.Model):
     """Unit of measure codes"""
-    meta_uom_id = models.AutoField(primary_key=True, verbose_name="Meta UOM ID", db_column="MetaUOMID")
+    meta_uom_id = models.IntegerField(primary_key=True, verbose_name="Meta UOM ID", db_column="MetaUOMID")
     uom_code = models.CharField(max_length=10, null=True, blank=True, verbose_name="UOM Code", db_column="UOMCode")
     uom_description = models.CharField(max_length=512, null=True, blank=True, verbose_name="UOM Description", db_column="UOMDescription")
     uom_label = models.CharField(max_length=10, null=True, blank=True, verbose_name="UOM Label", db_column="UOMLabel")
@@ -216,7 +216,7 @@ class MetaUOMCodes(models.Model):
         MeasurementGroup,
         on_delete=models.CASCADE,
         verbose_name="Measurement Group",
-        db_column = "MeasurementGroupID"
+        db_column="MeasurementGroupID"
     )
 
     class Meta:
@@ -235,7 +235,7 @@ class MetaUOMCodes(models.Model):
 
 class PartAttributes(models.Model):
     """Part attributes definitions"""
-    pa_id = models.AutoField(primary_key=True, verbose_name="Part Attribute ID", db_column="PAID")
+    pa_id = models.IntegerField(primary_key=True, verbose_name="Part Attribute ID", db_column="PAID")
     pa_name = models.CharField(max_length=80, null=True, blank=True, verbose_name="Attribute Name", db_column="PAName")
     pa_description = models.CharField(max_length=512, null=True, blank=True, verbose_name="Attribute Description", db_column="PADescr")
 
@@ -254,7 +254,7 @@ class PartAttributes(models.Model):
 
 class PartAttributeAssignment(models.Model):
     """Assignment of attributes to parts with metadata"""
-    papt_id = models.AutoField(primary_key=True, verbose_name="Part Attribute Assignment ID", db_column="PAPTID")
+    papt_id = models.IntegerField(primary_key=True, verbose_name="Part Attribute Assignment ID", db_column="PAPTID")
     meta_data = models.ForeignKey(MetaData, on_delete=models.CASCADE, verbose_name="Meta Data", db_column="MetaID")
     part = models.ForeignKey(Parts, on_delete=models.CASCADE, verbose_name="Part", db_column="PartTerminologyID")
     part_attribute = models.ForeignKey(PartAttributes, on_delete=models.CASCADE, verbose_name="Part Attribute", db_column="PAID")
@@ -276,12 +276,12 @@ class PartAttributeAssignment(models.Model):
 
 class MetaUOMCodeAssignment(models.Model):
     """Assignment of UOM codes to part attribute assignments"""
-    meta_uom_code_assignment_id = models.AutoField(primary_key=True, verbose_name="Meta UOM Code Assignment ID", db_column="MetaUOMCodeAssignmentID")
+    meta_uom_code_assignment_id = models.IntegerField(primary_key=True, verbose_name="Meta UOM Code Assignment ID", db_column="MetaUOMCodeAssignmentID")
     part_attribute_assignment = models.ForeignKey(
         PartAttributeAssignment,
         on_delete=models.CASCADE,
         verbose_name="Part Attribute Assignment",
-        db_column = "PAPTID"
+        db_column="PAPTID"
     )
     meta_uom = models.ForeignKey(MetaUOMCodes, on_delete=models.CASCADE, verbose_name="Meta UOM", db_column="MetaUOMID")
 
@@ -301,7 +301,7 @@ class MetaUOMCodeAssignment(models.Model):
 
 class PartPosition(models.Model):
     """Part positions"""
-    part_position_id = models.AutoField(primary_key=True, verbose_name="Part Position ID", db_column="PartPositionID")
+    part_position_id = models.IntegerField(primary_key=True, verbose_name="Part Position ID", db_column="PartPositionID")
     part = models.ForeignKey(Parts, on_delete=models.CASCADE, verbose_name="Part", db_column="PartTerminologyID")
     position = models.ForeignKey(Positions, on_delete=models.CASCADE, verbose_name="Position", db_column="PositionID")
     rev_date = models.DateField(null=True, blank=True, verbose_name="Revision Date", db_column="RevDate")
@@ -323,7 +323,7 @@ class PartPosition(models.Model):
 
 class PartCategory(models.Model):
     """Part category assignments"""
-    part_category_id = models.AutoField(primary_key=True, verbose_name="Part Category ID", db_column="PartCategoryID")
+    part_category_id = models.IntegerField(primary_key=True, verbose_name="Part Category ID", db_column="PartCategoryID")
     part = models.ForeignKey(Parts, on_delete=models.CASCADE, verbose_name="Part", db_column="PartTerminologyID")
     subcategory = models.ForeignKey(Subcategories, on_delete=models.CASCADE, verbose_name="Subcategory", db_column="SubCategoryID")
     category = models.ForeignKey(Categories, on_delete=models.CASCADE, verbose_name="Category", db_column="CategoryID")
@@ -390,14 +390,14 @@ class PartsRelationship(models.Model):
         on_delete=models.CASCADE,
         related_name='part_relationships',
         verbose_name="Part",
-        db_column = "PartTerminologyID"
+        db_column="PartTerminologyID"
     )
     related_part = models.ForeignKey(
         Parts,
         on_delete=models.CASCADE,
         related_name='related_to_parts',
         verbose_name="Related Part",
-        db_column = "RelatedPartTerminologyID"
+        db_column="RelatedPartTerminologyID"
     )
 
     class Meta:
@@ -417,7 +417,7 @@ class PartsRelationship(models.Model):
 
 class PartsSupersession(models.Model):
     """Part supersession tracking"""
-    parts_supersession_id = models.AutoField(primary_key=True, verbose_name="Parts Supersession ID", db_column="PartsSupersessionID")
+    parts_supersession_id = models.IntegerField(primary_key=True, verbose_name="Parts Supersession ID", db_column="PartsSupersessionId")
     old_part_terminology_id = models.IntegerField(verbose_name="Old Part Terminology ID", db_column="OldPartTerminologyID")
     old_part_terminology_name = models.CharField(max_length=256, verbose_name="Old Part Terminology Name", db_column="OldPartTerminologyName")
     new_part_terminology_id = models.IntegerField(verbose_name="New Part Terminology ID", db_column="NewPartTerminologyID")
@@ -442,8 +442,8 @@ class PartsSupersession(models.Model):
 
 class ValidValues(models.Model):
     """Valid values for attributes"""
-    valid_value_id = models.AutoField(primary_key=True, verbose_name="Valid Value ID", db_column="ValidValueID")
-    valid_value = models.CharField(max_length=100, verbose_name="Valid Value", db_column="ValidValues")
+    valid_value_id = models.IntegerField(primary_key=True, verbose_name="Valid Value ID", db_column="ValidValueID")
+    valid_value = models.CharField(max_length=100, verbose_name="Valid Value", db_column="ValidValue")
 
     class Meta:
         db_table = 'pcadb_valid_values'
@@ -460,12 +460,12 @@ class ValidValues(models.Model):
 
 class ValidValueAssignment(models.Model):
     """Assignment of valid values to part attribute assignments"""
-    valid_value_assignment_id = models.AutoField(primary_key=True, verbose_name="Valid Value Assignment ID", db_column="ValidValueAssignmentID")
+    valid_value_assignment_id = models.IntegerField(primary_key=True, verbose_name="Valid Value Assignment ID", db_column="ValidValueAssignmentID")
     part_attribute_assignment = models.ForeignKey(
         PartAttributeAssignment,
         on_delete=models.CASCADE,
         verbose_name="Part Attribute Assignment",
-        db_column = "PAPTID"
+        db_column="PAPTID"
     )
     valid_value = models.ForeignKey(ValidValues, on_delete=models.CASCADE, verbose_name="Valid Value", db_column="ValidValueID")
 
@@ -486,7 +486,7 @@ class ValidValueAssignment(models.Model):
 # PIES-related models
 class PIESSegment(models.Model):
     """PIES segments"""
-    pies_segment_id = models.AutoField(primary_key=True, verbose_name="PIES Segment ID", db_column="PIESSegmentId")
+    pies_segment_id = models.IntegerField(primary_key=True, verbose_name="PIES Segment ID", db_column="PIESSegmentId")
     segment_abb = models.CharField(max_length=50, verbose_name="Segment Abbreviation", db_column="SegmentAbb")
     segment_name = models.CharField(max_length=50, verbose_name="Segment Name", db_column="SegmentName")
     segment_description = models.CharField(max_length=250, verbose_name="Segment Description", db_column="SegmentDescription")
@@ -507,7 +507,7 @@ class PIESSegment(models.Model):
 
 class PIESCode(models.Model):
     """PIES codes"""
-    pies_code_id = models.AutoField(primary_key=True, verbose_name="PIES Code ID", db_column="PIESCodeId")
+    pies_code_id = models.IntegerField(primary_key=True, verbose_name="PIES Code ID", db_column="PIESCodeId")
     code_value = models.CharField(max_length=255, verbose_name="Code Value", db_column="CodeValue")
     code_format = models.CharField(max_length=255, verbose_name="Code Format", db_column="CodeFormat")
     field_format = models.CharField(max_length=255, null=True, blank=True, verbose_name="Field Format", db_column="FieldFormat")
@@ -530,7 +530,7 @@ class PIESCode(models.Model):
 
 class PIESExpiGroup(models.Model):
     """PIES expiration groups"""
-    pies_expi_group_id = models.AutoField(primary_key=True, verbose_name="PIES Expi Group ID", db_column="PIESExpiGroupId")
+    pies_expi_group_id = models.IntegerField(primary_key=True, verbose_name="PIES Expi Group ID", db_column="PIESExpiGroupId")
     expi_group_code = models.CharField(max_length=255, verbose_name="Expi Group Code", db_column="ExpiGroupCode")
     expi_group_description = models.CharField(max_length=255, verbose_name="Expi Group Description", db_column="ExpiGroupDescription")
 
@@ -549,14 +549,14 @@ class PIESExpiGroup(models.Model):
 
 class PIESExpiCode(models.Model):
     """PIES expiration codes"""
-    pies_expi_code_id = models.AutoField(primary_key=True, verbose_name="PIES Expi Code ID", db_column="PIESExpiCodeId")
+    pies_expi_code_id = models.IntegerField(primary_key=True, verbose_name="PIES Expi Code ID", db_column="PIESExpiCodeId")
     expi_code = models.CharField(max_length=50, verbose_name="Expi Code", db_column="ExpiCode")
     expi_code_description = models.CharField(max_length=255, verbose_name="Expi Code Description", db_column="ExpiCodeDescription")
     pies_expi_group = models.ForeignKey(
         PIESExpiGroup,
         on_delete=models.CASCADE,
         verbose_name="PIES Expi Group",
-        db_column = "PIESExpiGroupId"
+        db_column="PIESExpiGroupId"
     )
 
     class Meta:
@@ -575,7 +575,7 @@ class PIESExpiCode(models.Model):
 
 class PIESField(models.Model):
     """PIES fields"""
-    pies_field_id = models.AutoField(primary_key=True, verbose_name="PIES Field ID", db_column="PIESFieldId")
+    pies_field_id = models.IntegerField(primary_key=True, verbose_name="PIES Field ID", db_column="PIESFieldId")
     field_name = models.CharField(max_length=255, verbose_name="Field Name", db_column="FieldName")
     reference_field_number = models.CharField(max_length=255, verbose_name="Reference Field Number", db_column="ReferenceFieldNumber")
     pies_segment = models.ForeignKey(PIESSegment, on_delete=models.CASCADE, verbose_name="PIES Segment", db_column="PIESSegmentId")
@@ -597,7 +597,7 @@ class PIESField(models.Model):
 
 class PIESReferenceFieldCode(models.Model):
     """PIES reference field codes"""
-    pies_reference_field_code_id = models.AutoField(primary_key=True, verbose_name="PIES Reference Field Code ID", db_column="PIESReferenceFieldCodeId")
+    pies_reference_field_code_id = models.IntegerField(primary_key=True, verbose_name="PIES Reference Field Code ID", db_column="PIESReferenceFieldCodeId")
     pies_field = models.ForeignKey(PIESField, on_delete=models.CASCADE, verbose_name="PIES Field", db_column="PIESFieldId")
     pies_code = models.ForeignKey(PIESCode, on_delete=models.CASCADE, verbose_name="PIES Code", db_column="PIESCodeId")
     pies_expi_code = models.ForeignKey(
@@ -606,7 +606,7 @@ class PIESReferenceFieldCode(models.Model):
         null=True,
         blank=True,
         verbose_name="PIES Expi Code",
-        db_column = "PIESExpiCodeId"
+        db_column="PIESExpiCodeId"
     )
     reference_notes = models.CharField(max_length=2000, null=True, blank=True, verbose_name="Reference Notes", db_column="ReferenceNotes")
 
@@ -628,7 +628,7 @@ class PIESReferenceFieldCode(models.Model):
 # Audit/Change tracking models
 class ChangeReasons(models.Model):
     """Reasons for changes"""
-    change_reason_id = models.AutoField(primary_key=True, verbose_name="Change Reason ID", db_column="ChangeReasonID")
+    change_reason_id = models.IntegerField(primary_key=True, verbose_name="Change Reason ID", db_column="ChangeReasonID")
     change_reason = models.CharField(max_length=255, verbose_name="Change Reason", db_column="ChangeReason")
 
     class Meta:
@@ -646,7 +646,7 @@ class ChangeReasons(models.Model):
 
 class ChangeTableNames(models.Model):
     """Table names for change tracking"""
-    table_name_id = models.AutoField(primary_key=True, verbose_name="Table Name ID", db_column="TableNameID")
+    table_name_id = models.IntegerField(primary_key=True, verbose_name="Table Name ID", db_column="TableNameID")
     table_name = models.CharField(max_length=255, verbose_name="Table Name", db_column="TableName")
     table_description = models.CharField(max_length=1000, null=True, blank=True, verbose_name="Table Description", db_column="TableDescription")
 
@@ -665,7 +665,7 @@ class ChangeTableNames(models.Model):
 
 class ChangeAttributeStates(models.Model):
     """States for change attributes"""
-    change_attribute_state_id = models.AutoField(primary_key=True, verbose_name="Change Attribute State ID", db_column="ChangeAttributeStateID")
+    change_attribute_state_id = models.IntegerField(primary_key=True, verbose_name="Change Attribute State ID", db_column="ChangeAttributeStateID")
     change_attribute_state = models.CharField(max_length=255, verbose_name="Change Attribute State", db_column="ChangeAttributeState")
 
     class Meta:
@@ -683,7 +683,7 @@ class ChangeAttributeStates(models.Model):
 
 class Changes(models.Model):
     """Main change tracking table"""
-    change_id = models.AutoField(primary_key=True, verbose_name="Change ID", db_column="ChangeID")
+    change_id = models.IntegerField(primary_key=True, verbose_name="Change ID", db_column="ChangeID")
     request_id = models.IntegerField(verbose_name="Request ID", db_column="RequestID")
     change_reason = models.ForeignKey(ChangeReasons, on_delete=models.CASCADE, verbose_name="Change Reason", db_column="ChangeReasonID")
     rev_date = models.DateField(null=True, blank=True, verbose_name="Revision Date", db_column="RevDate")
@@ -705,13 +705,13 @@ class Changes(models.Model):
 
 class ChangeDetails(models.Model):
     """Detailed change tracking"""
-    change_detail_id = models.AutoField(primary_key=True, verbose_name="Change Detail ID", db_column="ChangeDetailID")
+    change_detail_id = models.IntegerField(primary_key=True, verbose_name="Change Detail ID", db_column="ChangeDetailID")
     change = models.ForeignKey(Changes, on_delete=models.CASCADE, verbose_name="Change", db_column="ChangeID")
     change_attribute_state = models.ForeignKey(
         ChangeAttributeStates,
         on_delete=models.CASCADE,
         verbose_name="Change Attribute State",
-        db_column = "ChangeAttributeStateID"
+        db_column="ChangeAttributeStateID"
     )
     table_name = models.ForeignKey(ChangeTableNames, on_delete=models.CASCADE, verbose_name="Table Name", db_column="TableNameID")
     primary_key_column_name = models.CharField(max_length=255, null=True, blank=True, verbose_name="Primary Key Column Name", db_column="PrimaryKeyColumnName")
@@ -740,7 +740,7 @@ class ChangeDetails(models.Model):
 # Lookup/Style tables
 class Style(models.Model):
     """Styling information"""
-    style_id = models.AutoField(primary_key=True, verbose_name="Style ID", db_column="StyleID")
+    style_id = models.IntegerField(primary_key=True, verbose_name="Style ID", db_column="StyleID")
     style_name = models.CharField(max_length=80, null=True, blank=True, verbose_name="Style Name", db_column="StyleName")
 
     class Meta:
@@ -765,7 +765,7 @@ class PartAttributeStyle(models.Model):
         null=True,
         blank=True,
         verbose_name="Part Attribute Assignment",
-        db_column = "PAPTID"
+        db_column="PAPTID"
     )
 
     class Meta:
@@ -803,7 +803,7 @@ class PartTypeStyle(models.Model):
 
 class CodeMaster(models.Model):
     """Master codes linking parts to categories and positions"""
-    code_master_id = models.AutoField(primary_key=True, verbose_name="Code Master ID", db_column="CodeMasterID")
+    code_master_id = models.IntegerField(primary_key=True, verbose_name="Code Master ID", db_column="CodeMasterID")
     part = models.ForeignKey(Parts, on_delete=models.CASCADE, verbose_name="Part", db_column="PartTerminologyID")
     category = models.ForeignKey(Categories, on_delete=models.CASCADE, verbose_name="Category", db_column="CategoryID")
     subcategory = models.ForeignKey(Subcategories, on_delete=models.CASCADE, verbose_name="Subcategory", db_column="SubCategoryID")
@@ -829,7 +829,6 @@ class CodeMaster(models.Model):
 
 class PCdbChanges(models.Model):
     """PCdb change tracking"""
-    id = models.AutoField(primary_key=True)
     code_master_id = models.IntegerField(null=True, blank=True, verbose_name="Code Master ID", db_column="CodeMasterID")
     category_id = models.IntegerField(null=True, blank=True, verbose_name="Category ID", db_column="CategoryID")
     category_name = models.CharField(max_length=100, null=True, blank=True, verbose_name="Category Name", db_column="CategoryName")
@@ -862,7 +861,6 @@ class PCdbChanges(models.Model):
 
 class RetiredTerms(models.Model):
     """Retired terminology tracking"""
-    id = models.AutoField(primary_key=True)
     part_name = models.CharField(max_length=255, null=True, blank=True, verbose_name="Part Name", db_column="PartName")
     part_id_code = models.IntegerField(null=True, blank=True, verbose_name="Part ID Code", db_column="PartIDCode")
 
@@ -882,7 +880,6 @@ class RetiredTerms(models.Model):
 
 class Version(models.Model):
     """Version tracking"""
-    id = models.AutoField(primary_key=True)
     version_date = models.DateField(null=True, blank=True, verbose_name="Version Date", db_column="VersionDate")
 
     class Meta:

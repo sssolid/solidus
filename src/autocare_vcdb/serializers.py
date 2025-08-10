@@ -12,7 +12,7 @@ from autocare_vcdb.models import (
 
     # Engine models
     EngineBase, EngineConfig, FuelType, Aspiration, CylinderHeadType,
-    IgnitionSystemType, Mfr, EngineDesignation, EngineVin, EngineVersion,
+    IgnitionSystemType, Mfr, EngineDesignation, EngineVIN, EngineVersion,
     Valves, PowerOutput,
 
     # Transmission models
@@ -21,7 +21,7 @@ from autocare_vcdb.models import (
 
     # Other system models
     BodyStyleConfig, BodyType, BodyNumDoors, BrakeConfig, BrakeType,
-    BrakeSystem, BrakeAbs, DriveType, SteeringConfig, SpringTypeConfig,
+    BrakeSystem, BrakeABS, DriveType, SteeringConfig, SpringTypeConfig,
     BedConfig, Class,
 
     # Relationship models

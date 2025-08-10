@@ -13,9 +13,9 @@ User = get_user_model()
 
 class Abbreviation(AuditMixin, models.Model):
     """Standard abbreviations used throughout the system."""
-    abbreviation = models.CharField(max_length=3, primary_key=True)
-    description = models.CharField(max_length=20)
-    long_description = models.CharField(max_length=200)
+    abbreviation = models.CharField(max_length=3, primary_key=True, db_column='Abbreviation')
+    description = models.CharField(max_length=20, db_column='Description')
+    long_description = models.CharField(max_length=200, db_column='LongDescription')
 
     class Meta:
         db_table = 'vcdb_abbreviation'
@@ -29,8 +29,8 @@ class Abbreviation(AuditMixin, models.Model):
 
 class Aspiration(AuditMixin, models.Model):
     """Engine aspiration types (naturally aspirated, turbocharged, etc.)."""
-    aspiration_id = models.IntegerField(primary_key=True)
-    aspiration_name = models.CharField(max_length=30)
+    aspiration_id = models.IntegerField(primary_key=True, db_column='AspirationID')
+    aspiration_name = models.CharField(max_length=30, db_column='AspirationName')
 
     class Meta:
         db_table = 'vcdb_aspiration'
@@ -44,7 +44,8 @@ class Aspiration(AuditMixin, models.Model):
 
 class AttachmentType(AuditMixin, models.Model):
     """Types of attachments that can be associated with records."""
-    attachment_type_name = models.CharField(max_length=20, unique=True)
+    attachment_type_id = models.AutoField(primary_key=True, db_column='AttachmentTypeID')
+    attachment_type_name = models.CharField(max_length=20, unique=True, db_column='AttachmentTypeName')
 
     class Meta:
         db_table = 'vcdb_attachment_type'
@@ -58,14 +59,16 @@ class AttachmentType(AuditMixin, models.Model):
 
 class Attachment(AuditMixin, models.Model):
     """File attachments for various entities."""
+    attachment_id = models.AutoField(primary_key=True, db_column='AttachmentID')
     attachment_type = models.ForeignKey(
         AttachmentType,
         on_delete=models.PROTECT,
-        related_name='attachments'
+        related_name='attachments',
+        db_column='AttachmentTypeID'
     )
-    attachment_file_name = models.CharField(max_length=50)
-    attachment_url = models.URLField(max_length=100)
-    attachment_description = models.CharField(max_length=50)
+    attachment_file_name = models.CharField(max_length=50, db_column='AttachmentFileName')
+    attachment_url = models.URLField(max_length=100, db_column='AttachmentURL')
+    attachment_description = models.CharField(max_length=50, db_column='AttachmentDescription')
 
     class Meta:
         db_table = 'vcdb_attachment'
@@ -83,8 +86,8 @@ class Attachment(AuditMixin, models.Model):
 
 class Make(AuditMixin, models.Model):
     """Vehicle manufacturers/makes."""
-    make_id = models.IntegerField(primary_key=True)
-    make_name = models.CharField(max_length=50, unique=True)
+    make_id = models.IntegerField(primary_key=True, db_column='MakeID')
+    make_name = models.CharField(max_length=50, unique=True, db_column='MakeName')
 
     class Meta:
         db_table = 'vcdb_make'
@@ -101,8 +104,8 @@ class Make(AuditMixin, models.Model):
 
 class VehicleTypeGroup(AuditMixin, models.Model):
     """Groups of vehicle types for organization."""
-    vehicle_type_group_id = models.IntegerField(primary_key=True)
-    vehicle_type_group_name = models.CharField(max_length=50)
+    vehicle_type_group_id = models.IntegerField(primary_key=True, db_column='VehicleTypeGroupID')
+    vehicle_type_group_name = models.CharField(max_length=50, db_column='VehicleTypeGroupName')
 
     class Meta:
         db_table = 'vcdb_vehicle_type_group'
@@ -116,14 +119,15 @@ class VehicleTypeGroup(AuditMixin, models.Model):
 
 class VehicleType(AuditMixin, models.Model):
     """Types of vehicles (car, truck, SUV, etc.)."""
-    vehicle_type_id = models.IntegerField(primary_key=True)
-    vehicle_type_name = models.CharField(max_length=50)
+    vehicle_type_id = models.IntegerField(primary_key=True, db_column='VehicleTypeID')
+    vehicle_type_name = models.CharField(max_length=50, db_column='VehicleTypeName')
     vehicle_type_group = models.ForeignKey(
         VehicleTypeGroup,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='vehicle_types'
+        related_name='vehicle_types',
+        db_column='VehicleTypeGroupID'
     )
 
     class Meta:
@@ -141,12 +145,13 @@ class VehicleType(AuditMixin, models.Model):
 
 class Model(AuditMixin, models.Model):
     """Vehicle models."""
-    model_id = models.IntegerField(primary_key=True)
-    model_name = models.CharField(max_length=100, null=True, blank=True)
+    model_id = models.IntegerField(primary_key=True, db_column='ModelID')
+    model_name = models.CharField(max_length=100, null=True, blank=True, db_column='ModelName')
     vehicle_type = models.ForeignKey(
         VehicleType,
         on_delete=models.PROTECT,
-        related_name='models'
+        related_name='models',
+        db_column='VehicleTypeID'
     )
 
     class Meta:
@@ -165,7 +170,7 @@ class Model(AuditMixin, models.Model):
 
 class Year(AuditMixin, models.Model):
     """Model years for vehicles."""
-    year_id = models.IntegerField(primary_key=True)
+    year_id = models.IntegerField(primary_key=True, db_column='YearID')
 
     class Meta:
         db_table = 'vcdb_year'
@@ -179,10 +184,10 @@ class Year(AuditMixin, models.Model):
 
 class BaseVehicle(AuditMixin, models.Model):
     """Base vehicle configurations combining year, make, and model."""
-    base_vehicle_id = models.IntegerField(primary_key=True)
-    year = models.ForeignKey(Year, on_delete=models.PROTECT, related_name='base_vehicles')
-    make = models.ForeignKey(Make, on_delete=models.PROTECT, related_name='base_vehicles')
-    model = models.ForeignKey(Model, on_delete=models.PROTECT, related_name='base_vehicles')
+    base_vehicle_id = models.IntegerField(primary_key=True, db_column='BaseVehicleID')
+    year = models.ForeignKey(Year, on_delete=models.PROTECT, related_name='base_vehicles', db_column='YearID')
+    make = models.ForeignKey(Make, on_delete=models.PROTECT, related_name='base_vehicles', db_column='MakeID')
+    model = models.ForeignKey(Model, on_delete=models.PROTECT, related_name='base_vehicles', db_column='ModelID')
 
     class Meta:
         db_table = 'vcdb_base_vehicle'
@@ -202,8 +207,8 @@ class BaseVehicle(AuditMixin, models.Model):
 
 class SubModel(AuditMixin, models.Model):
     """Vehicle sub-models and trim levels."""
-    sub_model_id = models.IntegerField(primary_key=True)
-    sub_model_name = models.CharField(max_length=50)
+    sub_model_id = models.IntegerField(primary_key=True, db_column='SubModelID')
+    sub_model_name = models.CharField(max_length=50, db_column='SubModelName')
 
     class Meta:
         db_table = 'vcdb_sub_model'
@@ -220,16 +225,17 @@ class SubModel(AuditMixin, models.Model):
 
 class Region(AuditMixin, models.Model):
     """Geographic regions and markets."""
-    region_id = models.IntegerField(primary_key=True)
+    region_id = models.IntegerField(primary_key=True, db_column='RegionID')
     parent = models.ForeignKey(
         'self',
         on_delete=models.CASCADE,
         null=True,
         blank=True,
-        related_name='children'
+        related_name='children',
+        db_column='ParentID'
     )
-    region_abbr = models.CharField(max_length=3, null=True, blank=True)
-    region_name = models.CharField(max_length=30, null=True, blank=True)
+    region_abbr = models.CharField(max_length=3, null=True, blank=True, db_column='RegionAbbr')
+    region_name = models.CharField(max_length=30, null=True, blank=True, db_column='RegionName')
 
     class Meta:
         db_table = 'vcdb_region'
@@ -247,8 +253,8 @@ class Region(AuditMixin, models.Model):
 
 class PublicationStage(AuditMixin, models.Model):
     """Publication stages for data lifecycle management."""
-    publication_stage_id = models.IntegerField(primary_key=True)
-    publication_stage_name = models.CharField(max_length=100)
+    publication_stage_id = models.IntegerField(primary_key=True, db_column='PublicationStageID')
+    publication_stage_name = models.CharField(max_length=100, db_column='PublicationStageName')
 
     class Meta:
         db_table = 'vcdb_publication_stage'
@@ -262,31 +268,35 @@ class PublicationStage(AuditMixin, models.Model):
 
 class Vehicle(AuditMixin, models.Model):
     """Complete vehicle configurations."""
-    vehicle_id = models.IntegerField(primary_key=True)
+    vehicle_id = models.IntegerField(primary_key=True, db_column='VehicleID')
     base_vehicle = models.ForeignKey(
         BaseVehicle,
         on_delete=models.PROTECT,
-        related_name='vehicles'
+        related_name='vehicles',
+        db_column='BaseVehicleID'
     )
     submodel = models.ForeignKey(
         SubModel,
         on_delete=models.PROTECT,
-        related_name='vehicles'
+        related_name='vehicles',
+        db_column='SubmodelID'
     )
     region = models.ForeignKey(
         Region,
         on_delete=models.PROTECT,
-        related_name='vehicles'
+        related_name='vehicles',
+        db_column='RegionID'
     )
-    source = models.CharField(max_length=10, null=True, blank=True)
+    source = models.CharField(max_length=10, null=True, blank=True, db_column='Source')
     publication_stage = models.ForeignKey(
         PublicationStage,
         on_delete=models.PROTECT,
         default=4,
-        related_name='vehicles'
+        related_name='vehicles',
+        db_column='PublicationStageID'
     )
-    publication_stage_source = models.CharField(max_length=100)
-    publication_stage_date = models.DateTimeField(auto_now_add=True)
+    publication_stage_source = models.CharField(max_length=100, db_column='PublicationStageSource')
+    publication_stage_date = models.DateTimeField(auto_now_add=True, db_column='PublicationStageDate')
 
     class Meta:
         db_table = 'vcdb_vehicle'
@@ -308,16 +318,16 @@ class Vehicle(AuditMixin, models.Model):
 # Engine-related models
 class EngineBase(AuditMixin, models.Model):
     """Base engine specifications."""
-    engine_base_id = models.IntegerField(primary_key=True)
-    liter = models.CharField(max_length=6)
-    cc = models.CharField(max_length=8)
-    cid = models.CharField(max_length=7)
-    cylinders = models.CharField(max_length=2)
-    block_type = models.CharField(max_length=2)
-    eng_bore_in = models.CharField(max_length=10)
-    eng_bore_metric = models.CharField(max_length=10)
-    eng_stroke_in = models.CharField(max_length=10)
-    eng_stroke_metric = models.CharField(max_length=10)
+    engine_base_id = models.IntegerField(primary_key=True, db_column='EngineBaseID')
+    liter = models.CharField(max_length=6, db_column='Liter')
+    cc = models.CharField(max_length=8, db_column='CC')
+    cid = models.CharField(max_length=7, db_column='CID')
+    cylinders = models.CharField(max_length=2, db_column='Cylinders')
+    block_type = models.CharField(max_length=2, db_column='BlockType')
+    eng_bore_in = models.CharField(max_length=10, db_column='EngBoreIn')
+    eng_bore_metric = models.CharField(max_length=10, db_column='EngBoreMetric')
+    eng_stroke_in = models.CharField(max_length=10, db_column='EngStrokeIn')
+    eng_stroke_metric = models.CharField(max_length=10, db_column='EngStrokeMetric')
 
     class Meta:
         db_table = 'vcdb_engine_base'
@@ -336,10 +346,90 @@ class EngineBase(AuditMixin, models.Model):
         return f"{self.liter}L {self.cylinders}cyl"
 
 
+class EngineBlock(AuditMixin, models.Model):
+    """Engine block specifications."""
+    engine_block_id = models.IntegerField(primary_key=True, db_column='EngineBlockID')
+    liter = models.CharField(max_length=6, db_column='Liter')
+    cc = models.CharField(max_length=8, db_column='CC')
+    cid = models.CharField(max_length=7, db_column='CID')
+    cylinders = models.CharField(max_length=2, db_column='Cylinders')
+    block_type = models.CharField(max_length=2, db_column='BlockType')
+
+    class Meta:
+        db_table = 'vcdb_engine_block'
+        ordering = ['liter', 'cylinders']
+        verbose_name = _('Engine Block')
+        verbose_name_plural = _('Engine Blocks')
+        indexes = [
+            models.Index(fields=['liter']),
+            models.Index(fields=['cc']),
+            models.Index(fields=['cid']),
+            models.Index(fields=['cylinders']),
+            models.Index(fields=['block_type']),
+        ]
+
+    def __str__(self):
+        return f"{self.liter}L {self.cylinders}cyl Block"
+
+
+class EngineBoreStroke(AuditMixin, models.Model):
+    """Engine bore and stroke measurements."""
+    engine_bore_stroke_id = models.IntegerField(primary_key=True, db_column='EngineBoreStrokeID')
+    eng_bore_in = models.CharField(max_length=10, db_column='EngBoreIn')
+    eng_bore_metric = models.CharField(max_length=10, db_column='EngBoreMetric')
+    eng_stroke_in = models.CharField(max_length=10, db_column='EngStrokeIn')
+    eng_stroke_metric = models.CharField(max_length=10, db_column='EngStrokeMetric')
+
+    class Meta:
+        db_table = 'vcdb_engine_bore_stroke'
+        ordering = ['eng_bore_in', 'eng_stroke_in']
+        verbose_name = _('Engine Bore Stroke')
+        verbose_name_plural = _('Engine Bore Strokes')
+        indexes = [
+            models.Index(fields=['eng_bore_in']),
+            models.Index(fields=['eng_bore_metric']),
+            models.Index(fields=['eng_stroke_in']),
+            models.Index(fields=['eng_stroke_metric']),
+        ]
+
+    def __str__(self):
+        return f"Bore: {self.eng_bore_in}in / Stroke: {self.eng_stroke_in}in"
+
+
+class EngineBase2(AuditMixin, models.Model):
+    """Alternative engine base configurations."""
+    engine_base_id = models.IntegerField(primary_key=True, db_column='EngineBaseID')
+    engine_block = models.ForeignKey(
+        EngineBlock,
+        on_delete=models.PROTECT,
+        related_name='engine_bases',
+        db_column='EngineBlockID'
+    )
+    engine_bore_stroke = models.ForeignKey(
+        EngineBoreStroke,
+        on_delete=models.PROTECT,
+        related_name='engine_bases',
+        db_column='EngineBoreStrokeID'
+    )
+
+    class Meta:
+        db_table = 'vcdb_engine_base2'
+        ordering = ['engine_block']
+        verbose_name = _('Engine Base 2')
+        verbose_name_plural = _('Engine Bases 2')
+        indexes = [
+            models.Index(fields=['engine_block']),
+            models.Index(fields=['engine_bore_stroke']),
+        ]
+
+    def __str__(self):
+        return f"{self.engine_block} - {self.engine_bore_stroke}"
+
+
 class CylinderHeadType(AuditMixin, models.Model):
     """Cylinder head configurations."""
-    cylinder_head_type_id = models.IntegerField(primary_key=True)
-    cylinder_head_type_name = models.CharField(max_length=30)
+    cylinder_head_type_id = models.IntegerField(primary_key=True, db_column='CylinderHeadTypeID')
+    cylinder_head_type_name = models.CharField(max_length=30, db_column='CylinderHeadTypeName')
 
     class Meta:
         db_table = 'vcdb_cylinder_head_type'
@@ -353,8 +443,8 @@ class CylinderHeadType(AuditMixin, models.Model):
 
 class FuelType(AuditMixin, models.Model):
     """Types of fuel used by engines."""
-    fuel_type_id = models.IntegerField(primary_key=True)
-    fuel_type_name = models.CharField(max_length=100)
+    fuel_type_id = models.IntegerField(primary_key=True, db_column='FuelTypeID')
+    fuel_type_name = models.CharField(max_length=100, db_column='FuelTypeName')
 
     class Meta:
         db_table = 'vcdb_fuel_type'
@@ -368,8 +458,8 @@ class FuelType(AuditMixin, models.Model):
 
 class FuelDeliveryType(AuditMixin, models.Model):
     """Primary fuel delivery methods."""
-    fuel_delivery_type_id = models.IntegerField(primary_key=True)
-    fuel_delivery_type_name = models.CharField(max_length=50)
+    fuel_delivery_type_id = models.IntegerField(primary_key=True, db_column='FuelDeliveryTypeID')
+    fuel_delivery_type_name = models.CharField(max_length=50, db_column='FuelDeliveryTypeName')
 
     class Meta:
         db_table = 'vcdb_fuel_delivery_type'
@@ -383,8 +473,8 @@ class FuelDeliveryType(AuditMixin, models.Model):
 
 class FuelDeliverySubType(AuditMixin, models.Model):
     """Fuel delivery sub-types."""
-    fuel_delivery_sub_type_id = models.IntegerField(primary_key=True)
-    fuel_delivery_sub_type_name = models.CharField(max_length=50)
+    fuel_delivery_sub_type_id = models.IntegerField(primary_key=True, db_column='FuelDeliverySubTypeID')
+    fuel_delivery_sub_type_name = models.CharField(max_length=50, db_column='FuelDeliverySubTypeName')
 
     class Meta:
         db_table = 'vcdb_fuel_delivery_sub_type'
@@ -398,8 +488,8 @@ class FuelDeliverySubType(AuditMixin, models.Model):
 
 class FuelSystemControlType(AuditMixin, models.Model):
     """Fuel system control methods."""
-    fuel_system_control_type_id = models.IntegerField(primary_key=True)
-    fuel_system_control_type_name = models.CharField(max_length=50)
+    fuel_system_control_type_id = models.IntegerField(primary_key=True, db_column='FuelSystemControlTypeID')
+    fuel_system_control_type_name = models.CharField(max_length=50, db_column='FuelSystemControlTypeName')
 
     class Meta:
         db_table = 'vcdb_fuel_system_control_type'
@@ -413,8 +503,8 @@ class FuelSystemControlType(AuditMixin, models.Model):
 
 class FuelSystemDesign(AuditMixin, models.Model):
     """Fuel system designs."""
-    fuel_system_design_id = models.IntegerField(primary_key=True)
-    fuel_system_design_name = models.CharField(max_length=50)
+    fuel_system_design_id = models.IntegerField(primary_key=True, db_column='FuelSystemDesignID')
+    fuel_system_design_name = models.CharField(max_length=50, db_column='FuelSystemDesignName')
 
     class Meta:
         db_table = 'vcdb_fuel_system_design'
@@ -428,26 +518,30 @@ class FuelSystemDesign(AuditMixin, models.Model):
 
 class FuelDeliveryConfig(AuditMixin, models.Model):
     """Complete fuel delivery system configurations."""
-    fuel_delivery_config_id = models.IntegerField(primary_key=True)
+    fuel_delivery_config_id = models.IntegerField(primary_key=True, db_column='FuelDeliveryConfigID')
     fuel_delivery_type = models.ForeignKey(
         FuelDeliveryType,
         on_delete=models.PROTECT,
-        related_name='configs'
+        related_name='configs',
+        db_column='FuelDeliveryTypeID'
     )
     fuel_delivery_sub_type = models.ForeignKey(
         FuelDeliverySubType,
         on_delete=models.PROTECT,
-        related_name='configs'
+        related_name='configs',
+        db_column='FuelDeliverySubTypeID'
     )
     fuel_system_control_type = models.ForeignKey(
         FuelSystemControlType,
         on_delete=models.PROTECT,
-        related_name='configs'
+        related_name='configs',
+        db_column='FuelSystemControlTypeID'
     )
     fuel_system_design = models.ForeignKey(
         FuelSystemDesign,
         on_delete=models.PROTECT,
-        related_name='configs'
+        related_name='configs',
+        db_column='FuelSystemDesignID'
     )
 
     class Meta:
@@ -468,8 +562,8 @@ class FuelDeliveryConfig(AuditMixin, models.Model):
 
 class IgnitionSystemType(AuditMixin, models.Model):
     """Ignition system types."""
-    ignition_system_type_id = models.IntegerField(primary_key=True)
-    ignition_system_type_name = models.CharField(max_length=30)
+    ignition_system_type_id = models.IntegerField(primary_key=True, db_column='IgnitionSystemTypeID')
+    ignition_system_type_name = models.CharField(max_length=30, db_column='IgnitionSystemTypeName')
 
     class Meta:
         db_table = 'vcdb_ignition_system_type'
@@ -483,8 +577,8 @@ class IgnitionSystemType(AuditMixin, models.Model):
 
 class Mfr(AuditMixin, models.Model):
     """Manufacturers (different from Makes - these are component manufacturers)."""
-    mfr_id = models.IntegerField(primary_key=True)
-    mfr_name = models.CharField(max_length=30)
+    mfr_id = models.IntegerField(primary_key=True, db_column='MfrID')
+    mfr_name = models.CharField(max_length=30, db_column='MfrName')
 
     class Meta:
         db_table = 'vcdb_mfr'
@@ -501,8 +595,8 @@ class Mfr(AuditMixin, models.Model):
 
 class EngineDesignation(AuditMixin, models.Model):
     """Engine designation codes."""
-    engine_designation_id = models.IntegerField(primary_key=True)
-    engine_designation_name = models.CharField(max_length=30)
+    engine_designation_id = models.IntegerField(primary_key=True, db_column='EngineDesignationID')
+    engine_designation_name = models.CharField(max_length=30, db_column='EngineDesignationName')
 
     class Meta:
         db_table = 'vcdb_engine_designation'
@@ -514,10 +608,10 @@ class EngineDesignation(AuditMixin, models.Model):
         return self.engine_designation_name
 
 
-class EngineVin(AuditMixin, models.Model):
+class EngineVIN(AuditMixin, models.Model):
     """Engine VIN codes."""
-    engine_vin_id = models.IntegerField(primary_key=True)
-    engine_vin_name = models.CharField(max_length=5)
+    engine_vin_id = models.IntegerField(primary_key=True, db_column='EngineVINID')
+    engine_vin_name = models.CharField(max_length=5, db_column='EngineVINName')
 
     class Meta:
         db_table = 'vcdb_engine_vin'
@@ -531,8 +625,8 @@ class EngineVin(AuditMixin, models.Model):
 
 class EngineVersion(AuditMixin, models.Model):
     """Engine versions."""
-    engine_version_id = models.IntegerField(primary_key=True)
-    engine_version = models.CharField(max_length=20)
+    engine_version_id = models.IntegerField(primary_key=True, db_column='EngineVersionID')
+    engine_version = models.CharField(max_length=20, db_column='EngineVersion')
 
     class Meta:
         db_table = 'vcdb_engine_version'
@@ -546,8 +640,8 @@ class EngineVersion(AuditMixin, models.Model):
 
 class Valves(AuditMixin, models.Model):
     """Valve configurations."""
-    valves_id = models.IntegerField(primary_key=True)
-    valves_per_engine = models.CharField(max_length=3)
+    valves_id = models.IntegerField(primary_key=True, db_column='ValvesID')
+    valves_per_engine = models.CharField(max_length=3, db_column='ValvesPerEngine')
 
     class Meta:
         db_table = 'vcdb_valves'
@@ -561,9 +655,9 @@ class Valves(AuditMixin, models.Model):
 
 class PowerOutput(AuditMixin, models.Model):
     """Engine power output specifications."""
-    power_output_id = models.IntegerField(primary_key=True)
-    horse_power = models.CharField(max_length=10)
-    kilowatt_power = models.CharField(max_length=10)
+    power_output_id = models.IntegerField(primary_key=True, db_column='PowerOutputID')
+    horse_power = models.CharField(max_length=10, db_column='HorsePower')
+    kilowatt_power = models.CharField(max_length=10, db_column='KilowattPower')
 
     class Meta:
         db_table = 'vcdb_power_output'
@@ -577,67 +671,79 @@ class PowerOutput(AuditMixin, models.Model):
 
 class EngineConfig(AuditMixin, models.Model):
     """Complete engine configurations."""
-    engine_config_id = models.IntegerField(primary_key=True)
+    engine_config_id = models.IntegerField(primary_key=True, db_column='EngineConfigID')
     engine_designation = models.ForeignKey(
         EngineDesignation,
         on_delete=models.PROTECT,
-        related_name='engine_configs'
+        related_name='engine_configs',
+        db_column='EngineDesignationID'
     )
     engine_vin = models.ForeignKey(
-        EngineVin,
+        EngineVIN,
         on_delete=models.PROTECT,
-        related_name='engine_configs'
+        related_name='engine_configs',
+        db_column='EngineVINID'
     )
     valves = models.ForeignKey(
         Valves,
         on_delete=models.PROTECT,
-        related_name='engine_configs'
+        related_name='engine_configs',
+        db_column='ValvesID'
     )
     engine_base = models.ForeignKey(
         EngineBase,
         on_delete=models.PROTECT,
-        related_name='engine_configs'
+        related_name='engine_configs',
+        db_column='EngineBaseID'
     )
     fuel_delivery_config = models.ForeignKey(
         FuelDeliveryConfig,
         on_delete=models.PROTECT,
-        related_name='engine_configs'
+        related_name='engine_configs',
+        db_column='FuelDeliveryConfigID'
     )
     aspiration = models.ForeignKey(
         Aspiration,
         on_delete=models.PROTECT,
-        related_name='engine_configs'
+        related_name='engine_configs',
+        db_column='AspirationID'
     )
     cylinder_head_type = models.ForeignKey(
         CylinderHeadType,
         on_delete=models.PROTECT,
-        related_name='engine_configs'
+        related_name='engine_configs',
+        db_column='CylinderHeadTypeID'
     )
     fuel_type = models.ForeignKey(
         FuelType,
         on_delete=models.PROTECT,
-        related_name='engine_configs'
+        related_name='engine_configs',
+        db_column='FuelTypeID'
     )
     ignition_system_type = models.ForeignKey(
         IgnitionSystemType,
         on_delete=models.PROTECT,
-        related_name='engine_configs'
+        related_name='engine_configs',
+        db_column='IgnitionSystemTypeID'
     )
     engine_mfr = models.ForeignKey(
         Mfr,
         on_delete=models.PROTECT,
-        related_name='engine_configs'
+        related_name='engine_configs',
+        db_column='EngineMfrID'
     )
     engine_version = models.ForeignKey(
         EngineVersion,
         on_delete=models.PROTECT,
-        related_name='engine_configs'
+        related_name='engine_configs',
+        db_column='EngineVersionID'
     )
     power_output = models.ForeignKey(
         PowerOutput,
         on_delete=models.PROTECT,
         default=1,
-        related_name='engine_configs'
+        related_name='engine_configs',
+        db_column='PowerOutputID'
     )
 
     class Meta:
@@ -663,11 +769,125 @@ class EngineConfig(AuditMixin, models.Model):
         return f"{self.engine_base} {self.engine_designation}"
 
 
+class EngineConfig2(AuditMixin, models.Model):
+    """Alternative engine configurations with additional bore/stroke data."""
+    engine_config_id = models.IntegerField(primary_key=True, db_column='EngineConfigID')
+    engine_designation = models.ForeignKey(
+        EngineDesignation,
+        on_delete=models.PROTECT,
+        related_name='engine_configs2',
+        db_column='EngineDesignationID'
+    )
+    engine_vin = models.ForeignKey(
+        EngineVIN,
+        on_delete=models.PROTECT,
+        related_name='engine_configs2',
+        db_column='EngineVINID'
+    )
+    valves = models.ForeignKey(
+        Valves,
+        on_delete=models.PROTECT,
+        related_name='engine_configs2',
+        db_column='ValvesID'
+    )
+    engine_base = models.ForeignKey(
+        EngineBase2,
+        on_delete=models.PROTECT,
+        related_name='engine_configs',
+        db_column='EngineBaseID'
+    )
+    engine_block = models.ForeignKey(
+        EngineBlock,
+        on_delete=models.PROTECT,
+        related_name='engine_configs2',
+        db_column='EngineBlockID'
+    )
+    engine_bore_stroke = models.ForeignKey(
+        EngineBoreStroke,
+        on_delete=models.PROTECT,
+        related_name='engine_configs2',
+        db_column='EngineBoreStrokeID'
+    )
+    fuel_delivery_config = models.ForeignKey(
+        FuelDeliveryConfig,
+        on_delete=models.PROTECT,
+        related_name='engine_configs2',
+        db_column='FuelDeliveryConfigID'
+    )
+    aspiration = models.ForeignKey(
+        Aspiration,
+        on_delete=models.PROTECT,
+        related_name='engine_configs2',
+        db_column='AspirationID'
+    )
+    cylinder_head_type = models.ForeignKey(
+        CylinderHeadType,
+        on_delete=models.PROTECT,
+        related_name='engine_configs2',
+        db_column='CylinderHeadTypeID'
+    )
+    fuel_type = models.ForeignKey(
+        FuelType,
+        on_delete=models.PROTECT,
+        related_name='engine_configs2',
+        db_column='FuelTypeID'
+    )
+    ignition_system_type = models.ForeignKey(
+        IgnitionSystemType,
+        on_delete=models.PROTECT,
+        related_name='engine_configs2',
+        db_column='IgnitionSystemTypeID'
+    )
+    engine_mfr = models.ForeignKey(
+        Mfr,
+        on_delete=models.PROTECT,
+        related_name='engine_configs2',
+        db_column='EngineMfrID'
+    )
+    engine_version = models.ForeignKey(
+        EngineVersion,
+        on_delete=models.PROTECT,
+        related_name='engine_configs2',
+        db_column='EngineVersionID'
+    )
+    power_output = models.ForeignKey(
+        PowerOutput,
+        on_delete=models.PROTECT,
+        default=1,
+        related_name='engine_configs2',
+        db_column='PowerOutputID'
+    )
+
+    class Meta:
+        db_table = 'vcdb_engine_config2'
+        ordering = ['engine_block__liter', 'engine_block__cylinders']
+        verbose_name = _('Engine Config 2')
+        verbose_name_plural = _('Engine Configs 2')
+        indexes = [
+            models.Index(fields=['engine_designation']),
+            models.Index(fields=['engine_vin']),
+            models.Index(fields=['valves']),
+            models.Index(fields=['engine_base']),
+            models.Index(fields=['engine_block']),
+            models.Index(fields=['engine_bore_stroke']),
+            models.Index(fields=['fuel_delivery_config']),
+            models.Index(fields=['aspiration']),
+            models.Index(fields=['cylinder_head_type']),
+            models.Index(fields=['fuel_type']),
+            models.Index(fields=['ignition_system_type']),
+            models.Index(fields=['engine_mfr']),
+            models.Index(fields=['engine_version']),
+        ]
+
+    def __str__(self):
+        return f"{self.engine_block} {self.engine_designation}"
+
+
 # Transmission-related models
 class TransmissionType(AuditMixin, models.Model):
     """Transmission types (manual, automatic, etc.)."""
-    transmission_type_id = models.IntegerField(primary_key=True)
-    transmission_type_name = models.CharField(max_length=30)
+    transmission_type_id = models.IntegerField(primary_key=True, db_column='TransmissionTypeID')
+    transmission_type_name = models.CharField(max_length=30, db_column='TransmissionTypeName')
 
     class Meta:
         db_table = 'vcdb_transmission_type'
@@ -681,8 +901,8 @@ class TransmissionType(AuditMixin, models.Model):
 
 class TransmissionNumSpeeds(AuditMixin, models.Model):
     """Number of transmission speeds."""
-    transmission_num_speeds_id = models.IntegerField(primary_key=True)
-    transmission_num_speeds = models.CharField(max_length=3)
+    transmission_num_speeds_id = models.IntegerField(primary_key=True, db_column='TransmissionNumSpeedsID')
+    transmission_num_speeds = models.CharField(max_length=3, db_column='TransmissionNumSpeeds')
 
     class Meta:
         db_table = 'vcdb_transmission_num_speeds'
@@ -696,8 +916,8 @@ class TransmissionNumSpeeds(AuditMixin, models.Model):
 
 class TransmissionControlType(AuditMixin, models.Model):
     """Transmission control types."""
-    transmission_control_type_id = models.IntegerField(primary_key=True)
-    transmission_control_type_name = models.CharField(max_length=30)
+    transmission_control_type_id = models.IntegerField(primary_key=True, db_column='TransmissionControlTypeID')
+    transmission_control_type_name = models.CharField(max_length=30, db_column='TransmissionControlTypeName')
 
     class Meta:
         db_table = 'vcdb_transmission_control_type'
@@ -711,21 +931,24 @@ class TransmissionControlType(AuditMixin, models.Model):
 
 class TransmissionBase(AuditMixin, models.Model):
     """Base transmission configurations."""
-    transmission_base_id = models.IntegerField(primary_key=True)
+    transmission_base_id = models.IntegerField(primary_key=True, db_column='TransmissionBaseID')
     transmission_type = models.ForeignKey(
         TransmissionType,
         on_delete=models.PROTECT,
-        related_name='transmission_bases'
+        related_name='transmission_bases',
+        db_column='TransmissionTypeID'
     )
     transmission_num_speeds = models.ForeignKey(
         TransmissionNumSpeeds,
         on_delete=models.PROTECT,
-        related_name='transmission_bases'
+        related_name='transmission_bases',
+        db_column='TransmissionNumSpeedsID'
     )
     transmission_control_type = models.ForeignKey(
         TransmissionControlType,
         on_delete=models.PROTECT,
-        related_name='transmission_bases'
+        related_name='transmission_bases',
+        db_column='TransmissionControlTypeID'
     )
 
     class Meta:
@@ -745,8 +968,8 @@ class TransmissionBase(AuditMixin, models.Model):
 
 class TransmissionMfrCode(AuditMixin, models.Model):
     """Transmission manufacturer codes."""
-    transmission_mfr_code_id = models.IntegerField(primary_key=True)
-    transmission_mfr_code = models.CharField(max_length=30)
+    transmission_mfr_code_id = models.IntegerField(primary_key=True, db_column='TransmissionMfrCodeID')
+    transmission_mfr_code = models.CharField(max_length=30, db_column='TransmissionMfrCode')
 
     class Meta:
         db_table = 'vcdb_transmission_mfr_code'
@@ -760,8 +983,8 @@ class TransmissionMfrCode(AuditMixin, models.Model):
 
 class ElecControlled(AuditMixin, models.Model):
     """Electronic control indicators."""
-    elec_controlled_id = models.IntegerField(primary_key=True)
-    elec_controlled = models.CharField(max_length=3)
+    elec_controlled_id = models.IntegerField(primary_key=True, db_column='ElecControlledID')
+    elec_controlled = models.CharField(max_length=3, db_column='ElecControlled')
 
     class Meta:
         db_table = 'vcdb_elec_controlled'
@@ -775,26 +998,30 @@ class ElecControlled(AuditMixin, models.Model):
 
 class Transmission(AuditMixin, models.Model):
     """Complete transmission configurations."""
-    transmission_id = models.IntegerField(primary_key=True)
+    transmission_id = models.IntegerField(primary_key=True, db_column='TransmissionID')
     transmission_base = models.ForeignKey(
         TransmissionBase,
         on_delete=models.PROTECT,
-        related_name='transmissions'
+        related_name='transmissions',
+        db_column='TransmissionBaseID'
     )
     transmission_mfr_code = models.ForeignKey(
         TransmissionMfrCode,
         on_delete=models.PROTECT,
-        related_name='transmissions'
+        related_name='transmissions',
+        db_column='TransmissionMfrCodeID'
     )
     transmission_elec_controlled = models.ForeignKey(
         ElecControlled,
         on_delete=models.PROTECT,
-        related_name='transmissions'
+        related_name='transmissions',
+        db_column='TransmissionElecControlledID'
     )
     transmission_mfr = models.ForeignKey(
         Mfr,
         on_delete=models.PROTECT,
-        related_name='transmissions'
+        related_name='transmissions',
+        db_column='TransmissionMfrID'
     )
 
     class Meta:
@@ -815,8 +1042,8 @@ class Transmission(AuditMixin, models.Model):
 # Body and styling models
 class BodyType(AuditMixin, models.Model):
     """Vehicle body types."""
-    body_type_id = models.IntegerField(primary_key=True)
-    body_type_name = models.CharField(max_length=50)
+    body_type_id = models.IntegerField(primary_key=True, db_column='BodyTypeID')
+    body_type_name = models.CharField(max_length=50, db_column='BodyTypeName')
 
     class Meta:
         db_table = 'vcdb_body_type'
@@ -830,8 +1057,8 @@ class BodyType(AuditMixin, models.Model):
 
 class BodyNumDoors(AuditMixin, models.Model):
     """Number of doors configurations."""
-    body_num_doors_id = models.IntegerField(primary_key=True)
-    body_num_doors = models.CharField(max_length=3)
+    body_num_doors_id = models.IntegerField(primary_key=True, db_column='BodyNumDoorsID')
+    body_num_doors = models.CharField(max_length=3, db_column='BodyNumDoors')
 
     class Meta:
         db_table = 'vcdb_body_num_doors'
@@ -845,16 +1072,18 @@ class BodyNumDoors(AuditMixin, models.Model):
 
 class BodyStyleConfig(AuditMixin, models.Model):
     """Body style configurations."""
-    body_style_config_id = models.IntegerField(primary_key=True)
+    body_style_config_id = models.IntegerField(primary_key=True, db_column='BodyStyleConfigID')
     body_num_doors = models.ForeignKey(
         BodyNumDoors,
         on_delete=models.PROTECT,
-        related_name='body_style_configs'
+        related_name='body_style_configs',
+        db_column='BodyNumDoorsID'
     )
     body_type = models.ForeignKey(
         BodyType,
         on_delete=models.PROTECT,
-        related_name='body_style_configs'
+        related_name='body_style_configs',
+        db_column='BodyTypeID'
     )
 
     class Meta:
@@ -873,8 +1102,8 @@ class BodyStyleConfig(AuditMixin, models.Model):
 
 class MfrBodyCode(AuditMixin, models.Model):
     """Manufacturer body codes."""
-    mfr_body_code_id = models.IntegerField(primary_key=True)
-    mfr_body_code_name = models.CharField(max_length=10)
+    mfr_body_code_id = models.IntegerField(primary_key=True, db_column='MfrBodyCodeID')
+    mfr_body_code_name = models.CharField(max_length=10, db_column='MfrBodyCodeName')
 
     class Meta:
         db_table = 'vcdb_mfr_body_code'
@@ -888,9 +1117,9 @@ class MfrBodyCode(AuditMixin, models.Model):
 
 class WheelBase(AuditMixin, models.Model):
     """Wheelbase measurements."""
-    wheel_base_id = models.IntegerField(primary_key=True)
-    wheel_base = models.CharField(max_length=10)
-    wheel_base_metric = models.CharField(max_length=10)
+    wheel_base_id = models.IntegerField(primary_key=True, db_column='WheelBaseID')
+    wheel_base = models.CharField(max_length=10, db_column='WheelBase')
+    wheel_base_metric = models.CharField(max_length=10, db_column='WheelBaseMetric')
 
     class Meta:
         db_table = 'vcdb_wheel_base'
@@ -905,8 +1134,8 @@ class WheelBase(AuditMixin, models.Model):
 # Brake system models
 class BrakeType(AuditMixin, models.Model):
     """Types of brakes."""
-    brake_type_id = models.IntegerField(primary_key=True)
-    brake_type_name = models.CharField(max_length=30)
+    brake_type_id = models.IntegerField(primary_key=True, db_column='BrakeTypeID')
+    brake_type_name = models.CharField(max_length=30, db_column='BrakeTypeName')
 
     class Meta:
         db_table = 'vcdb_brake_type'
@@ -920,8 +1149,8 @@ class BrakeType(AuditMixin, models.Model):
 
 class BrakeSystem(AuditMixin, models.Model):
     """Brake system types."""
-    brake_system_id = models.IntegerField(primary_key=True)
-    brake_system_name = models.CharField(max_length=30)
+    brake_system_id = models.IntegerField(primary_key=True, db_column='BrakeSystemID')
+    brake_system_name = models.CharField(max_length=30, db_column='BrakeSystemName')
 
     class Meta:
         db_table = 'vcdb_brake_system'
@@ -933,10 +1162,10 @@ class BrakeSystem(AuditMixin, models.Model):
         return self.brake_system_name
 
 
-class BrakeAbs(AuditMixin, models.Model):
+class BrakeABS(AuditMixin, models.Model):
     """ABS brake configurations."""
-    brake_abs_id = models.IntegerField(primary_key=True)
-    brake_abs_name = models.CharField(max_length=30)
+    brake_abs_id = models.IntegerField(primary_key=True, db_column='BrakeABSID')
+    brake_abs_name = models.CharField(max_length=30, db_column='BrakeABSName')
 
     class Meta:
         db_table = 'vcdb_brake_abs'
@@ -950,26 +1179,30 @@ class BrakeAbs(AuditMixin, models.Model):
 
 class BrakeConfig(AuditMixin, models.Model):
     """Complete brake system configurations."""
-    brake_config_id = models.IntegerField(primary_key=True)
+    brake_config_id = models.IntegerField(primary_key=True, db_column='BrakeConfigID')
     front_brake_type = models.ForeignKey(
         BrakeType,
         on_delete=models.PROTECT,
-        related_name='front_brake_configs'
+        related_name='front_brake_configs',
+        db_column='FrontBrakeTypeID'
     )
     rear_brake_type = models.ForeignKey(
         BrakeType,
         on_delete=models.PROTECT,
-        related_name='rear_brake_configs'
+        related_name='rear_brake_configs',
+        db_column='RearBrakeTypeID'
     )
     brake_system = models.ForeignKey(
         BrakeSystem,
         on_delete=models.PROTECT,
-        related_name='brake_configs'
+        related_name='brake_configs',
+        db_column='BrakeSystemID'
     )
     brake_abs = models.ForeignKey(
-        BrakeAbs,
+        BrakeABS,
         on_delete=models.PROTECT,
-        related_name='brake_configs'
+        related_name='brake_configs',
+        db_column='BrakeABSID'
     )
 
     class Meta:
@@ -991,8 +1224,8 @@ class BrakeConfig(AuditMixin, models.Model):
 # Drive type
 class DriveType(AuditMixin, models.Model):
     """Vehicle drive types (FWD, RWD, AWD, etc.)."""
-    drive_type_id = models.IntegerField(primary_key=True)
-    drive_type_name = models.CharField(max_length=30)
+    drive_type_id = models.IntegerField(primary_key=True, db_column='DriveTypeID')
+    drive_type_name = models.CharField(max_length=30, db_column='DriveTypeName')
 
     class Meta:
         db_table = 'vcdb_drive_type'
@@ -1007,8 +1240,8 @@ class DriveType(AuditMixin, models.Model):
 # Steering system models
 class SteeringType(AuditMixin, models.Model):
     """Steering types."""
-    steering_type_id = models.IntegerField(primary_key=True)
-    steering_type_name = models.CharField(max_length=30)
+    steering_type_id = models.IntegerField(primary_key=True, db_column='SteeringTypeID')
+    steering_type_name = models.CharField(max_length=30, db_column='SteeringTypeName')
 
     class Meta:
         db_table = 'vcdb_steering_type'
@@ -1022,8 +1255,8 @@ class SteeringType(AuditMixin, models.Model):
 
 class SteeringSystem(AuditMixin, models.Model):
     """Steering systems."""
-    steering_system_id = models.IntegerField(primary_key=True)
-    steering_system_name = models.CharField(max_length=30)
+    steering_system_id = models.IntegerField(primary_key=True, db_column='SteeringSystemID')
+    steering_system_name = models.CharField(max_length=30, db_column='SteeringSystemName')
 
     class Meta:
         db_table = 'vcdb_steering_system'
@@ -1037,16 +1270,18 @@ class SteeringSystem(AuditMixin, models.Model):
 
 class SteeringConfig(AuditMixin, models.Model):
     """Complete steering configurations."""
-    steering_config_id = models.IntegerField(primary_key=True)
+    steering_config_id = models.IntegerField(primary_key=True, db_column='SteeringConfigID')
     steering_type = models.ForeignKey(
         SteeringType,
         on_delete=models.PROTECT,
-        related_name='steering_configs'
+        related_name='steering_configs',
+        db_column='SteeringTypeID'
     )
     steering_system = models.ForeignKey(
         SteeringSystem,
         on_delete=models.PROTECT,
-        related_name='steering_configs'
+        related_name='steering_configs',
+        db_column='SteeringSystemID'
     )
 
     class Meta:
@@ -1066,8 +1301,8 @@ class SteeringConfig(AuditMixin, models.Model):
 # Spring/suspension system models
 class SpringType(AuditMixin, models.Model):
     """Spring/suspension types."""
-    spring_type_id = models.IntegerField(primary_key=True)
-    spring_type_name = models.CharField(max_length=50)
+    spring_type_id = models.IntegerField(primary_key=True, db_column='SpringTypeID')
+    spring_type_name = models.CharField(max_length=50, db_column='SpringTypeName')
 
     class Meta:
         db_table = 'vcdb_spring_type'
@@ -1081,16 +1316,18 @@ class SpringType(AuditMixin, models.Model):
 
 class SpringTypeConfig(AuditMixin, models.Model):
     """Complete spring/suspension configurations."""
-    spring_type_config_id = models.IntegerField(primary_key=True)
+    spring_type_config_id = models.IntegerField(primary_key=True, db_column='SpringTypeConfigID')
     front_spring_type = models.ForeignKey(
         SpringType,
         on_delete=models.PROTECT,
-        related_name='front_spring_configs'
+        related_name='front_spring_configs',
+        db_column='FrontSpringTypeID'
     )
     rear_spring_type = models.ForeignKey(
         SpringType,
         on_delete=models.PROTECT,
-        related_name='rear_spring_configs'
+        related_name='rear_spring_configs',
+        db_column='RearSpringTypeID'
     )
 
     class Meta:
@@ -1110,8 +1347,8 @@ class SpringTypeConfig(AuditMixin, models.Model):
 # Bed configuration models (for trucks)
 class BedType(AuditMixin, models.Model):
     """Truck bed types."""
-    bed_type_id = models.IntegerField(primary_key=True)
-    bed_type_name = models.CharField(max_length=50)
+    bed_type_id = models.IntegerField(primary_key=True, db_column='BedTypeID')
+    bed_type_name = models.CharField(max_length=50, db_column='BedTypeName')
 
     class Meta:
         db_table = 'vcdb_bed_type'
@@ -1125,9 +1362,9 @@ class BedType(AuditMixin, models.Model):
 
 class BedLength(AuditMixin, models.Model):
     """Truck bed lengths."""
-    bed_length_id = models.IntegerField(primary_key=True)
-    bed_length = models.CharField(max_length=10)
-    bed_length_metric = models.CharField(max_length=10)
+    bed_length_id = models.IntegerField(primary_key=True, db_column='BedLengthID')
+    bed_length = models.CharField(max_length=10, db_column='BedLength')
+    bed_length_metric = models.CharField(max_length=10, db_column='BedLengthMetric')
 
     class Meta:
         db_table = 'vcdb_bed_length'
@@ -1141,16 +1378,18 @@ class BedLength(AuditMixin, models.Model):
 
 class BedConfig(AuditMixin, models.Model):
     """Truck bed configurations."""
-    bed_config_id = models.IntegerField(primary_key=True)
+    bed_config_id = models.IntegerField(primary_key=True, db_column='BedConfigID')
     bed_length = models.ForeignKey(
         BedLength,
         on_delete=models.PROTECT,
-        related_name='bed_configs'
+        related_name='bed_configs',
+        db_column='BedLengthID'
     )
     bed_type = models.ForeignKey(
         BedType,
         on_delete=models.PROTECT,
-        related_name='bed_configs'
+        related_name='bed_configs',
+        db_column='BedTypeID'
     )
 
     class Meta:
@@ -1169,8 +1408,8 @@ class BedConfig(AuditMixin, models.Model):
 
 class Class(AuditMixin, models.Model):
     """Vehicle class classifications."""
-    class_id = models.IntegerField(primary_key=True)
-    class_name = models.CharField(max_length=30)
+    class_id = models.IntegerField(primary_key=True, db_column='ClassID')
+    class_name = models.CharField(max_length=30, db_column='ClassName')
 
     class Meta:
         db_table = 'vcdb_class'
@@ -1185,18 +1424,20 @@ class Class(AuditMixin, models.Model):
 # Vehicle-to-component relationship models
 class VehicleToEngineConfig(AuditMixin, models.Model):
     """Links vehicles to their engine configurations."""
-    vehicle_to_engine_config_id = models.IntegerField(primary_key=True)
+    vehicle_to_engine_config_id = models.IntegerField(primary_key=True, db_column='VehicleToEngineConfigID')
     vehicle = models.ForeignKey(
         Vehicle,
         on_delete=models.CASCADE,
-        related_name='engine_configs'
+        related_name='engine_configs',
+        db_column='VehicleID'
     )
     engine_config = models.ForeignKey(
-        EngineConfig,
+        EngineConfig2,
         on_delete=models.PROTECT,
-        related_name='vehicles'
+        related_name='vehicles',
+        db_column='EngineConfigID'
     )
-    source = models.CharField(max_length=10, null=True, blank=True)
+    source = models.CharField(max_length=10, null=True, blank=True, db_column='Source')
 
     class Meta:
         db_table = 'vcdb_vehicle_to_engine_config'
@@ -1214,18 +1455,20 @@ class VehicleToEngineConfig(AuditMixin, models.Model):
 
 class VehicleToTransmission(AuditMixin, models.Model):
     """Links vehicles to their transmissions."""
-    vehicle_to_transmission_id = models.IntegerField(primary_key=True)
+    vehicle_to_transmission_id = models.IntegerField(primary_key=True, db_column='VehicleToTransmissionID')
     vehicle = models.ForeignKey(
         Vehicle,
         on_delete=models.CASCADE,
-        related_name='transmissions'
+        related_name='transmissions',
+        db_column='VehicleID'
     )
     transmission = models.ForeignKey(
         Transmission,
         on_delete=models.PROTECT,
-        related_name='vehicles'
+        related_name='vehicles',
+        db_column='TransmissionID'
     )
-    source = models.CharField(max_length=10, null=True, blank=True)
+    source = models.CharField(max_length=10, null=True, blank=True, db_column='Source')
 
     class Meta:
         db_table = 'vcdb_vehicle_to_transmission'
@@ -1241,20 +1484,74 @@ class VehicleToTransmission(AuditMixin, models.Model):
         return f"{self.vehicle} -> {self.transmission}"
 
 
-class VehicleToBodyStyleConfig(AuditMixin, models.Model):
-    """Links vehicles to their body style configurations."""
-    vehicle_to_body_style_config_id = models.IntegerField(primary_key=True)
+class VehicleToBodyConfig(AuditMixin, models.Model):
+    """Links vehicles to complete body configurations including wheelbase."""
+    vehicle_to_body_config_id = models.IntegerField(primary_key=True, db_column='VehicleToBodyConfigID')
     vehicle = models.ForeignKey(
         Vehicle,
         on_delete=models.CASCADE,
-        related_name='body_style_configs'
+        related_name='body_configs',
+        db_column='VehicleID'
+    )
+    wheelbase = models.ForeignKey(
+        WheelBase,
+        on_delete=models.PROTECT,
+        related_name='vehicle_body_configs',
+        db_column='WheelBaseID'
+    )
+    bed_config = models.ForeignKey(
+        BedConfig,
+        on_delete=models.PROTECT,
+        related_name='vehicle_body_configs',
+        db_column='BedConfigID'
     )
     body_style_config = models.ForeignKey(
         BodyStyleConfig,
         on_delete=models.PROTECT,
-        related_name='vehicles'
+        related_name='vehicle_body_configs',
+        db_column='BodyStyleConfigID'
     )
-    source = models.CharField(max_length=10, null=True, blank=True)
+    mfr_body_code = models.ForeignKey(
+        MfrBodyCode,
+        on_delete=models.PROTECT,
+        related_name='vehicle_body_configs',
+        db_column='MfrBodyCodeID'
+    )
+    source = models.CharField(max_length=10, null=True, blank=True, db_column='Source')
+
+    class Meta:
+        db_table = 'vcdb_vehicle_to_body_config'
+        ordering = ['vehicle']
+        verbose_name = _('Vehicle to Body Config')
+        verbose_name_plural = _('Vehicle to Body Configs')
+        indexes = [
+            models.Index(fields=['vehicle']),
+            models.Index(fields=['wheelbase']),
+            models.Index(fields=['bed_config']),
+            models.Index(fields=['body_style_config']),
+            models.Index(fields=['mfr_body_code']),
+        ]
+
+    def __str__(self):
+        return f"{self.vehicle} -> Body Config"
+
+
+class VehicleToBodyStyleConfig(AuditMixin, models.Model):
+    """Links vehicles to their body style configurations."""
+    vehicle_to_body_style_config_id = models.IntegerField(primary_key=True, db_column='VehicleToBodyStyleConfigID')
+    vehicle = models.ForeignKey(
+        Vehicle,
+        on_delete=models.CASCADE,
+        related_name='body_style_configs',
+        db_column='VehicleID'
+    )
+    body_style_config = models.ForeignKey(
+        BodyStyleConfig,
+        on_delete=models.PROTECT,
+        related_name='vehicles',
+        db_column='BodyStyleConfigID'
+    )
+    source = models.CharField(max_length=10, null=True, blank=True, db_column='Source')
 
     class Meta:
         db_table = 'vcdb_vehicle_to_body_style_config'
@@ -1272,18 +1569,20 @@ class VehicleToBodyStyleConfig(AuditMixin, models.Model):
 
 class VehicleToBrakeConfig(AuditMixin, models.Model):
     """Links vehicles to their brake configurations."""
-    vehicle_to_brake_config_id = models.IntegerField(primary_key=True)
+    vehicle_to_brake_config_id = models.IntegerField(primary_key=True, db_column='VehicleToBrakeConfigID')
     vehicle = models.ForeignKey(
         Vehicle,
         on_delete=models.CASCADE,
-        related_name='brake_configs'
+        related_name='brake_configs',
+        db_column='VehicleID'
     )
     brake_config = models.ForeignKey(
         BrakeConfig,
         on_delete=models.PROTECT,
-        related_name='vehicles'
+        related_name='vehicles',
+        db_column='BrakeConfigID'
     )
-    source = models.CharField(max_length=10, null=True, blank=True)
+    source = models.CharField(max_length=10, null=True, blank=True, db_column='Source')
 
     class Meta:
         db_table = 'vcdb_vehicle_to_brake_config'
@@ -1301,18 +1600,20 @@ class VehicleToBrakeConfig(AuditMixin, models.Model):
 
 class VehicleToDriveType(AuditMixin, models.Model):
     """Links vehicles to their drive types."""
-    vehicle_to_drive_type_id = models.IntegerField(primary_key=True)
+    vehicle_to_drive_type_id = models.IntegerField(primary_key=True, db_column='VehicleToDriveTypeID')
     vehicle = models.ForeignKey(
         Vehicle,
         on_delete=models.CASCADE,
-        related_name='drive_types'
+        related_name='drive_types',
+        db_column='VehicleID'
     )
     drive_type = models.ForeignKey(
         DriveType,
         on_delete=models.PROTECT,
-        related_name='vehicles'
+        related_name='vehicles',
+        db_column='DriveTypeID'
     )
-    source = models.CharField(max_length=10, null=True, blank=True)
+    source = models.CharField(max_length=10, null=True, blank=True, db_column='Source')
 
     class Meta:
         db_table = 'vcdb_vehicle_to_drive_type'
@@ -1330,18 +1631,20 @@ class VehicleToDriveType(AuditMixin, models.Model):
 
 class VehicleToSteeringConfig(AuditMixin, models.Model):
     """Links vehicles to their steering configurations."""
-    vehicle_to_steering_config_id = models.IntegerField(primary_key=True)
+    vehicle_to_steering_config_id = models.IntegerField(primary_key=True, db_column='VehicleToSteeringConfigID')
     vehicle = models.ForeignKey(
         Vehicle,
         on_delete=models.CASCADE,
-        related_name='steering_configs'
+        related_name='steering_configs',
+        db_column='VehicleID'
     )
     steering_config = models.ForeignKey(
         SteeringConfig,
         on_delete=models.PROTECT,
-        related_name='vehicles'
+        related_name='vehicles',
+        db_column='SteeringConfigID'
     )
-    source = models.CharField(max_length=10, null=True, blank=True)
+    source = models.CharField(max_length=10, null=True, blank=True, db_column='Source')
 
     class Meta:
         db_table = 'vcdb_vehicle_to_steering_config'
@@ -1359,18 +1662,20 @@ class VehicleToSteeringConfig(AuditMixin, models.Model):
 
 class VehicleToSpringTypeConfig(AuditMixin, models.Model):
     """Links vehicles to their spring/suspension configurations."""
-    vehicle_to_spring_type_config_id = models.IntegerField(primary_key=True)
+    vehicle_to_spring_type_config_id = models.IntegerField(primary_key=True, db_column='VehicleToSpringTypeConfigID')
     vehicle = models.ForeignKey(
         Vehicle,
         on_delete=models.CASCADE,
-        related_name='spring_type_configs'
+        related_name='spring_type_configs',
+        db_column='VehicleID'
     )
     spring_type_config = models.ForeignKey(
         SpringTypeConfig,
         on_delete=models.PROTECT,
-        related_name='vehicles'
+        related_name='vehicles',
+        db_column='SpringTypeConfigID'
     )
-    source = models.CharField(max_length=10, null=True, blank=True)
+    source = models.CharField(max_length=10, null=True, blank=True, db_column='Source')
 
     class Meta:
         db_table = 'vcdb_vehicle_to_spring_type_config'
@@ -1388,18 +1693,20 @@ class VehicleToSpringTypeConfig(AuditMixin, models.Model):
 
 class VehicleToBedConfig(AuditMixin, models.Model):
     """Links vehicles to their bed configurations (for trucks)."""
-    vehicle_to_bed_config_id = models.IntegerField(primary_key=True)
+    vehicle_to_bed_config_id = models.IntegerField(primary_key=True, db_column='VehicleToBedConfigID')
     vehicle = models.ForeignKey(
         Vehicle,
         on_delete=models.CASCADE,
-        related_name='bed_configs'
+        related_name='bed_configs',
+        db_column='VehicleID'
     )
     bed_config = models.ForeignKey(
         BedConfig,
         on_delete=models.PROTECT,
-        related_name='vehicles'
+        related_name='vehicles',
+        db_column='BedConfigID'
     )
-    source = models.CharField(max_length=10, null=True, blank=True)
+    source = models.CharField(max_length=10, null=True, blank=True, db_column='Source')
 
     class Meta:
         db_table = 'vcdb_vehicle_to_bed_config'
@@ -1417,18 +1724,20 @@ class VehicleToBedConfig(AuditMixin, models.Model):
 
 class VehicleToClass(AuditMixin, models.Model):
     """Links vehicles to their classifications."""
-    vehicle_to_class_id = models.IntegerField(primary_key=True)
+    vehicle_to_class_id = models.IntegerField(primary_key=True, db_column='VehicleToClassID')
     vehicle = models.ForeignKey(
         Vehicle,
         on_delete=models.CASCADE,
-        related_name='classes'
+        related_name='classes',
+        db_column='VehicleID'
     )
     vehicle_class = models.ForeignKey(
         Class,
         on_delete=models.PROTECT,
-        related_name='vehicles'
+        related_name='vehicles',
+        db_column='ClassID'
     )
-    source = models.CharField(max_length=10, null=True, blank=True)
+    source = models.CharField(max_length=10, null=True, blank=True, db_column='Source')
 
     class Meta:
         db_table = 'vcdb_vehicle_to_class'
@@ -1446,18 +1755,20 @@ class VehicleToClass(AuditMixin, models.Model):
 
 class VehicleToMfrBodyCode(AuditMixin, models.Model):
     """Links vehicles to manufacturer body codes."""
-    vehicle_to_mfr_body_code_id = models.IntegerField(primary_key=True)
+    vehicle_to_mfr_body_code_id = models.IntegerField(primary_key=True, db_column='VehicleToMfrBodyCodeID')
     vehicle = models.ForeignKey(
         Vehicle,
         on_delete=models.CASCADE,
-        related_name='mfr_body_codes'
+        related_name='mfr_body_codes',
+        db_column='VehicleID'
     )
     mfr_body_code = models.ForeignKey(
         MfrBodyCode,
         on_delete=models.PROTECT,
-        related_name='vehicles'
+        related_name='vehicles',
+        db_column='MfrBodyCodeID'
     )
-    source = models.CharField(max_length=10, null=True, blank=True)
+    source = models.CharField(max_length=10, null=True, blank=True, db_column='Source')
 
     class Meta:
         db_table = 'vcdb_vehicle_to_mfr_body_code'
@@ -1475,18 +1786,20 @@ class VehicleToMfrBodyCode(AuditMixin, models.Model):
 
 class VehicleToWheelbase(AuditMixin, models.Model):
     """Links vehicles to their wheelbase specifications."""
-    vehicle_to_wheelbase_id = models.IntegerField(primary_key=True)
+    vehicle_to_wheelbase_id = models.IntegerField(primary_key=True, db_column='VehicleToWheelbaseID')
     vehicle = models.ForeignKey(
         Vehicle,
         on_delete=models.CASCADE,
-        related_name='wheelbases'
+        related_name='wheelbases',
+        db_column='VehicleID'
     )
     wheelbase = models.ForeignKey(
         WheelBase,
         on_delete=models.PROTECT,
-        related_name='vehicles'
+        related_name='vehicles',
+        db_column='WheelbaseID'
     )
-    source = models.CharField(max_length=10, null=True, blank=True)
+    source = models.CharField(max_length=10, null=True, blank=True, db_column='Source')
 
     class Meta:
         db_table = 'vcdb_vehicle_to_wheelbase'
@@ -1503,10 +1816,10 @@ class VehicleToWheelbase(AuditMixin, models.Model):
 
 
 # Audit and Change Tracking Models
-class ChangeReason(AuditMixin, models.Model):
+class ChangeReasons(AuditMixin, models.Model):
     """Reasons for data changes."""
-    change_reason_id = models.IntegerField(primary_key=True)
-    change_reason = models.CharField(max_length=255)
+    change_reason_id = models.IntegerField(primary_key=True, db_column='ChangeReasonID')
+    change_reason = models.CharField(max_length=255, db_column='ChangeReason')
 
     class Meta:
         db_table = 'vcdb_change_reasons'
@@ -1518,16 +1831,17 @@ class ChangeReason(AuditMixin, models.Model):
         return self.change_reason
 
 
-class Change(AuditMixin, models.Model):
+class Changes(AuditMixin, models.Model):
     """Change tracking records."""
-    change_id = models.AutoField(primary_key=True)
-    request_id = models.IntegerField()
+    change_id = models.AutoField(primary_key=True, db_column='ChangeID')
+    request_id = models.IntegerField(db_column='RequestID')
     change_reason = models.ForeignKey(
-        ChangeReason,
+        ChangeReasons,
         on_delete=models.PROTECT,
-        related_name='changes'
+        related_name='changes',
+        db_column='ChangeReasonID'
     )
-    rev_date = models.DateTimeField(null=True, blank=True)
+    rev_date = models.DateTimeField(null=True, blank=True, db_column='RevDate')
 
     class Meta:
         db_table = 'vcdb_changes'
@@ -1544,10 +1858,10 @@ class Change(AuditMixin, models.Model):
         return f"Change {self.change_id}: {self.change_reason}"
 
 
-class ChangeAttributeState(AuditMixin, models.Model):
+class ChangeAttributeStates(AuditMixin, models.Model):
     """Change attribute states."""
-    change_attribute_state_id = models.IntegerField(primary_key=True)
-    change_attribute_state = models.CharField(max_length=255)
+    change_attribute_state_id = models.IntegerField(primary_key=True, db_column='ChangeAttributeStateID')
+    change_attribute_state = models.CharField(max_length=255, db_column='ChangeAttributeState')
 
     class Meta:
         db_table = 'vcdb_change_attribute_states'
@@ -1559,11 +1873,11 @@ class ChangeAttributeState(AuditMixin, models.Model):
         return self.change_attribute_state
 
 
-class ChangeTableName(AuditMixin, models.Model):
+class ChangeTableNames(AuditMixin, models.Model):
     """Table names for change tracking."""
-    table_name_id = models.IntegerField(primary_key=True)
-    table_name = models.CharField(max_length=255)
-    table_description = models.CharField(max_length=1000, null=True, blank=True)
+    table_name_id = models.IntegerField(primary_key=True, db_column='TableNameID')
+    table_name = models.CharField(max_length=255, db_column='TableName')
+    table_description = models.CharField(max_length=1000, null=True, blank=True, db_column='TableDescription')
 
     class Meta:
         db_table = 'vcdb_change_table_names'
@@ -1575,30 +1889,33 @@ class ChangeTableName(AuditMixin, models.Model):
         return self.table_name
 
 
-class ChangeDetail(AuditMixin, models.Model):
+class ChangeDetails(AuditMixin, models.Model):
     """Detailed change tracking information."""
-    change_detail_id = models.AutoField(primary_key=True)
+    change_detail_id = models.AutoField(primary_key=True, db_column='ChangeDetailID')
     change = models.ForeignKey(
-        Change,
+        Changes,
         on_delete=models.CASCADE,
-        related_name='details'
+        related_name='details',
+        db_column='ChangeID'
     )
     change_attribute_state = models.ForeignKey(
-        ChangeAttributeState,
+        ChangeAttributeStates,
         on_delete=models.PROTECT,
-        related_name='details'
+        related_name='details',
+        db_column='ChangeAttributeStateID'
     )
     table_name = models.ForeignKey(
-        ChangeTableName,
+        ChangeTableNames,
         on_delete=models.PROTECT,
-        related_name='details'
+        related_name='details',
+        db_column='TableNameID'
     )
-    primary_key_column_name = models.CharField(max_length=255, null=True, blank=True)
-    primary_key_before = models.IntegerField(null=True, blank=True)
-    primary_key_after = models.IntegerField(null=True, blank=True)
-    column_name = models.CharField(max_length=255, null=True, blank=True)
-    column_value_before = models.CharField(max_length=1000, null=True, blank=True)
-    column_value_after = models.CharField(max_length=1000, null=True, blank=True)
+    primary_key_column_name = models.CharField(max_length=255, null=True, blank=True, db_column='PrimaryKeyColumnName')
+    primary_key_before = models.IntegerField(null=True, blank=True, db_column='PrimaryKeyBefore')
+    primary_key_after = models.IntegerField(null=True, blank=True, db_column='PrimaryKeyAfter')
+    column_name = models.CharField(max_length=255, null=True, blank=True, db_column='ColumnName')
+    column_value_before = models.CharField(max_length=1000, null=True, blank=True, db_column='ColumnValueBefore')
+    column_value_after = models.CharField(max_length=1000, null=True, blank=True, db_column='ColumnValueAfter')
 
     class Meta:
         db_table = 'vcdb_change_details'
@@ -1619,8 +1936,9 @@ class ChangeDetail(AuditMixin, models.Model):
 # Internationalization Models
 class Language(AuditMixin, models.Model):
     """Supported languages for internationalization."""
-    language_name = models.CharField(max_length=20)
-    dialect_name = models.CharField(max_length=20, null=True, blank=True)
+    language_id = models.AutoField(primary_key=True, db_column='LanguageID')
+    language_name = models.CharField(max_length=20, db_column='LanguageName')
+    dialect_name = models.CharField(max_length=20, null=True, blank=True, db_column='DialectName')
 
     class Meta:
         db_table = 'vcdb_language'
@@ -1636,7 +1954,8 @@ class Language(AuditMixin, models.Model):
 
 class EnglishPhrase(AuditMixin, models.Model):
     """English phrases for translation."""
-    english_phrase = models.CharField(max_length=100, unique=True)
+    english_phrase_id = models.AutoField(primary_key=True, db_column='EnglishPhraseID')
+    english_phrase = models.CharField(max_length=100, unique=True, db_column='EnglishPhrase')
 
     class Meta:
         db_table = 'vcdb_english_phrase'
@@ -1653,17 +1972,20 @@ class EnglishPhrase(AuditMixin, models.Model):
 
 class LanguageTranslation(AuditMixin, models.Model):
     """Translations of English phrases to other languages."""
+    language_translation_id = models.AutoField(primary_key=True, db_column='LanguageTranslationID')
     english_phrase = models.ForeignKey(
         EnglishPhrase,
         on_delete=models.CASCADE,
-        related_name='translations'
+        related_name='translations',
+        db_column='EnglishPhraseID'
     )
     language = models.ForeignKey(
         Language,
         on_delete=models.CASCADE,
-        related_name='translations'
+        related_name='translations',
+        db_column='LanguageID'
     )
-    translation = models.CharField(max_length=150)
+    translation = models.CharField(max_length=150, db_column='Translation')
 
     class Meta:
         db_table = 'vcdb_language_translation'
@@ -1682,15 +2004,18 @@ class LanguageTranslation(AuditMixin, models.Model):
 
 class LanguageTranslationAttachment(AuditMixin, models.Model):
     """Attachments for language translations."""
+    language_translation_attachment_id = models.AutoField(primary_key=True, db_column='LanguageTranslationAttachmentID')
     language_translation = models.ForeignKey(
         LanguageTranslation,
         on_delete=models.CASCADE,
-        related_name='attachments'
+        related_name='attachments',
+        db_column='LanguageTranslationID'
     )
     attachment = models.ForeignKey(
         Attachment,
         on_delete=models.CASCADE,
-        related_name='language_translation_attachments'
+        related_name='language_translation_attachments',
+        db_column='AttachmentID'
     )
 
     class Meta:
@@ -1706,7 +2031,7 @@ class LanguageTranslationAttachment(AuditMixin, models.Model):
 # Version tracking
 class Version(AuditMixin, models.Model):
     """System version tracking."""
-    version_date = models.DateField(primary_key=True)
+    version_date = models.DateField(primary_key=True, db_column='VersionDate')
 
     class Meta:
         db_table = 'vcdb_version'
@@ -1718,12 +2043,12 @@ class Version(AuditMixin, models.Model):
         return str(self.version_date)
 
 
-class VcdbChange(models.Model):
+class VCdbChanges(models.Model):
     """VCDB change tracking (legacy)."""
-    version_date = models.DateTimeField()
-    table_name = models.CharField(max_length=30)
-    record_id = models.IntegerField()
-    action = models.CharField(max_length=1)
+    version_date = models.DateTimeField(db_column='VersionDate')
+    table_name = models.CharField(max_length=30, db_column='TableName')
+    record_id = models.IntegerField(db_column='ID')
+    action = models.CharField(max_length=1, db_column='Action')
 
     class Meta:
         db_table = 'vcdb_vcdb_changes'

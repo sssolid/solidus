@@ -7,7 +7,9 @@
 
     <!-- Navigation Menu -->
     <div class="flex-1 px-3 py-4">
-        {% if user.is_employee %}
+        {%  if user.is_superuser %}
+            {% include 'partials/base/admin_menu.html' %}
+        {% elif user.is_employee %}
             {% include 'partials/base/employee_menu.html' %}
         {% else %}
             {% include 'partials/base/customer_menu.html' %}

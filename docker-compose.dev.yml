@@ -84,6 +84,8 @@ services:
       # Email
       - EMAIL_HOST=mailhog
       - EMAIL_PORT=1025
+      # Superuser
+      - CREATE_SUPERUSER=true
     depends_on:
       postgres:
         condition: service_healthy

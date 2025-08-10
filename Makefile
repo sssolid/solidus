@@ -9,6 +9,11 @@ DOCKER_COMPOSE_PROD = docker compose -f docker-compose.yml -f docker-compose.pro
 LOCAL_DJANGO = uv run python manage.py
 CONTAINER_DJANGO = $(DOCKER_COMPOSE) exec web uv run python manage.py
 
+# Optional: set these if your DBs are bind-mounted to host directories (not named volumes)
+POSTGRES_BIND_DIR ?=
+REDIS_BIND_DIR    ?=
+MYSQL_BIND_DIR    ?=
+
 # Local Python path setup (Django apps are in src/)
 export PYTHONPATH := $(PWD)/src:$(PYTHONPATH)
 
@@ -396,16 +401,47 @@ dev-reset:
 	$(MAKE) dev
 	@echo "✅ Development environment reset!"
 
-.PHONY: dev-clean-reset
-dev-clean-reset:
-	@echo "🗑️  Performing a full development clean reset..."
-	docker compose -f docker-compose.dev.yml down -v
-	docker compose -f docker-compose.dev.yml build
-	$(LOCAL_DJANGO) makemigrations
-	${MAKE} dev-frontend
+.PHONY: dev-nuke
+dev-nuke:
+	@echo "⚠️  THIS WILL COMPLETELY WIPE YOUR DEV ENV (containers, networks, volumes, data)."
+	@sleep 1
+
+	@echo "🛑  Stopping and removing dev containers, networks, and named volumes…"
+	docker compose -f docker-compose.dev.yml down -v --remove-orphans
+
+	@echo "🧽  Pruning dangling (anonymous) volumes…"
+	@docker volume prune -f >/dev/null 2>&1 || true
+
+	@echo "🗑️  Removing bind-mounted data directories (if configured)…"
+	@if [ -n "$(POSTGRES_BIND_DIR)" ] && [ -d "$(POSTGRES_BIND_DIR)" ]; then \
+		echo "   - rm -rf $(POSTGRES_BIND_DIR)"; rm -rf "$(POSTGRES_BIND_DIR)"; \
+	fi
+	@if [ -n "$(REDIS_BIND_DIR)" ] && [ -d "$(REDIS_BIND_DIR)" ]; then \
+		echo "   - rm -rf $(REDIS_BIND_DIR)"; rm -rf "$(REDIS_BIND_DIR)"; \
+	fi
+	@if [ -n "$(MYSQL_BIND_DIR)" ] && [ -d "$(MYSQL_BIND_DIR)" ]; then \
+		echo "   - rm -rf $(MYSQL_BIND_DIR)"; rm -rf "$(MYSQL_BIND_DIR)"; \
+	fi
+
+	@echo "🧰  Cleaning Python caches & stray SQLite files…"
+	@find . -type d -name '__pycache__' -prune -exec rm -rf {} + 2>/dev/null || true
+	@find . -type f -name '*.pyc' -delete 2>/dev/null || true
+	@find . -maxdepth 2 -type f -name '*.sqlite3' -delete 2>/dev/null || true
+
+	@echo "🏗️  Rebuilding dev images from scratch…"
+	docker compose -f docker-compose.dev.yml build --no-cache
+
+	@echo "🧾  Resetting Django migrations and schema (host)…"
 	$(LOCAL_DJANGO) reset_migrations
+	$(LOCAL_DJANGO) makemigrations
+
+	@echo "🧪  Rebuilding frontend…"
+	$(MAKE) dev-frontend
+
+	@echo "🚀  Starting fresh dev stack…"
 	$(MAKE) dev
-	@echo "✅ Full development environment clean and rebuild complete!"
+
+	@echo "✅  Full dev environment nuke & rebuild complete!"
 
 # File watching and hot reload status
 .PHONY: dev-status
@@ -477,6 +513,13 @@ dev-superuser:
 dev-collectstatic:
 	@echo "📁 Collecting static files in development..."
 	docker compose -f docker-compose.dev.yml exec web uv run python manage.py collectstatic --noinput
+
+.PHONY: dev-import-autocare
+dev-import-autocare:
+	@echo "👤 Importing development Autocare data..."
+	docker compose -f docker-compose.dev.yml exec web uv run python manage.py import_vcdb_data
+	docker compose -f docker-compose.dev.yml exec web uv run python manage.py import_pcadb_data
+#	docker compose -f docker-compose.dev.yml exec web uv run python manage.py import_qdb_data
 
 # Performance monitoring for development
 .PHONY: dev-profile

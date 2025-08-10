@@ -19,7 +19,7 @@ from autocare_vcdb.models import (
     EngineBase, CylinderHeadType, FuelType, FuelDeliveryType,
     FuelDeliverySubType, FuelSystemControlType, FuelSystemDesign,
     FuelDeliveryConfig, IgnitionSystemType, Mfr, EngineDesignation,
-    EngineVin, EngineVersion, Valves, PowerOutput, EngineConfig,
+    EngineVIN, EngineVersion, Valves, PowerOutput, EngineConfig,
 
     # Transmission models
     TransmissionType, TransmissionNumSpeeds, TransmissionControlType,
@@ -29,7 +29,7 @@ from autocare_vcdb.models import (
     BodyType, BodyNumDoors, BodyStyleConfig, MfrBodyCode, WheelBase,
 
     # Brake system models
-    BrakeType, BrakeSystem, BrakeAbs, BrakeConfig,
+    BrakeType, BrakeSystem, BrakeABS, BrakeConfig,
 
     # Other systems
     DriveType, SteeringType, SteeringSystem, SteeringConfig,
@@ -43,13 +43,13 @@ from autocare_vcdb.models import (
     VehicleToMfrBodyCode, VehicleToWheelbase,
 
     # Audit models
-    ChangeReason, Change, ChangeAttributeState, ChangeTableName, ChangeDetail,
+    ChangeReasons, Changes, ChangeAttributeStates, ChangeTableNames, ChangeDetails,
 
     # Internationalization
     Language, EnglishPhrase, LanguageTranslation, LanguageTranslationAttachment,
 
     # Version
-    Version, VcdbChange,
+    Version, VCdbChanges, EngineConfig2, EngineBase2,
 )
 
 
@@ -79,14 +79,14 @@ class AspirationAdmin(admin.ModelAdmin):
 
 @admin.register(AttachmentType)
 class AttachmentTypeAdmin(admin.ModelAdmin):
-    list_display = ['id', 'attachment_type_name']
+    list_display = ['attachment_type_id', 'attachment_type_name']
     search_fields = ['attachment_type_name']
     ordering = ['attachment_type_name']
 
 
 @admin.register(Attachment)
 class AttachmentAdmin(admin.ModelAdmin):
-    list_display = ['id', 'attachment_file_name', 'attachment_type', 'attachment_description']
+    list_display = ['attachment_id', 'attachment_file_name', 'attachment_type', 'attachment_description']
     list_filter = ['attachment_type', ]
     search_fields = ['attachment_file_name', 'attachment_description']
     autocomplete_fields = ['attachment_type']
@@ -236,6 +236,16 @@ class EngineBaseAdmin(admin.ModelAdmin):
     ordering = ['liter', 'cylinders']
 
 
+@admin.register(EngineBase2)
+class EngineBaseAdmin(admin.ModelAdmin):
+    list_display = [
+        'engine_base_id'
+    ]
+    list_filter = ['engine_block']
+    search_fields = ['engine_block__liter']
+    ordering = ['engine_block__liter']
+
+
 @admin.register(CylinderHeadType)
 class CylinderHeadTypeAdmin(admin.ModelAdmin):
     list_display = ['cylinder_head_type_id', 'cylinder_head_type_name']
@@ -319,8 +329,8 @@ class EngineDesignationAdmin(admin.ModelAdmin):
     ordering = ['engine_designation_name']
 
 
-@admin.register(EngineVin)
-class EngineVinAdmin(admin.ModelAdmin):
+@admin.register(EngineVIN)
+class EngineVINAdmin(admin.ModelAdmin):
     list_display = ['engine_vin_id', 'engine_vin_name']
     search_fields = ['engine_vin_name']
     ordering = ['engine_vin_name']
@@ -360,6 +370,38 @@ class EngineConfigAdmin(admin.ModelAdmin):
     search_fields = [
         'engine_designation__engine_designation_name',
         'engine_base__liter', 'engine_base__cylinders'
+    ]
+    autocomplete_fields = [
+        'engine_designation', 'engine_vin', 'valves', 'engine_base',
+        'fuel_delivery_config', 'aspiration', 'cylinder_head_type',
+        'fuel_type', 'ignition_system_type', 'engine_mfr',
+        'engine_version', 'power_output'
+    ]
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related(
+            'engine_base', 'engine_designation', 'fuel_type', 'aspiration', 'power_output'
+        )
+
+    def engine_base_display(self, obj):
+        return str(obj.engine_base)
+
+    engine_base_display.short_description = _('Engine Base')
+    engine_base_display.admin_order_field = 'engine_base'
+
+
+@admin.register(EngineConfig2)
+class EngineConfig2Admin(admin.ModelAdmin):
+    list_display = [
+        'engine_config_id', 'engine_base_display', 'engine_designation',
+        'fuel_type', 'aspiration', 'power_output'
+    ]
+    list_filter = [
+        'fuel_type',
+        'aspiration', 'cylinder_head_type', 'ignition_system_type'
+    ]
+    search_fields = [
+        'engine_designation__engine_designation_name',
     ]
     autocomplete_fields = [
         'engine_designation', 'engine_vin', 'valves', 'engine_base',
@@ -498,8 +540,8 @@ class BrakeSystemAdmin(admin.ModelAdmin):
     ordering = ['brake_system_name']
 
 
-@admin.register(BrakeAbs)
-class BrakeAbsAdmin(admin.ModelAdmin):
+@admin.register(BrakeABS)
+class BrakeABSAdmin(admin.ModelAdmin):
     list_display = ['brake_abs_id', 'brake_abs_name']
     search_fields = ['brake_abs_name']
     ordering = ['brake_abs_name']
@@ -633,20 +675,20 @@ VehicleAdmin.inlines = [
 
 
 # Audit and change tracking admins
-@admin.register(ChangeReason)
-class ChangeReasonAdmin(admin.ModelAdmin):
+@admin.register(ChangeReasons)
+class ChangeReasonsAdmin(admin.ModelAdmin):
     list_display = ['change_reason_id', 'change_reason']
     search_fields = ['change_reason']
     ordering = ['change_reason']
 
 
 class ChangeDetailInline(admin.TabularInline):
-    model = ChangeDetail
+    model = ChangeDetails
     extra = 0
     readonly_fields = ['change_detail_id']
 
 
-@admin.register(Change)
+@admin.register(Changes)
 class ChangeAdmin(admin.ModelAdmin):
     list_display = ['change_id', 'request_id', 'change_reason', 'rev_date']
     list_filter = ['change_reason', 'rev_date']
@@ -656,21 +698,21 @@ class ChangeAdmin(admin.ModelAdmin):
     inlines = [ChangeDetailInline]
 
 
-@admin.register(ChangeAttributeState)
+@admin.register(ChangeAttributeStates)
 class ChangeAttributeStateAdmin(admin.ModelAdmin):
     list_display = ['change_attribute_state_id', 'change_attribute_state']
     search_fields = ['change_attribute_state']
     ordering = ['change_attribute_state']
 
 
-@admin.register(ChangeTableName)
+@admin.register(ChangeTableNames)
 class ChangeTableNameAdmin(admin.ModelAdmin):
     list_display = ['table_name_id', 'table_name', 'table_description']
     search_fields = ['table_name', 'table_description']
     ordering = ['table_name']
 
 
-@admin.register(ChangeDetail)
+@admin.register(ChangeDetails)
 class ChangeDetailAdmin(admin.ModelAdmin):
     list_display = [
         'change_detail_id', 'change', 'table_name', 'column_name',
@@ -684,14 +726,14 @@ class ChangeDetailAdmin(admin.ModelAdmin):
 # Internationalization admins
 @admin.register(Language)
 class LanguageAdmin(admin.ModelAdmin):
-    list_display = ['id', 'language_name', 'dialect_name']
+    list_display = ['language_id', 'language_name', 'dialect_name']
     search_fields = ['language_name', 'dialect_name']
     ordering = ['language_name']
 
 
 @admin.register(EnglishPhrase)
 class EnglishPhraseAdmin(admin.ModelAdmin):
-    list_display = ['id', 'english_phrase']
+    list_display = ['english_phrase_id', 'english_phrase']
     search_fields = ['english_phrase']
     ordering = ['english_phrase']
 
@@ -703,7 +745,7 @@ class LanguageTranslationAttachmentInline(admin.TabularInline):
 
 @admin.register(LanguageTranslation)
 class LanguageTranslationAdmin(admin.ModelAdmin):
-    list_display = ['id', 'english_phrase', 'language', 'translation']
+    list_display = ['language_translation_id', 'english_phrase', 'language', 'translation']
     list_filter = ['language']
     search_fields = ['english_phrase__english_phrase', 'translation']
     autocomplete_fields = ['english_phrase', 'language']
@@ -717,7 +759,7 @@ class VersionAdmin(admin.ModelAdmin):
     ordering = ['-version_date']
 
 
-@admin.register(VcdbChange)
+@admin.register(VCdbChanges)
 class VcdbChangeAdmin(admin.ModelAdmin):
     list_display = ['version_date', 'table_name', 'record_id', 'action']
     list_filter = ['table_name', 'action', 'version_date']
